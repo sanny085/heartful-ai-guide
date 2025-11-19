@@ -465,8 +465,26 @@ export default function HeartHealthResults() {
                       <h3 className="text-2xl font-semibold text-foreground mb-4">Recommended Actions</h3>
                       <div className="space-y-4">
                         {assessment.ai_insights.recommendations.map((rec: any, idx: number) => {
-                          const title = typeof rec === 'object' ? rec.title : `Recommendation ${idx + 1}`;
-                          const description = typeof rec === 'string' ? rec : (rec.description || rec.title || '');
+                          // Handle various data formats defensively
+                          let title = '';
+                          let description = '';
+                          
+                          if (typeof rec === 'object' && rec !== null) {
+                            title = rec.title || '';
+                            description = rec.description || '';
+                          } else if (typeof rec === 'string') {
+                            // If it's a string, use it as description
+                            description = rec;
+                            title = `Recommendation ${idx + 1}`;
+                          }
+                          
+                          // Clean up any JSON artifacts that might have slipped through
+                          title = title.replace(/^["']\s*title["']?\s*:\s*["']?/i, '').replace(/["'],?\s*$/, '').trim();
+                          description = description.replace(/^["']\s*description["']?\s*:\s*["']?/i, '').replace(/["'],?\s*$/, '').trim();
+                          
+                          // Skip if both are empty or just contain artifacts
+                          if (!title && !description) return null;
+                          if (title === '}' || description === '}' || description === '{') return null;
                           
                           return (
                             <Card key={idx} className="p-6 bg-muted/30 border-l-4 border-accent">
@@ -475,13 +493,13 @@ export default function HeartHealthResults() {
                                   <CheckCircle className="w-6 h-6 text-accent" />
                                 </div>
                                 <div className="flex-1">
-                                  <h4 className="text-lg font-semibold text-foreground mb-2">{title}</h4>
-                                  <p className="text-base leading-relaxed text-foreground/90">{description}</p>
+                                  {title && <h4 className="text-lg font-semibold text-foreground mb-2">{title}</h4>}
+                                  {description && <p className="text-base leading-relaxed text-foreground/90">{description}</p>}
                                 </div>
                               </div>
                             </Card>
                           );
-                        })}
+                        }).filter(Boolean)}
                       </div>
                     </div>
                   )}
