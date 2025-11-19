@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Phone, Home, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -59,7 +60,6 @@ export default function HeartHealthResults() {
 
   const calculateCardiovascularScore = () => {
     if (!assessment) return 0;
-    // Simple scoring algorithm (can be enhanced)
     let score = 100;
     if (assessment.bmi && assessment.bmi > 25) score -= 10;
     if (assessment.systolic && assessment.systolic > 140) score -= 15;
@@ -134,287 +134,212 @@ export default function HeartHealthResults() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b">
-          <button className="pb-4 px-4 border-b-2 border-accent text-accent font-medium">
-            Heart Health
-          </button>
-          <button className="pb-4 px-4 text-muted-foreground hover:text-foreground">
-            Insights
-          </button>
-          <button className="pb-4 px-4 text-muted-foreground hover:text-foreground">
-            Risk Contributors
-          </button>
-        </div>
+        <Tabs defaultValue="health" className="w-full">
+          <TabsList className="mb-8">
+            <TabsTrigger value="health">Heart Health</TabsTrigger>
+            <TabsTrigger value="insights">Insights</TabsTrigger>
+            <TabsTrigger value="risk">Risk Contributors</TabsTrigger>
+          </TabsList>
 
-        {/* Key Metrics Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6 text-center space-y-2 shadow-md">
-            <div className="text-4xl font-bold text-foreground">
-              {assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}
-            </div>
-            <h3 className="text-lg font-semibold text-accent">BMI</h3>
-            <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
-          </Card>
-
-          <Card className="p-6 text-center space-y-2 shadow-md">
-            <div className="text-4xl font-bold text-foreground">
-              {calculateCardiovascularScore()}
-            </div>
-            <h3 className="text-lg font-semibold text-accent">CV Score</h3>
-            <p className="text-xs text-muted-foreground">points</p>
-          </Card>
-
-          <Card className="p-6 text-center space-y-2 shadow-md">
-            <div className="text-4xl font-bold text-foreground">
-              {assessment.heart_age || assessment.age || "N/A"}
-            </div>
-            <h3 className="text-lg font-semibold text-accent">Heart Age</h3>
-            <p className="text-xs text-muted-foreground">years</p>
-          </Card>
-
-          <Card className="p-6 text-center space-y-2 shadow-md">
-            <div className="text-4xl font-bold text-foreground">
-              {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}
-            </div>
-            <h3 className="text-lg font-semibold text-accent">Risk</h3>
-            <p className="text-xs text-muted-foreground">%</p>
-          </Card>
-        </div>
-
-        {/* Detailed Metrics */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-accent">Blood Pressure</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Systolic:</span>
-                <span className="font-semibold">{assessment.systolic || "N/A"} mmHg</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Diastolic:</span>
-                <span className="font-semibold">{assessment.diastolic || "N/A"} mmHg</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Category:</span>
-                <span className="font-semibold">{getBPCategory()}</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6 space-y-4">
-            <h3 className="text-xl font-semibold text-accent">Body Composition</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">BMI:</span>
-                <span className="font-semibold">{assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Category:</span>
-                <span className="font-semibold">{getBMICategory()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Age:</span>
-                <span className="font-semibold">{assessment.age || "N/A"} years</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* AI Insights */}
-        {assessment.ai_insights && (
-          <div className="space-y-6 mb-8">
-            <Card className="p-6 bg-card border-accent/20">
-              <h3 className="text-2xl font-bold text-accent mb-4 flex items-center gap-2">
-                <Activity className="w-6 h-6" />
-                Your Personalized Health Insights
-              </h3>
-              
-              {assessment.ai_insights.summary && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold mb-3 text-foreground">Health Summary</h4>
-                  <p className="text-base leading-relaxed text-foreground/90">
-                    {assessment.ai_insights.summary}
-                  </p>
+          <TabsContent value="health" className="space-y-8">
+            {/* Key Metrics Cards */}
+            <div className="grid md:grid-cols-4 gap-6">
+              <Card className="p-6 text-center space-y-2 shadow-md">
+                <div className="text-4xl font-bold text-foreground">
+                  {assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}
                 </div>
-              )}
+                <h3 className="text-lg font-semibold text-accent">BMI</h3>
+                <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
+              </Card>
 
-              {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
-                <div>
-                  <h4 className="text-lg font-semibold mb-4 text-foreground">Health Recommendations</h4>
-                  <div className="space-y-4">
-                    {assessment.ai_insights.recommendations.map((rec: any, idx: number) => {
-                      const recText = typeof rec === 'string' ? rec : rec.description || rec.title || '';
-                      const recTitle = typeof rec === 'object' ? rec.title : null;
-                      
-                      // Determine severity based on keywords
-                      let severity = 'info';
-                      const lowerText = recText.toLowerCase();
-                      if (lowerText.includes('critical') || lowerText.includes('danger') || lowerText.includes('high risk')) {
-                        severity = 'danger';
-                      } else if (lowerText.includes('warning') || lowerText.includes('attention') || lowerText.includes('concern')) {
-                        severity = 'warning';
-                      } else if (lowerText.includes('good') || lowerText.includes('excellent') || lowerText.includes('healthy')) {
-                        severity = 'success';
-                      }
+              <Card className="p-6 text-center space-y-2 shadow-md">
+                <div className="text-4xl font-bold text-foreground">
+                  {calculateCardiovascularScore()}
+                </div>
+                <h3 className="text-lg font-semibold text-accent">CV Score</h3>
+                <p className="text-xs text-muted-foreground">points</p>
+              </Card>
 
-                      return (
-                        <Card 
-                          key={idx} 
-                          className={`p-4 ${
-                            severity === 'danger' ? 'border-red-500 bg-red-50 dark:bg-red-950/20' :
-                            severity === 'warning' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' :
-                            severity === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-950/20' :
-                            'border-border bg-muted/50'
-                          }`}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div className={`mt-1 ${
-                              severity === 'danger' ? 'text-red-500' :
-                              severity === 'warning' ? 'text-orange-500' :
-                              severity === 'success' ? 'text-green-500' :
-                              'text-accent'
-                            }`}>
-                              {severity === 'danger' && <span className="text-2xl">⚠️</span>}
-                              {severity === 'warning' && <span className="text-2xl">⚡</span>}
-                              {severity === 'success' && <span className="text-2xl">✅</span>}
-                              {severity === 'info' && <span className="text-2xl">💡</span>}
-                            </div>
-                            <div className="flex-1">
-                              {recTitle && (
-                                <h5 className={`font-semibold mb-2 ${
-                                  severity === 'danger' ? 'text-red-700 dark:text-red-400' :
-                                  severity === 'warning' ? 'text-orange-700 dark:text-orange-400' :
-                                  severity === 'success' ? 'text-green-700 dark:text-green-400' :
-                                  'text-foreground'
-                                }`}>
-                                  {recTitle}
-                                </h5>
-                              )}
-                              <p className={`text-sm leading-relaxed ${
-                                severity === 'danger' ? 'text-red-800 dark:text-red-300' :
-                                severity === 'warning' ? 'text-orange-800 dark:text-orange-300' :
-                                severity === 'success' ? 'text-green-800 dark:text-green-300' :
-                                'text-foreground/80'
-                              }`}>
-                                {recText}
-                              </p>
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
+              <Card className="p-6 text-center space-y-2 shadow-md">
+                <div className="text-4xl font-bold text-foreground">
+                  {assessment.heart_age || assessment.age || "N/A"}
+                </div>
+                <h3 className="text-lg font-semibold text-accent">Heart Age</h3>
+                <p className="text-xs text-muted-foreground">years</p>
+              </Card>
+
+              <Card className="p-6 text-center space-y-2 shadow-md">
+                <div className="text-4xl font-bold text-foreground">
+                  {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}
+                </div>
+                <h3 className="text-lg font-semibold text-accent">Risk</h3>
+                <p className="text-xs text-muted-foreground">%</p>
+              </Card>
+            </div>
+
+            {/* Detailed Metrics */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="p-6 space-y-4">
+                <h3 className="text-xl font-semibold text-accent">Blood Pressure</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Systolic:</span>
+                    <span className="font-semibold">{assessment.systolic || "N/A"} mmHg</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Diastolic:</span>
+                    <span className="font-semibold">{assessment.diastolic || "N/A"} mmHg</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category:</span>
+                    <span className="font-semibold">{getBPCategory()}</span>
                   </div>
                 </div>
-              )}
-            </Card>
-
-            {/* What to Do & What to Avoid */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="p-6 border-green-500/30 bg-green-50 dark:bg-green-950/20">
-                <h4 className="text-lg font-bold text-green-700 dark:text-green-400 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">✅</span>
-                  What You Should Do
-                </h4>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
-                    <span className="text-green-600 mt-0.5">•</span>
-                    <span>Continue your regular exercise routine - {assessment.exercise || 'staying active'} is excellent for heart health</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
-                    <span className="text-green-600 mt-0.5">•</span>
-                    <span>Maintain your healthy BMI through balanced nutrition and regular physical activity</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
-                    <span className="text-green-600 mt-0.5">•</span>
-                    <span>Monitor your blood pressure regularly to track your cardiovascular health</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
-                    <span className="text-green-600 mt-0.5">•</span>
-                    <span>Get regular health check-ups to catch any potential issues early</span>
-                  </li>
-                </ul>
               </Card>
 
-              <Card className="p-6 border-red-500/30 bg-red-50 dark:bg-red-950/20">
-                <h4 className="text-lg font-bold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
-                  <span className="text-2xl">⛔</span>
-                  What to Avoid
-                </h4>
-                <ul className="space-y-3">
-                  {assessment.smoking === 'yes' && (
-                    <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
-                      <span className="text-red-600 mt-0.5">•</span>
-                      <span><strong>Stop smoking immediately</strong> - It's the single most harmful factor for heart health</span>
-                    </li>
-                  )}
-                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
-                    <span className="text-red-600 mt-0.5">•</span>
-                    <span>Avoid excessive salt intake which can increase blood pressure</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
-                    <span className="text-red-600 mt-0.5">•</span>
-                    <span>Limit processed foods and saturated fats that impact heart health</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
-                    <span className="text-red-600 mt-0.5">•</span>
-                    <span>Don't skip regular health screenings and medical check-ups</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
-                    <span className="text-red-600 mt-0.5">•</span>
-                    <span>Avoid prolonged sedentary behavior - take breaks to move throughout the day</span>
-                  </li>
-                </ul>
+              <Card className="p-6 space-y-4">
+                <h3 className="text-xl font-semibold text-accent">Body Composition</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">BMI:</span>
+                    <span className="font-semibold">{assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Category:</span>
+                    <span className="font-semibold">{getBMICategory()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Age:</span>
+                    <span className="font-semibold">{assessment.age || "N/A"} years</span>
+                  </div>
+                </div>
               </Card>
             </div>
-          </div>
-        )}
+          </TabsContent>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-wrap gap-4 justify-center mb-8">
-          <Button
-            onClick={() => navigate("/chat")}
-            className="bg-accent hover:bg-accent/90 text-accent-foreground px-8"
-            size="lg"
-          >
-            <MessageCircle className="mr-2 h-5 w-5" />
-            Start Chat
-          </Button>
-          <Button
-            variant="outline"
-            className="border-accent text-accent hover:bg-accent/10 px-8"
-            size="lg"
-          >
-            <Phone className="mr-2 h-5 w-5" />
-            Call Us
-          </Button>
-        </div>
+          <TabsContent value="insights" className="space-y-6">
+            {assessment.ai_insights ? (
+              <div className="space-y-6">
+                <Card className="p-8 bg-card border-accent/20">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Activity className="w-8 h-8 text-accent" />
+                    <h2 className="text-3xl font-bold text-foreground">Your Personalized Health Insights</h2>
+                  </div>
+                  
+                  {assessment.ai_insights.summary && (
+                    <div className="mb-8 pb-6 border-b border-border">
+                      <p className="text-lg leading-relaxed text-foreground">
+                        {assessment.ai_insights.summary}
+                      </p>
+                    </div>
+                  )}
 
-        {/* Social Share */}
-        <div className="text-center space-y-4">
-          <p className="text-sm text-muted-foreground">Invite your friends & family to take the test</p>
-          <div className="flex gap-3 justify-center">
-            {[
-              { icon: "🟢", label: "WhatsApp" },
-              { icon: "📷", label: "Instagram" },
-              { icon: "👍", label: "Facebook" },
-              { icon: "✖️", label: "X" },
-              { icon: "💼", label: "LinkedIn" }
-            ].map((social) => (
-              <button
-                key={social.label}
-                className="w-12 h-12 rounded-full bg-card border border-border hover:border-accent hover:shadow-md transition-all flex items-center justify-center"
-                aria-label={social.label}
-              >
-                <span className="text-xl">{social.icon}</span>
-              </button>
-            ))}
-          </div>
+                  {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
+                    <div className="space-y-6">
+                      <h3 className="text-2xl font-semibold text-foreground mb-4">Recommended Actions</h3>
+                      <div className="space-y-4">
+                        {assessment.ai_insights.recommendations.map((rec: any, idx: number) => {
+                          const title = typeof rec === 'object' ? rec.title : `Recommendation ${idx + 1}`;
+                          const description = typeof rec === 'string' ? rec : (rec.description || rec.title || '');
+                          
+                          return (
+                            <Card key={idx} className="p-6 bg-muted/30 border-l-4 border-accent">
+                              <div className="flex gap-4">
+                                <div className="flex-shrink-0 mt-1">
+                                  <CheckCircle className="w-6 h-6 text-accent" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="text-lg font-semibold text-foreground mb-2">{title}</h4>
+                                  <p className="text-base leading-relaxed text-foreground/90">{description}</p>
+                                </div>
+                              </div>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              </div>
+            ) : (
+              <Card className="p-8 text-center">
+                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground">
+                  No personalized insights available yet. Please check back later.
+                </p>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="risk" className="space-y-6">
+            <Card className="p-8">
+              <h2 className="text-2xl font-bold text-foreground mb-6">Risk Factors</h2>
+              <div className="space-y-4">
+                {assessment.exercise && (
+                  <div className="flex justify-between items-center pb-4 border-b border-border">
+                    <span className="text-base text-muted-foreground">Exercise Level:</span>
+                    <span className="text-base font-semibold text-foreground">{assessment.exercise}</span>
+                  </div>
+                )}
+                {assessment.smoking && (
+                  <div className="flex justify-between items-center pb-4 border-b border-border">
+                    <span className="text-base text-muted-foreground">Smoking Status:</span>
+                    <span className="text-base font-semibold text-foreground">{assessment.smoking}</span>
+                  </div>
+                )}
+                {assessment.systolic && assessment.systolic > 120 && (
+                  <div className="flex justify-between items-center pb-4 border-b border-border">
+                    <span className="text-base text-muted-foreground">Blood Pressure:</span>
+                    <span className="text-base font-semibold text-accent">{getBPCategory()}</span>
+                  </div>
+                )}
+                {assessment.bmi && assessment.bmi > 25 && (
+                  <div className="flex justify-between items-center pb-4 border-b border-border">
+                    <span className="text-base text-muted-foreground">Body Weight:</span>
+                    <span className="text-base font-semibold text-accent">{getBMICategory()}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Action Buttons */}
+        <div className="grid md:grid-cols-2 gap-6 mt-8">
+          <Card className="p-6">
+            <div className="flex items-center gap-4">
+              <MessageCircle className="w-12 h-12 text-accent" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">Chat with Our Health Expert</h3>
+                <p className="text-sm text-muted-foreground mb-4">Get personalized guidance</p>
+                <Button onClick={() => navigate("/chat")} className="w-full">
+                  Start Chat
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <div className="flex items-center gap-4">
+              <Phone className="w-12 h-12 text-accent" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold mb-2">Talk to Our Team</h3>
+                <p className="text-sm text-muted-foreground mb-4">Speak with a health advisor</p>
+                <Button variant="outline" className="w-full">
+                  Schedule Call
+                </Button>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-12 text-sm text-muted-foreground">
-          Copyright © 2024 10,000 hearts | All Rights Reserved.
+        <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
+          <p>© 2024 10000hearts. All rights reserved.</p>
+          <p className="mt-2">
+            This assessment is for informational purposes only and does not constitute medical advice.
+            Please consult with a healthcare professional for medical concerns.
+          </p>
         </div>
       </div>
     </div>
