@@ -58,7 +58,7 @@ const Index = () => {
 
           <div className="flex flex-wrap gap-4 justify-center pt-4">
             <Button
-              onClick={() => navigate("/heart-health")}
+              onClick={() => navigate(user ? "/heart-health" : "/auth")}
               className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 shadow-lg hover:shadow-xl transition-all"
               size="lg"
             >

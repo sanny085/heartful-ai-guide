@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Heart, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const STEPS = [
   "Profile",
@@ -18,7 +21,9 @@ const STEPS = [
 
 export default function HeartHealthAssessment() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -62,12 +67,87 @@ export default function HeartHealthAssessment() {
     }
   };
 
-  const handleNext = () => {
+  useEffect(() => {
+    // Redirect if not logged in
+    if (!user) {
+      toast.error("Please log in to take the heart health test");
+      navigate("/auth");
+    }
+  }, [user, navigate]);
+
+  const calculateBMI = (height: number, weight: number) => {
+    // Height in cm, convert to meters
+    const heightInMeters = height / 100;
+    return weight / (heightInMeters * heightInMeters);
+  };
+
+  const handleNext = async () => {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
       // Submit and navigate to results
-      navigate("/heart-health-results");
+      await saveAssessment();
+    }
+  };
+
+  const saveAssessment = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    try {
+      // Get user profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile) {
+        toast.error("Profile not found. Please complete your profile setup.");
+        navigate("/profile-setup");
+        return;
+      }
+
+      // Calculate BMI if height and weight are provided
+      const bmi = formData.height && formData.weight 
+        ? calculateBMI(Number(formData.height), Number(formData.weight))
+        : null;
+
+      // Save assessment
+      const { data, error } = await supabase
+        .from("heart_health_assessments")
+        .insert({
+          user_id: profile.user_id,
+          name: formData.name,
+          mobile: formData.mobile,
+          age: formData.age ? parseInt(formData.age) : null,
+          gender: formData.gender,
+          height: formData.height ? parseFloat(formData.height) : null,
+          weight: formData.weight ? parseFloat(formData.weight) : null,
+          diet: formData.diet,
+          exercise: formData.exercise,
+          sleep_hours: formData.sleepHours ? parseFloat(formData.sleepHours) : null,
+          smoking: formData.smoking,
+          tobacco_use: formData.tobacco,
+          knows_lipids: formData.knowsLipids,
+          high_cholesterol: formData.highCholesterol,
+          diabetes: formData.diabetes,
+          systolic: formData.systolic ? parseInt(formData.systolic) : null,
+          diastolic: formData.diastolic ? parseInt(formData.diastolic) : null,
+          bmi: bmi
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Assessment saved successfully!");
+      navigate(`/heart-health-results?id=${data.id}`);
+    } catch (error) {
+      console.error("Error saving assessment:", error);
+      toast.error("Failed to save assessment. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -350,11 +430,11 @@ export default function HeartHealthAssessment() {
               <div className="mt-8">
                 <Button
                   onClick={handleNext}
-                  disabled={!canProceed()}
+                  disabled={!canProceed() || saving}
                   className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                   size="lg"
                 >
-                  {currentStep < STEPS.length - 1 ? "Next" : "View Results"}
+                  {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : "View Results"}
                 </Button>
               </div>
             </div>
