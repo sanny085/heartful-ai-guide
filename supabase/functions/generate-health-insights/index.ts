@@ -58,9 +58,12 @@ Diabetes: ${assessment.diabetes || "Not specified"}
 Age: ${assessment.age || "Not specified"}
 Gender: ${assessment.gender || "Not specified"}
 
+Risk Score: ${riskScore}%
+
 Provide a comprehensive health assessment with:
 1. A brief summary (3-4 sentences) describing their overall health status in an encouraging, supportive tone
 2. 4-5 specific, actionable recommendations for improving heart health
+3. If risk score is above 10%, include specific do's and don'ts (3-4 items each)
 
 Return ONLY valid JSON (no markdown formatting, no code blocks) with this exact structure:
 {
@@ -70,6 +73,12 @@ Return ONLY valid JSON (no markdown formatting, no code blocks) with this exact 
       "title": "Clear recommendation title",
       "description": "Detailed explanation of what they should do and why"
     }
+  ],
+  "dos": [
+    "Specific action they should do"
+  ],
+  "donts": [
+    "Specific action they should avoid"
   ]
 }
 
