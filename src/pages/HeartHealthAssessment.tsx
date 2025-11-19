@@ -102,7 +102,7 @@ export default function HeartHealthAssessment() {
                   onCheckedChange={(checked) => updateFormData("consent", checked)}
                 />
                 <Label htmlFor="consent" className="text-sm leading-relaxed cursor-pointer">
-                  I agree to be contacted by Fitterfly through call, email, WhatsApp, SMS and to be added to Fitterfly WhatsApp group
+                  I agree to be contacted by 10000Hearts through call, email, WhatsApp, SMS and to be added to 10000Hearts WhatsApp group
                 </Label>
               </div>
             )}
@@ -292,7 +292,7 @@ export default function HeartHealthAssessment() {
           <div className="space-y-8">
             <div className="flex items-center gap-3">
               <Heart className="w-8 h-8 text-accent fill-accent" />
-              <span className="text-2xl font-bold text-primary">FitterFly</span>
+              <span className="text-2xl font-bold text-primary">10000Hearts</span>
             </div>
 
             <div>
