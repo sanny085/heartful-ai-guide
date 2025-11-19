@@ -74,10 +74,18 @@ const ProfileSetup = () => {
     }
 
     try {
-      const { error } = await supabase.from('profiles').insert({
-        user_id: user.id,
+      // Validate age is a number
+      const ageNum = parseInt(formData.age);
+      if (isNaN(ageNum)) {
+        toast.error("Please enter a valid age");
+        return;
+      }
+
+      // Validate using zod schema
+      const { profileSchema } = await import("@/lib/validation");
+      const validationResult = profileSchema.safeParse({
         name: formData.name,
-        age: parseInt(formData.age),
+        age: ageNum,
         gender: formData.gender,
         married_status: formData.married_status,
         location: formData.location,
@@ -85,13 +93,29 @@ const ProfileSetup = () => {
         medical_category: formData.medical_category,
       });
 
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast.error(firstError.message);
+        return;
+      }
+
+      const { error } = await supabase.from('profiles').insert({
+        user_id: user.id,
+        name: validationResult.data.name,
+        age: validationResult.data.age,
+        gender: validationResult.data.gender,
+        married_status: validationResult.data.married_status,
+        location: validationResult.data.location,
+        preferred_language: validationResult.data.preferred_language,
+        medical_category: validationResult.data.medical_category,
+      });
+
       if (error) throw error;
 
       toast.success("Profile created successfully!");
       navigate('/');
     } catch (error: any) {
-      console.error('Error creating profile:', error);
-      toast.error(error.message || "Failed to create profile");
+      toast.error("Failed to create profile");
     }
   };
 

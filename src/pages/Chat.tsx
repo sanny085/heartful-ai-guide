@@ -109,6 +109,17 @@ const Chat = () => {
     if (!input.trim() || !conversationId || !user) return;
 
     const userMessage = input.trim();
+    
+    // Validate message content
+    const { messageSchema } = await import("@/lib/validation");
+    const validationResult = messageSchema.safeParse({ content: userMessage });
+    
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      toast.error(firstError.message);
+      return;
+    }
+
     setInput('');
     setIsLoading(true);
 
@@ -118,7 +129,7 @@ const Chat = () => {
         .insert({
           conversation_id: conversationId,
           role: 'user',
-          content: userMessage,
+          content: validationResult.data.content,
         });
 
       if (insertError) throw insertError;
@@ -126,7 +137,7 @@ const Chat = () => {
       const newUserMsg: Message = {
         id: crypto.randomUUID(),
         role: 'user',
-        content: userMessage,
+        content: validationResult.data.content,
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, newUserMsg]);
