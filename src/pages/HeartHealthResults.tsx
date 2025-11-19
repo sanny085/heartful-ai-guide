@@ -18,6 +18,8 @@ interface Assessment {
   diastolic: number | null;
   ai_insights: any;
   created_at: string;
+  exercise: string | null;
+  smoking: string | null;
 }
 
 export default function HeartHealthResults() {
@@ -221,27 +223,151 @@ export default function HeartHealthResults() {
 
         {/* AI Insights */}
         {assessment.ai_insights && (
-          <Card className="p-6 mb-8">
-            <h3 className="text-xl font-semibold text-accent mb-4">AI-Powered Health Insights</h3>
-            <div className="space-y-4">
+          <div className="space-y-6 mb-8">
+            <Card className="p-6 bg-card border-accent/20">
+              <h3 className="text-2xl font-bold text-accent mb-4 flex items-center gap-2">
+                <Activity className="w-6 h-6" />
+                Your Personalized Health Insights
+              </h3>
+              
               {assessment.ai_insights.summary && (
-                <div>
-                  <h4 className="font-semibold mb-2">Summary</h4>
-                  <p className="text-muted-foreground">{assessment.ai_insights.summary}</p>
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold mb-3 text-foreground">Health Summary</h4>
+                  <p className="text-base leading-relaxed text-foreground/90">
+                    {assessment.ai_insights.summary}
+                  </p>
                 </div>
               )}
+
               {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-2">Recommendations</h4>
-                  <ul className="list-disc list-inside space-y-1">
-                    {assessment.ai_insights.recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="text-muted-foreground">{rec}</li>
-                    ))}
-                  </ul>
+                  <h4 className="text-lg font-semibold mb-4 text-foreground">Health Recommendations</h4>
+                  <div className="space-y-4">
+                    {assessment.ai_insights.recommendations.map((rec: any, idx: number) => {
+                      const recText = typeof rec === 'string' ? rec : rec.description || rec.title || '';
+                      const recTitle = typeof rec === 'object' ? rec.title : null;
+                      
+                      // Determine severity based on keywords
+                      let severity = 'info';
+                      const lowerText = recText.toLowerCase();
+                      if (lowerText.includes('critical') || lowerText.includes('danger') || lowerText.includes('high risk')) {
+                        severity = 'danger';
+                      } else if (lowerText.includes('warning') || lowerText.includes('attention') || lowerText.includes('concern')) {
+                        severity = 'warning';
+                      } else if (lowerText.includes('good') || lowerText.includes('excellent') || lowerText.includes('healthy')) {
+                        severity = 'success';
+                      }
+
+                      return (
+                        <Card 
+                          key={idx} 
+                          className={`p-4 ${
+                            severity === 'danger' ? 'border-red-500 bg-red-50 dark:bg-red-950/20' :
+                            severity === 'warning' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' :
+                            severity === 'success' ? 'border-green-500 bg-green-50 dark:bg-green-950/20' :
+                            'border-border bg-muted/50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`mt-1 ${
+                              severity === 'danger' ? 'text-red-500' :
+                              severity === 'warning' ? 'text-orange-500' :
+                              severity === 'success' ? 'text-green-500' :
+                              'text-accent'
+                            }`}>
+                              {severity === 'danger' && <span className="text-2xl">⚠️</span>}
+                              {severity === 'warning' && <span className="text-2xl">⚡</span>}
+                              {severity === 'success' && <span className="text-2xl">✅</span>}
+                              {severity === 'info' && <span className="text-2xl">💡</span>}
+                            </div>
+                            <div className="flex-1">
+                              {recTitle && (
+                                <h5 className={`font-semibold mb-2 ${
+                                  severity === 'danger' ? 'text-red-700 dark:text-red-400' :
+                                  severity === 'warning' ? 'text-orange-700 dark:text-orange-400' :
+                                  severity === 'success' ? 'text-green-700 dark:text-green-400' :
+                                  'text-foreground'
+                                }`}>
+                                  {recTitle}
+                                </h5>
+                              )}
+                              <p className={`text-sm leading-relaxed ${
+                                severity === 'danger' ? 'text-red-800 dark:text-red-300' :
+                                severity === 'warning' ? 'text-orange-800 dark:text-orange-300' :
+                                severity === 'success' ? 'text-green-800 dark:text-green-300' :
+                                'text-foreground/80'
+                              }`}>
+                                {recText}
+                              </p>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
+            </Card>
+
+            {/* What to Do & What to Avoid */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card className="p-6 border-green-500/30 bg-green-50 dark:bg-green-950/20">
+                <h4 className="text-lg font-bold text-green-700 dark:text-green-400 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">✅</span>
+                  What You Should Do
+                </h4>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
+                    <span className="text-green-600 mt-0.5">•</span>
+                    <span>Continue your regular exercise routine - {assessment.exercise || 'staying active'} is excellent for heart health</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
+                    <span className="text-green-600 mt-0.5">•</span>
+                    <span>Maintain your healthy BMI through balanced nutrition and regular physical activity</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
+                    <span className="text-green-600 mt-0.5">•</span>
+                    <span>Monitor your blood pressure regularly to track your cardiovascular health</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-green-800 dark:text-green-300">
+                    <span className="text-green-600 mt-0.5">•</span>
+                    <span>Get regular health check-ups to catch any potential issues early</span>
+                  </li>
+                </ul>
+              </Card>
+
+              <Card className="p-6 border-red-500/30 bg-red-50 dark:bg-red-950/20">
+                <h4 className="text-lg font-bold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
+                  <span className="text-2xl">⛔</span>
+                  What to Avoid
+                </h4>
+                <ul className="space-y-3">
+                  {assessment.smoking === 'yes' && (
+                    <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
+                      <span className="text-red-600 mt-0.5">•</span>
+                      <span><strong>Stop smoking immediately</strong> - It's the single most harmful factor for heart health</span>
+                    </li>
+                  )}
+                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
+                    <span className="text-red-600 mt-0.5">•</span>
+                    <span>Avoid excessive salt intake which can increase blood pressure</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
+                    <span className="text-red-600 mt-0.5">•</span>
+                    <span>Limit processed foods and saturated fats that impact heart health</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
+                    <span className="text-red-600 mt-0.5">•</span>
+                    <span>Don't skip regular health screenings and medical check-ups</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-sm text-red-800 dark:text-red-300">
+                    <span className="text-red-600 mt-0.5">•</span>
+                    <span>Avoid prolonged sedentary behavior - take breaks to move throughout the day</span>
+                  </li>
+                </ul>
+              </Card>
             </div>
-          </Card>
+          </div>
         )}
 
         {/* CTA Buttons */}
