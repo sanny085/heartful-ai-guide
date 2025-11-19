@@ -53,7 +53,7 @@ export default function HeartHealthAssessment() {
       case 0:
         return formData.name && formData.mobile;
       case 1:
-        return formData.diet;
+        return formData.diet && formData.exercise;
       case 2:
         return formData.sleepHours;
       case 3:
@@ -72,7 +72,49 @@ export default function HeartHealthAssessment() {
     if (!user) {
       toast.error("Please log in to take the heart health test");
       navigate("/auth");
+      return;
     }
+
+    // Load existing assessment data if available
+    const loadExistingData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("heart_health_assessments")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setFormData({
+            name: data.name || "",
+            mobile: data.mobile || "",
+            age: data.age?.toString() || "",
+            gender: data.gender || "",
+            height: data.height?.toString() || "",
+            weight: data.weight?.toString() || "",
+            diet: data.diet || "",
+            exercise: data.exercise || "",
+            sleepHours: data.sleep_hours?.toString() || "",
+            smoking: data.smoking || "",
+            tobacco: data.tobacco_use || [],
+            knowsLipids: data.knows_lipids || "",
+            highCholesterol: data.high_cholesterol || "",
+            diabetes: data.diabetes || "",
+            systolic: data.systolic?.toString() || "",
+            diastolic: data.diastolic?.toString() || "",
+            consent: false
+          });
+        }
+      } catch (error) {
+        console.error("Error loading existing data:", error);
+      }
+    };
+
+    loadExistingData();
   }, [user, navigate]);
 
   const calculateBMI = (height: number, weight: number) => {
@@ -141,6 +183,16 @@ export default function HeartHealthAssessment() {
 
       if (error) throw error;
 
+      // Call edge function to generate AI insights
+      const { error: insightsError } = await supabase.functions.invoke("generate-health-insights", {
+        body: { assessmentId: data.id }
+      });
+
+      if (insightsError) {
+        console.error("Error generating insights:", insightsError);
+        toast.error("Assessment saved but insights generation failed");
+      }
+
       toast.success("Assessment saved successfully!");
       navigate(`/heart-health-results?id=${data.id}`);
     } catch (error) {
@@ -156,24 +208,77 @@ export default function HeartHealthAssessment() {
       case 0:
         return (
           <div className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name*</Label>
-              <Input
-                id="name"
-                placeholder="Enter Name"
-                value={formData.name}
-                onChange={(e) => updateFormData("name", e.target.value)}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name*</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter Name"
+                  value={formData.name}
+                  onChange={(e) => updateFormData("name", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mobile">Mobile No*</Label>
+                <Input
+                  id="mobile"
+                  placeholder="Enter Mobile no."
+                  value={formData.mobile}
+                  onChange={(e) => updateFormData("mobile", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile No*</Label>
-              <Input
-                id="mobile"
-                placeholder="Enter Mobile no."
-                value={formData.mobile}
-                onChange={(e) => updateFormData("mobile", e.target.value)}
-              />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="age">Age</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  placeholder="Enter Age"
+                  value={formData.age}
+                  onChange={(e) => updateFormData("age", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <select
+                  id="gender"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={formData.gender}
+                  onChange={(e) => updateFormData("gender", e.target.value)}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="height">Height (cm)</Label>
+                <Input
+                  id="height"
+                  type="number"
+                  placeholder="Enter Height in cm"
+                  value={formData.height}
+                  onChange={(e) => updateFormData("height", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="weight">Weight (kg)</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  placeholder="Enter Weight in kg"
+                  value={formData.weight}
+                  onChange={(e) => updateFormData("weight", e.target.value)}
+                />
+              </div>
+            </div>
+
             {formData.name && formData.mobile && (
               <div className="flex items-start space-x-3 pt-4">
                 <Checkbox
@@ -216,6 +321,34 @@ export default function HeartHealthAssessment() {
                   <p className="text-sm">{option}</p>
                 </Card>
               ))}
+            </div>
+
+            <div className="mt-8">
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-health-lightBlue flex items-center justify-center">
+                  <span className="text-2xl">🏃</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-center mb-6">How would you describe your physical activity?</h3>
+              <div className="space-y-3">
+                {[
+                  "Sedentary - Little to no exercise",
+                  "Light activity - Exercise 1-2 times per week",
+                  "Moderate activity - Exercise 3-4 times per week",
+                  "Active - Exercise 5-6 times per week",
+                  "Very active - Exercise daily or intense workouts"
+                ].map((option) => (
+                  <Card
+                    key={option}
+                    className={`p-4 cursor-pointer transition-all hover:shadow-md ${
+                      formData.exercise === option ? "border-accent bg-accent/5" : "border-border"
+                    }`}
+                    onClick={() => updateFormData("exercise", option)}
+                  >
+                    <p className="text-sm">{option}</p>
+                  </Card>
+                ))}
+              </div>
             </div>
           </div>
         );

@@ -1,6 +1,10 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,23 +17,46 @@ serve(async (req) => {
   }
 
   try {
-    const { assessment } = await req.json();
+    const { assessmentId } = await req.json();
+
+    if (!assessmentId) {
+      throw new Error("assessmentId is required");
+    }
+
+    // Create Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Load assessment from database
+    const { data: assessment, error: fetchError } = await supabase
+      .from("heart_health_assessments")
+      .select("*")
+      .eq("id", assessmentId)
+      .single();
+
+    if (fetchError || !assessment) {
+      throw new Error("Assessment not found");
+    }
+
+    console.log("Loaded assessment:", assessment.id);
 
     // Calculate heart age and risk score
     const heartAge = calculateHeartAge(assessment);
     const riskScore = calculateRiskScore(assessment);
+
+    console.log("Calculated heart age:", heartAge, "risk score:", riskScore);
 
     // Generate AI insights
     const prompt = `You are a compassionate health advisor. Based on this health assessment data, provide personalized insights and recommendations:
 
 BMI: ${assessment.bmi?.toFixed(1) || "N/A"}
 Blood Pressure: ${assessment.systolic}/${assessment.diastolic} mmHg
-Diet: ${assessment.diet}
+Diet: ${assessment.diet || "Not specified"}
 Exercise: ${assessment.exercise || "Not specified"}
 Sleep: ${assessment.sleep_hours} hours
-Smoking: ${assessment.smoking}
-Diabetes: ${assessment.diabetes}
+Smoking: ${assessment.smoking || "Not specified"}
+Diabetes: ${assessment.diabetes || "Not specified"}
 Age: ${assessment.age || "Not specified"}
+Gender: ${assessment.gender || "Not specified"}
 
 Provide:
 1. A brief summary (2-3 sentences) of their overall health status
@@ -57,12 +84,16 @@ Keep the tone encouraging and supportive. Format as JSON with "summary" and "rec
     });
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Lovable AI API error:", response.status, errorText);
       throw new Error(`Lovable AI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
     const aiContent = data.choices[0].message.content;
     
+    console.log("AI response:", aiContent);
+
     // Try to parse as JSON, fallback to creating structure
     let insights;
     try {
@@ -74,8 +105,26 @@ Keep the tone encouraging and supportive. Format as JSON with "summary" and "rec
       };
     }
 
+    // Update assessment with calculated values and insights
+    const { error: updateError } = await supabase
+      .from("heart_health_assessments")
+      .update({
+        heart_age: heartAge,
+        risk_score: riskScore,
+        ai_insights: insights
+      })
+      .eq("id", assessmentId);
+
+    if (updateError) {
+      console.error("Error updating assessment:", updateError);
+      throw updateError;
+    }
+
+    console.log("Successfully updated assessment with insights");
+
     return new Response(
       JSON.stringify({
+        success: true,
         insights,
         heart_age: heartAge,
         risk_score: riskScore
@@ -85,9 +134,12 @@ Keep the tone encouraging and supportive. Format as JSON with "summary" and "rec
       }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in generate-health-insights:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: error instanceof Error ? error.stack : undefined
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
