@@ -551,7 +551,11 @@ export default function HeartHealthResults() {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-2">Talk to Our Team</h3>
                 <p className="text-sm text-muted-foreground mb-4">Speak with a health advisor</p>
-                <Button variant="outline" className="w-full">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => window.open('https://10000hearts.com/register', '_blank')}
+                >
                   Schedule Call
                 </Button>
               </div>
