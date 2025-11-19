@@ -503,6 +503,50 @@ export default function HeartHealthResults() {
                       </div>
                     </div>
                   )}
+
+                  {/* Do's and Don'ts Section - Show only if risk score is moderate or high */}
+                  {(assessment.risk_score && assessment.risk_score >= 10) && (assessment.ai_insights.dos || assessment.ai_insights.donts) && (
+                    <div className="mt-8 space-y-6">
+                      <h3 className="text-2xl font-semibold text-foreground mb-4">Important Guidelines</h3>
+                      <div className="grid md:grid-cols-2 gap-6">
+                        {/* Do's Section */}
+                        {assessment.ai_insights.dos && Array.isArray(assessment.ai_insights.dos) && assessment.ai_insights.dos.length > 0 && (
+                          <Card className="p-6 bg-success/5 border-l-4 border-success shadow-[0_4px_20px_-4px_hsl(var(--success)/0.3)]">
+                            <div className="flex items-center gap-3 mb-4">
+                              <CheckCircle className="w-6 h-6 text-success" />
+                              <h4 className="text-xl font-semibold text-success">Do's</h4>
+                            </div>
+                            <ul className="space-y-3">
+                              {assessment.ai_insights.dos.map((item: string, idx: number) => (
+                                <li key={idx} className="flex gap-3 text-foreground">
+                                  <span className="text-success mt-1">✓</span>
+                                  <span className="text-base leading-relaxed">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </Card>
+                        )}
+
+                        {/* Don'ts Section */}
+                        {assessment.ai_insights.donts && Array.isArray(assessment.ai_insights.donts) && assessment.ai_insights.donts.length > 0 && (
+                          <Card className="p-6 bg-warning/5 border-l-4 border-warning shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.4)]">
+                            <div className="flex items-center gap-3 mb-4">
+                              <AlertCircle className="w-6 h-6 text-warning" />
+                              <h4 className="text-xl font-semibold text-warning">Don'ts</h4>
+                            </div>
+                            <ul className="space-y-3">
+                              {assessment.ai_insights.donts.map((item: string, idx: number) => (
+                                <li key={idx} className="flex gap-3 text-foreground">
+                                  <span className="text-warning mt-1">✗</span>
+                                  <span className="text-base leading-relaxed">{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </Card>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               </div>
             ) : (
