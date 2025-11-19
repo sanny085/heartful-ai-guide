@@ -90,10 +90,10 @@ export default function HeartHealthResults() {
 
   const getCVRiskLevel = () => {
     const score = calculateCardiovascularScore();
-    if (score >= 90) return { level: "Very High Risk", color: "text-destructive" };
-    if (score >= 70) return { level: "High Risk", color: "text-destructive" };
-    if (score >= 50) return { level: "Moderate Risk", color: "text-yellow-600" };
-    return { level: "Low Risk", color: "text-green-600" };
+    if (score >= 90) return { level: "Very High Risk", color: "text-warning" };
+    if (score >= 70) return { level: "High Risk", color: "text-warning" };
+    if (score >= 50) return { level: "Moderate Risk", color: "text-health-orange" };
+    return { level: "Low Risk", color: "text-success" };
   };
 
   const getHeartAgeMessage = () => {
@@ -109,10 +109,10 @@ export default function HeartHealthResults() {
 
   const getRiskCategory = () => {
     const risk = assessment?.risk_score || 0;
-    if (risk < 5) return { level: "Excellent", color: "text-green-600" };
-    if (risk < 10) return { level: "Good", color: "text-green-500" };
-    if (risk < 20) return { level: "Moderate", color: "text-yellow-600" };
-    return { level: "High", color: "text-destructive" };
+    if (risk < 5) return { level: "Excellent", color: "text-success" };
+    if (risk < 10) return { level: "Good", color: "text-health-green" };
+    if (risk < 20) return { level: "Moderate", color: "text-health-orange" };
+    return { level: "High", color: "text-warning" };
   };
 
   if (loading) {
@@ -223,15 +223,15 @@ export default function HeartHealthResults() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">18.5 - 24.9</span>
-                    <span className="font-medium text-green-600">Normal</span>
+                    <span className="font-medium text-success">Normal</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">25 - 29.9</span>
-                    <span className="font-medium text-yellow-600">Overweight</span>
+                    <span className="font-medium text-health-orange">Overweight</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2">
                     <span className="text-muted-foreground">30+</span>
-                    <span className="font-medium text-destructive">Obese</span>
+                    <span className="font-medium text-warning">Obese</span>
                   </div>
                 </div>
                 {assessment.bmi && (
@@ -252,15 +252,15 @@ export default function HeartHealthResults() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">0 - 50</span>
-                    <span className="font-medium text-green-600">Low Risk</span>
+                    <span className="font-medium text-success">Low Risk</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">50 - 70</span>
-                    <span className="font-medium text-yellow-600">Moderate Risk</span>
+                    <span className="font-medium text-health-orange">Moderate Risk</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2">
                     <span className="text-muted-foreground">70+</span>
-                    <span className="font-medium text-destructive">High Risk</span>
+                    <span className="font-medium text-warning">High Risk</span>
                   </div>
                 </div>
                 <div className="mt-4 p-3 bg-accent/10 rounded-lg">
@@ -306,19 +306,19 @@ export default function HeartHealthResults() {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">&lt; 5%</span>
-                    <span className="font-medium text-green-600">Excellent</span>
+                    <span className="font-medium text-success">Excellent</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">5 - 10%</span>
-                    <span className="font-medium text-green-500">Good</span>
+                    <span className="font-medium text-health-green">Good</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
                     <span className="text-muted-foreground">10 - 20%</span>
-                    <span className="font-medium text-yellow-600">Moderate</span>
+                    <span className="font-medium text-health-orange">Moderate</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2">
                     <span className="text-muted-foreground">&gt; 20%</span>
-                    <span className="font-medium text-destructive">High</span>
+                    <span className="font-medium text-warning">High</span>
                   </div>
                 </div>
                 {assessment.risk_score && (
@@ -369,24 +369,24 @@ export default function HeartHealthResults() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm pb-2 border-b border-border">
                       <span className="text-muted-foreground">&lt;120/80</span>
-                      <span className="font-medium text-green-600">Normal</span>
+                      <span className="font-medium text-success">Normal</span>
                     </div>
                     <div className="flex justify-between text-sm pb-2 border-b border-border">
                       <span className="text-muted-foreground">120-129/&lt;80</span>
-                      <span className="font-medium text-yellow-600">Elevated</span>
+                      <span className="font-medium text-health-orange">Elevated</span>
                     </div>
                     <div className="flex justify-between text-sm pb-2 border-b border-border">
                       <span className="text-muted-foreground">130-139/80-89</span>
-                      <span className="font-medium text-orange-600">Stage 1 High</span>
+                      <span className="font-medium text-health-orange">Stage 1 High</span>
                     </div>
                     <div className="flex justify-between text-sm pb-2">
                       <span className="text-muted-foreground">≥140/≥90</span>
-                      <span className="font-medium text-destructive">Stage 2 High</span>
+                      <span className="font-medium text-warning">Stage 2 High</span>
                     </div>
                   </div>
                   {getBPCategory() === "Normal" && assessment.systolic && assessment.systolic < 100 && (
-                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                      <p className="text-xs text-blue-900 dark:text-blue-100">
+                    <div className="mt-4 p-3 bg-health-lightBlue rounded-lg">
+                      <p className="text-xs text-foreground">
                         💡 Low-normal BP is common in athletes and active individuals. If you experience dizziness or fatigue, consult your doctor.
                       </p>
                     </div>

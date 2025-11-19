@@ -160,7 +160,7 @@ const Profile = () => {
                   <Button
                     variant="outline"
                     onClick={handleSignOut}
-                    className="border-destructive text-destructive hover:bg-destructive/5"
+                    className="border-warning text-warning hover:bg-warning/5"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out

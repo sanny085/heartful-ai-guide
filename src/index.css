@@ -8,47 +8,57 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Healthcare brand colors */
-    --background: 195 50% 97%;
-    --foreground: 215 25% 20%;
+    /* 10000Hearts Brand Colors - Soft Cyan/Turquoise Theme */
+    --background: 185 50% 96%;
+    --foreground: 0 0% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 20%;
+    --card-foreground: 0 0% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 20%;
+    --popover-foreground: 0 0% 15%;
 
-    /* Primary: Professional Medical Blue */
-    --primary: 215 70% 35%;
+    /* Primary: Turquoise/Cyan Brand Color */
+    --primary: 188 58% 54%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary: Soft Info Blue */
-    --secondary: 200 40% 92%;
-    --secondary-foreground: 215 70% 35%;
+    /* Secondary: Soft Mint Background */
+    --secondary: 180 35% 92%;
+    --secondary-foreground: 0 0% 15%;
 
     /* Muted backgrounds */
-    --muted: 200 30% 95%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 185 40% 94%;
+    --muted-foreground: 0 0% 45%;
 
-    /* Accent: Vibrant Health Pink */
-    --accent: 335 85% 50%;
+    /* Accent: Bright Cyan for highlights */
+    --accent: 188 58% 54%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Success/Green accent */
+    --success: 100 75% 45%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning/Orange accent */
+    --warning: 20 100% 64%;
+    --warning-foreground: 0 0% 100%;
+
+    /* Destructive - Keeping minimal, muted orange instead of red */
+    --destructive: 25 90% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 200 25% 88%;
-    --input: 200 25% 88%;
-    --ring: 215 70% 35%;
+    --border: 185 30% 88%;
+    --input: 185 30% 88%;
+    --ring: 188 58% 54%;
 
     --radius: 0.75rem;
     
     /* Custom health theme tokens */
-    --health-bg: 195 50% 97%;
+    --health-bg: 185 50% 96%;
     --health-card: 0 0% 100%;
-    --health-blue: 215 70% 35%;
-    --health-pink: 335 85% 50%;
-    --health-light-blue: 200 40% 92%;
+    --health-cyan: 188 58% 54%;
+    --health-green: 100 75% 45%;
+    --health-orange: 20 100% 64%;
+    --health-light-blue: 185 45% 93%;
     
     /* Shadows */
     --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -57,65 +67,66 @@ All colors MUST be HSL.
     /* Transitions */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 185 50% 98%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 188 58% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 185 45% 93%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 185 30% 88%;
+    --sidebar-ring: 188 58% 54%;
   }
 
   .dark {
-    --background: 215 30% 12%;
-    --foreground: 210 40% 98%;
+    --background: 200 30% 12%;
+    --foreground: 185 40% 95%;
 
-    --card: 215 28% 16%;
-    --card-foreground: 210 40% 98%;
+    --card: 200 28% 16%;
+    --card-foreground: 185 40% 95%;
 
-    --popover: 215 28% 16%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 200 28% 16%;
+    --popover-foreground: 185 40% 95%;
 
-    --primary: 200 85% 55%;
-    --primary-foreground: 215 30% 12%;
+    --primary: 188 58% 54%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 25% 22%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 200 25% 22%;
+    --secondary-foreground: 185 40% 95%;
 
-    --muted: 215 25% 22%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 200 25% 22%;
+    --muted-foreground: 185 20% 65%;
 
-    --accent: 335 85% 50%;
+    --accent: 188 58% 54%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --success: 100 75% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 20 100% 64%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 25 90% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 25% 25%;
-    --input: 215 25% 25%;
-    --ring: 200 85% 55%;
+    --border: 200 25% 25%;
+    --input: 200 25% 25%;
+    --ring: 188 58% 54%;
     
-    --health-bg: 215 30% 12%;
-    --health-card: 215 28% 16%;
-    --health-blue: 200 85% 55%;
-    --health-pink: 335 85% 50%;
-    --health-light-blue: 215 25% 22%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --health-bg: 200 30% 12%;
+    --health-card: 200 28% 16%;
+    --health-cyan: 188 58% 54%;
+    --health-green: 100 75% 45%;
+    --health-orange: 20 100% 64%;
+    --health-light-blue: 200 25% 22%;
+    
+    --sidebar-background: 200 30% 10%;
+    --sidebar-foreground: 185 40% 95%;
+    --sidebar-primary: 188 58% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 200 25% 18%;
+    --sidebar-accent-foreground: 185 40% 95%;
+    --sidebar-border: 200 25% 20%;
+    --sidebar-ring: 188 58% 54%;
   }
 }
 
