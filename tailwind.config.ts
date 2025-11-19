@@ -47,11 +47,20 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         health: {
           bg: "hsl(var(--health-bg))",
           card: "hsl(var(--health-card))",
-          blue: "hsl(var(--health-blue))",
-          pink: "hsl(var(--health-pink))",
+          cyan: "hsl(var(--health-cyan))",
+          green: "hsl(var(--health-green))",
+          orange: "hsl(var(--health-orange))",
           lightBlue: "hsl(var(--health-light-blue))",
         },
         sidebar: {
@@ -63,6 +72,17 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        // Deprecated aliases for backward compatibility
+        green: {
+          500: "hsl(var(--success))",
+          600: "hsl(var(--success))",
+        },
+        yellow: {
+          600: "hsl(var(--health-orange))",
+        },
+        orange: {
+          600: "hsl(var(--health-orange))",
         },
       },
       borderRadius: {
