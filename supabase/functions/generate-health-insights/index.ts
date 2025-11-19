@@ -103,30 +103,47 @@ Keep the tone warm, professional, and motivating. Focus on practical, achievable
     const data = await response.json();
     let aiContent = data.choices[0].message.content;
     
-    console.log("AI response:", aiContent);
+    console.log("Raw AI response:", aiContent);
 
-    // Extract JSON from markdown code blocks if present
-    const jsonMatch = aiContent.match(/```json\s*([\s\S]*?)\s*```/);
-    if (jsonMatch) {
-      aiContent = jsonMatch[1].trim();
+    // Clean up the response thoroughly
+    // Remove markdown code blocks
+    aiContent = aiContent.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    
+    // Remove common labels and artifacts
+    aiContent = aiContent.replace(/Recommendation\s+\d+/gi, '');
+    aiContent = aiContent.replace(/^\s*\{\s*$/gm, ''); // Remove standalone {
+    aiContent = aiContent.replace(/^\s*\}\s*$/gm, ''); // Remove standalone }
+    aiContent = aiContent.replace(/^\s*"(recommendations|title|description)"\s*[:/]?\s*$/gim, '');
+    
+    // Extract only the JSON content
+    const firstBrace = aiContent.indexOf('{');
+    const lastBrace = aiContent.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      aiContent = aiContent.substring(firstBrace, lastBrace + 1);
     }
+    
+    aiContent = aiContent.trim();
+    
+    console.log("Cleaned AI response:", aiContent);
 
     // Try to parse as JSON, fallback to creating structure
     let insights;
     try {
       insights = JSON.parse(aiContent);
       
-      // Ensure recommendations is an array of objects with title and description
-      if (insights.recommendations && Array.isArray(insights.recommendations)) {
-        insights.recommendations = insights.recommendations.map((rec: any) => {
-          if (typeof rec === 'string') {
-            return {
-              title: "Health Recommendation",
-              description: rec
-            };
-          }
-          return rec;
-        });
+      // Validate and clean the structure
+      if (!insights.summary || !insights.recommendations) {
+        throw new Error("Invalid structure");
+      }
+      
+      // Clean up recommendations array
+      if (Array.isArray(insights.recommendations)) {
+        insights.recommendations = insights.recommendations
+          .filter((rec: any) => rec && rec.title && rec.description)
+          .map((rec: any) => ({
+            title: rec.title.trim(),
+            description: rec.description.trim()
+          }));
       }
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
