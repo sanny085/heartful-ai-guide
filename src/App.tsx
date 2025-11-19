@@ -10,6 +10,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import Profile from "./pages/Profile";
 import HeartHealthAssessment from "./pages/HeartHealthAssessment";
 import HeartHealthResults from "./pages/HeartHealthResults";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/heart-health" element={<HeartHealthAssessment />} />
             <Route path="/heart-health-results" element={<HeartHealthResults />} />
+            <Route path="/chat" element={<Chat />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
