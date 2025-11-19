@@ -1,19 +1,132 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageCircle, Phone } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Heart, MessageCircle, Phone, Home, Activity } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+interface Assessment {
+  id: string;
+  name: string;
+  age: number | null;
+  gender: string | null;
+  bmi: number | null;
+  heart_age: number | null;
+  risk_score: number | null;
+  systolic: number | null;
+  diastolic: number | null;
+  ai_insights: any;
+  created_at: string;
+}
 
 export default function HeartHealthResults() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const assessmentId = searchParams.get("id");
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!assessmentId) {
+      toast.error("No assessment found");
+      navigate("/heart-health");
+      return;
+    }
+
+    loadAssessment();
+  }, [assessmentId]);
+
+  const loadAssessment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("heart_health_assessments")
+        .select("*")
+        .eq("id", assessmentId)
+        .single();
+
+      if (error) throw error;
+      setAssessment(data);
+    } catch (error) {
+      console.error("Error loading assessment:", error);
+      toast.error("Failed to load assessment results");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateCardiovascularScore = () => {
+    if (!assessment) return 0;
+    // Simple scoring algorithm (can be enhanced)
+    let score = 100;
+    if (assessment.bmi && assessment.bmi > 25) score -= 10;
+    if (assessment.systolic && assessment.systolic > 140) score -= 15;
+    if (assessment.risk_score) score -= assessment.risk_score * 2;
+    return Math.max(0, Math.round(score));
+  };
+
+  const getBPCategory = () => {
+    if (!assessment?.systolic || !assessment?.diastolic) return "Unknown";
+    const sys = assessment.systolic;
+    const dia = assessment.diastolic;
+    
+    if (sys < 120 && dia < 80) return "Normal";
+    if (sys < 130 && dia < 80) return "Elevated";
+    if (sys < 140 || dia < 90) return "High (Stage 1)";
+    return "High (Stage 2)";
+  };
+
+  const getBMICategory = () => {
+    if (!assessment?.bmi) return "Unknown";
+    const bmi = assessment.bmi;
+    
+    if (bmi < 18.5) return "Underweight";
+    if (bmi < 25) return "Normal";
+    if (bmi < 30) return "Overweight";
+    return "Obese";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Activity className="w-12 h-12 text-accent animate-pulse mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading your results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!assessment) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">No assessment found</p>
+          <Button onClick={() => navigate("/heart-health")} className="mt-4">
+            Take Assessment
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-5xl">
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/")}
+          className="mb-4"
+        >
+          <Home className="mr-2 h-4 w-4" />
+          Back to Home
+        </Button>
+
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Heart className="w-12 h-12 text-accent fill-accent" />
             <div>
-              <h2 className="text-2xl font-bold">Hi Sanny,</h2>
+              <h2 className="text-2xl font-bold">Hi {assessment.name},</h2>
               <h1 className="text-3xl font-bold">Here's a snapshot of your heart health report</h1>
             </div>
           </div>
@@ -32,44 +145,104 @@ export default function HeartHealthResults() {
           </button>
         </div>
 
-        {/* Metrics Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <Card className="p-6 text-center space-y-4 shadow-md">
-            <div>
-              <div className="text-5xl font-bold text-foreground mb-1">
-                86<span className="text-2xl text-muted-foreground">points</span>
-              </div>
-              <h3 className="text-xl font-semibold text-accent mb-2">Cardiovascular Score</h3>
+        {/* Key Metrics Cards */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card className="p-6 text-center space-y-2 shadow-md">
+            <div className="text-4xl font-bold text-foreground">
+              {assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}
             </div>
-            <p className="text-sm text-muted-foreground">
-              A score close to 100 means your heart is very healthy!
-            </p>
+            <h3 className="text-lg font-semibold text-accent">BMI</h3>
+            <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
           </Card>
 
-          <Card className="p-6 text-center space-y-4 shadow-md">
-            <div>
-              <div className="text-5xl font-bold text-foreground mb-1">
-                28<span className="text-2xl text-muted-foreground">years</span>
-              </div>
-              <h3 className="text-xl font-semibold text-accent mb-2">Heart Age</h3>
+          <Card className="p-6 text-center space-y-2 shadow-md">
+            <div className="text-4xl font-bold text-foreground">
+              {calculateCardiovascularScore()}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Heart Age may differ from your actual age. The younger your heart, healthier you are, so aim to keep your heart young!
-            </p>
+            <h3 className="text-lg font-semibold text-accent">CV Score</h3>
+            <p className="text-xs text-muted-foreground">points</p>
           </Card>
 
-          <Card className="p-6 text-center space-y-4 shadow-md">
-            <div>
-              <div className="text-5xl font-bold text-foreground mb-1">
-                4<span className="text-2xl text-muted-foreground">%</span>
-              </div>
-              <h3 className="text-xl font-semibold text-accent mb-2">Heart Disease Risk</h3>
+          <Card className="p-6 text-center space-y-2 shadow-md">
+            <div className="text-4xl font-bold text-foreground">
+              {assessment.heart_age || assessment.age || "N/A"}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Heart Disease Risk % shows your chance of getting heart disease in the next 10 years; a lower percentage means better health.
-            </p>
+            <h3 className="text-lg font-semibold text-accent">Heart Age</h3>
+            <p className="text-xs text-muted-foreground">years</p>
+          </Card>
+
+          <Card className="p-6 text-center space-y-2 shadow-md">
+            <div className="text-4xl font-bold text-foreground">
+              {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}
+            </div>
+            <h3 className="text-lg font-semibold text-accent">Risk</h3>
+            <p className="text-xs text-muted-foreground">%</p>
           </Card>
         </div>
+
+        {/* Detailed Metrics */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <Card className="p-6 space-y-4">
+            <h3 className="text-xl font-semibold text-accent">Blood Pressure</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Systolic:</span>
+                <span className="font-semibold">{assessment.systolic || "N/A"} mmHg</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Diastolic:</span>
+                <span className="font-semibold">{assessment.diastolic || "N/A"} mmHg</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Category:</span>
+                <span className="font-semibold">{getBPCategory()}</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 space-y-4">
+            <h3 className="text-xl font-semibold text-accent">Body Composition</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">BMI:</span>
+                <span className="font-semibold">{assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Category:</span>
+                <span className="font-semibold">{getBMICategory()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Age:</span>
+                <span className="font-semibold">{assessment.age || "N/A"} years</span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* AI Insights */}
+        {assessment.ai_insights && (
+          <Card className="p-6 mb-8">
+            <h3 className="text-xl font-semibold text-accent mb-4">AI-Powered Health Insights</h3>
+            <div className="space-y-4">
+              {assessment.ai_insights.summary && (
+                <div>
+                  <h4 className="font-semibold mb-2">Summary</h4>
+                  <p className="text-muted-foreground">{assessment.ai_insights.summary}</p>
+                </div>
+              )}
+              {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Recommendations</h4>
+                  <ul className="list-disc list-inside space-y-1">
+                    {assessment.ai_insights.recommendations.map((rec: string, idx: number) => (
+                      <li key={idx} className="text-muted-foreground">{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </Card>
+        )}
 
         {/* CTA Buttons */}
         <div className="flex flex-wrap gap-4 justify-center mb-8">
@@ -115,7 +288,7 @@ export default function HeartHealthResults() {
 
         {/* Footer */}
         <div className="text-center mt-12 text-sm text-muted-foreground">
-          Copyright © 2024 Fitterfly Healthtech Pvt. Ltd. | All Rights Reserved.
+          Copyright © 2024 10,000 hearts | All Rights Reserved.
         </div>
       </div>
     </div>
