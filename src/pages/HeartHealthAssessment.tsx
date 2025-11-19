@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart } from "lucide-react";
+import { Heart, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const STEPS = [
@@ -290,9 +290,18 @@ export default function HeartHealthAssessment() {
         <div className="grid lg:grid-cols-[400px_1fr] gap-8">
           {/* Left Sidebar */}
           <div className="space-y-8">
-            <div className="flex items-center gap-3">
-              <Heart className="w-8 h-8 text-accent fill-accent" />
-              <span className="text-2xl font-bold text-primary">10000Hearts</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Heart className="w-8 h-8 text-accent fill-accent" />
+                <span className="text-2xl font-bold text-primary">10000Hearts</span>
+              </div>
+              <button
+                onClick={() => navigate("/")}
+                className="p-2 rounded-lg hover:bg-accent/10 transition-colors"
+                aria-label="Go to home"
+              >
+                <Home className="w-6 h-6 text-primary" />
+              </button>
             </div>
 
             <div>
@@ -334,7 +343,7 @@ export default function HeartHealthAssessment() {
           {/* Main Content */}
           <Card className="p-8 shadow-lg">
             <div className="max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold mb-8">Take the Fitterfly Heart Health Test</h2>
+              <h2 className="text-2xl font-bold mb-8">Take the 10000Hearts Health Test</h2>
 
               {renderStepContent()}
 
