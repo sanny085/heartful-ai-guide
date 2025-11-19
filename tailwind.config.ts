@@ -47,6 +47,13 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        health: {
+          bg: "hsl(var(--health-bg))",
+          card: "hsl(var(--health-card))",
+          blue: "hsl(var(--health-blue))",
+          pink: "hsl(var(--health-pink))",
+          lightBlue: "hsl(var(--health-light-blue))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
