@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Activity, MessageCircle } from "lucide-react";
+import { Heart, Activity, MessageCircle, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
@@ -14,9 +16,26 @@ const Index = () => {
             <Heart className="w-10 h-10 text-accent fill-accent" />
             <span className="text-3xl font-bold text-primary">10000Hearts</span>
           </div>
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary/5">
-            Sign In
-          </Button>
+          {!loading && (
+            user ? (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/profile')}
+                className="border-primary text-primary hover:bg-primary/5"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/auth')}
+                className="border-primary text-primary hover:bg-primary/5"
+              >
+                Sign In
+              </Button>
+            )
+          )}
         </header>
 
         {/* Hero Section */}
