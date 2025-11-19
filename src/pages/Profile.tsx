@@ -72,17 +72,34 @@ const Profile = () => {
     if (!user) return;
 
     try {
+      // Validate age is a number
+      const ageNum = parseInt(formData.age);
+      if (isNaN(ageNum)) {
+        toast.error("Please enter a valid age");
+        return;
+      }
+
+      // Validate using zod schema
+      const { profileSchema } = await import("@/lib/validation");
+      const validationResult = profileSchema.safeParse({
+        name: formData.name,
+        age: ageNum,
+        gender: formData.gender,
+        married_status: formData.married_status,
+        location: formData.location,
+        preferred_language: formData.preferred_language,
+        medical_category: formData.medical_category,
+      });
+
+      if (!validationResult.success) {
+        const firstError = validationResult.error.errors[0];
+        toast.error(firstError.message);
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          name: formData.name,
-          age: parseInt(formData.age),
-          gender: formData.gender,
-          married_status: formData.married_status,
-          location: formData.location,
-          preferred_language: formData.preferred_language,
-          medical_category: formData.medical_category,
-        })
+        .update(validationResult.data)
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -91,8 +108,7 @@ const Profile = () => {
       setIsEditing(false);
       fetchProfile();
     } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast.error(error.message || "Failed to update profile");
+      toast.error("Failed to update profile");
     }
   };
 
