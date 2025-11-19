@@ -258,7 +258,7 @@ const Chat = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/')}
           className="text-primary-foreground hover:bg-primary/90"
         >
           <ArrowLeft className="h-5 w-5" />
