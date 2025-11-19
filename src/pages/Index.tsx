@@ -2,10 +2,36 @@ import { Button } from "@/components/ui/button";
 import { Heart, Activity, MessageCircle, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [hasAssessment, setHasAssessment] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkExistingAssessment();
+    }
+  }, [user]);
+
+  const checkExistingAssessment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("heart_health_assessments")
+        .select("id")
+        .eq("user_id", user?.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setHasAssessment(true);
+      }
+    } catch (error) {
+      console.error("Error checking assessment:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
@@ -62,7 +88,7 @@ const Index = () => {
               className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 shadow-lg hover:shadow-xl transition-all"
               size="lg"
             >
-              Take Heart Health Test
+              {user && hasAssessment ? "View/Update Health Report" : "Take Heart Health Test"}
             </Button>
             <Button
               variant="outline"
