@@ -38,6 +38,95 @@ export type Database = {
         }
         Relationships: []
       }
+      heart_health_assessments: {
+        Row: {
+          age: number | null
+          ai_insights: Json | null
+          bmi: number | null
+          created_at: string
+          diabetes: string | null
+          diastolic: number | null
+          diet: string | null
+          exercise: string | null
+          gender: string | null
+          heart_age: number | null
+          height: number | null
+          high_cholesterol: string | null
+          id: string
+          knows_lipids: string | null
+          mobile: string
+          name: string
+          risk_score: number | null
+          sleep_hours: number | null
+          smoking: string | null
+          systolic: number | null
+          tobacco_use: string[] | null
+          updated_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          ai_insights?: Json | null
+          bmi?: number | null
+          created_at?: string
+          diabetes?: string | null
+          diastolic?: number | null
+          diet?: string | null
+          exercise?: string | null
+          gender?: string | null
+          heart_age?: number | null
+          height?: number | null
+          high_cholesterol?: string | null
+          id?: string
+          knows_lipids?: string | null
+          mobile: string
+          name: string
+          risk_score?: number | null
+          sleep_hours?: number | null
+          smoking?: string | null
+          systolic?: number | null
+          tobacco_use?: string[] | null
+          updated_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          ai_insights?: Json | null
+          bmi?: number | null
+          created_at?: string
+          diabetes?: string | null
+          diastolic?: number | null
+          diet?: string | null
+          exercise?: string | null
+          gender?: string | null
+          heart_age?: number | null
+          height?: number | null
+          high_cholesterol?: string | null
+          id?: string
+          knows_lipids?: string | null
+          mobile?: string
+          name?: string
+          risk_score?: number | null
+          sleep_hours?: number | null
+          smoking?: string | null
+          systolic?: number | null
+          tobacco_use?: string[] | null
+          updated_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "heart_health_assessments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
