@@ -58,11 +58,22 @@ Diabetes: ${assessment.diabetes || "Not specified"}
 Age: ${assessment.age || "Not specified"}
 Gender: ${assessment.gender || "Not specified"}
 
-Provide:
-1. A brief summary (2-3 sentences) of their overall health status
-2. 4-5 specific, actionable recommendations to improve heart health
+Provide a comprehensive health assessment with:
+1. A brief summary (3-4 sentences) describing their overall health status in an encouraging, supportive tone
+2. 4-5 specific, actionable recommendations for improving heart health
 
-Keep the tone encouraging and supportive. Format as JSON with "summary" and "recommendations" array.`;
+Return ONLY valid JSON (no markdown formatting, no code blocks) with this exact structure:
+{
+  "summary": "A brief encouraging summary of their health status",
+  "recommendations": [
+    {
+      "title": "Clear recommendation title",
+      "description": "Detailed explanation of what they should do and why"
+    }
+  ]
+}
+
+Keep the tone warm, professional, and motivating. Focus on practical, achievable actions.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -90,18 +101,43 @@ Keep the tone encouraging and supportive. Format as JSON with "summary" and "rec
     }
 
     const data = await response.json();
-    const aiContent = data.choices[0].message.content;
+    let aiContent = data.choices[0].message.content;
     
     console.log("AI response:", aiContent);
+
+    // Extract JSON from markdown code blocks if present
+    const jsonMatch = aiContent.match(/```json\s*([\s\S]*?)\s*```/);
+    if (jsonMatch) {
+      aiContent = jsonMatch[1].trim();
+    }
 
     // Try to parse as JSON, fallback to creating structure
     let insights;
     try {
       insights = JSON.parse(aiContent);
-    } catch {
+      
+      // Ensure recommendations is an array of objects with title and description
+      if (insights.recommendations && Array.isArray(insights.recommendations)) {
+        insights.recommendations = insights.recommendations.map((rec: any) => {
+          if (typeof rec === 'string') {
+            return {
+              title: "Health Recommendation",
+              description: rec
+            };
+          }
+          return rec;
+        });
+      }
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError);
+      // Create a structured fallback
+      const lines = aiContent.split("\n").filter((line: string) => line.trim().length > 0);
       insights = {
-        summary: aiContent.split("\n")[0],
-        recommendations: aiContent.split("\n").filter((line: string) => line.trim().length > 0).slice(1)
+        summary: lines[0] || "Based on your assessment, we have generated personalized recommendations for you.",
+        recommendations: lines.slice(1).map((line: string, idx: number) => ({
+          title: `Recommendation ${idx + 1}`,
+          description: line.replace(/^[-*]\s*/, "").trim()
+        }))
       };
     }
 
