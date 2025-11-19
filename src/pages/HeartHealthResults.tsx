@@ -88,6 +88,33 @@ export default function HeartHealthResults() {
     return "Obese";
   };
 
+  const getCVRiskLevel = () => {
+    const score = calculateCardiovascularScore();
+    if (score >= 90) return { level: "Very High Risk", color: "text-destructive" };
+    if (score >= 70) return { level: "High Risk", color: "text-destructive" };
+    if (score >= 50) return { level: "Moderate Risk", color: "text-yellow-600" };
+    return { level: "Low Risk", color: "text-green-600" };
+  };
+
+  const getHeartAgeMessage = () => {
+    const heartAge = assessment?.heart_age || assessment?.age || 0;
+    const actualAge = assessment?.age || 0;
+    if (heartAge > actualAge) {
+      return `Your heart is behaving ${heartAge - actualAge} years older than your actual age`;
+    } else if (heartAge < actualAge) {
+      return `Your heart is ${actualAge - heartAge} years younger than your actual age!`;
+    }
+    return "Your heart age matches your actual age";
+  };
+
+  const getRiskCategory = () => {
+    const risk = assessment?.risk_score || 0;
+    if (risk < 5) return { level: "Excellent", color: "text-green-600" };
+    if (risk < 10) return { level: "Good", color: "text-green-500" };
+    if (risk < 20) return { level: "Moderate", color: "text-yellow-600" };
+    return { level: "High", color: "text-destructive" };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -143,78 +170,277 @@ export default function HeartHealthResults() {
 
           <TabsContent value="health" className="space-y-8">
             {/* Key Metrics Cards */}
-            <div className="grid md:grid-cols-4 gap-6">
-              <Card className="p-6 text-center space-y-2 shadow-md">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-foreground">
                   {assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}
                 </div>
                 <h3 className="text-lg font-semibold text-accent">BMI</h3>
                 <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
+                <p className="text-xs text-muted-foreground mt-2">Body Mass Index</p>
               </Card>
 
-              <Card className="p-6 text-center space-y-2 shadow-md">
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-foreground">
                   {calculateCardiovascularScore()}
                 </div>
                 <h3 className="text-lg font-semibold text-accent">CV Score</h3>
-                <p className="text-xs text-muted-foreground">points</p>
+                <p className={`text-xs font-medium ${getCVRiskLevel().color}`}>
+                  {getCVRiskLevel().level}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">Cardiovascular Risk</p>
               </Card>
 
-              <Card className="p-6 text-center space-y-2 shadow-md">
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-foreground">
                   {assessment.heart_age || assessment.age || "N/A"}
                 </div>
                 <h3 className="text-lg font-semibold text-accent">Heart Age</h3>
-                <p className="text-xs text-muted-foreground">years</p>
+                <p className="text-xs text-muted-foreground">vs {assessment.age} years</p>
+                <p className="text-xs text-muted-foreground mt-2">Biological Age</p>
               </Card>
 
-              <Card className="p-6 text-center space-y-2 shadow-md">
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-foreground">
-                  {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}
+                  {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}%
                 </div>
-                <h3 className="text-lg font-semibold text-accent">Risk</h3>
-                <p className="text-xs text-muted-foreground">%</p>
+                <h3 className="text-lg font-semibold text-accent">Heart Risk</h3>
+                <p className={`text-xs font-medium ${getRiskCategory().color}`}>
+                  {getRiskCategory().level}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">10-Year Risk</p>
               </Card>
             </div>
 
-            {/* Detailed Metrics */}
+            {/* Metric Explanations */}
             <div className="grid md:grid-cols-2 gap-6">
-              <Card className="p-6 space-y-4">
-                <h3 className="text-xl font-semibold text-accent">Blood Pressure</h3>
+              {/* BMI Explanation */}
+              <Card className="p-6">
+                <h3 className="text-xl font-semibold text-accent mb-4">📊 What is BMI?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  BMI (Body Mass Index) tells whether your weight is healthy for your height.
+                </p>
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Systolic:</span>
-                    <span className="font-semibold">{assessment.systolic || "N/A"} mmHg</span>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">18.5 - 24.9</span>
+                    <span className="font-medium text-green-600">Normal</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Diastolic:</span>
-                    <span className="font-semibold">{assessment.diastolic || "N/A"} mmHg</span>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">25 - 29.9</span>
+                    <span className="font-medium text-yellow-600">Overweight</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Category:</span>
-                    <span className="font-semibold">{getBPCategory()}</span>
+                  <div className="flex justify-between text-sm pb-2">
+                    <span className="text-muted-foreground">30+</span>
+                    <span className="font-medium text-destructive">Obese</span>
                   </div>
+                </div>
+                {assessment.bmi && (
+                  <div className="mt-4 p-3 bg-accent/10 rounded-lg">
+                    <p className="text-sm font-medium text-foreground">
+                      Your BMI: {assessment.bmi.toFixed(1)} → {getBMICategory()}
+                    </p>
+                  </div>
+                )}
+              </Card>
+
+              {/* CV Score Explanation */}
+              <Card className="p-6">
+                <h3 className="text-xl font-semibold text-accent mb-4">❤️ What is CV Score?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Cardiovascular Risk Score combines factors like blood pressure, BMI, lifestyle, and more.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">0 - 50</span>
+                    <span className="font-medium text-green-600">Low Risk</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">50 - 70</span>
+                    <span className="font-medium text-yellow-600">Moderate Risk</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2">
+                    <span className="text-muted-foreground">70+</span>
+                    <span className="font-medium text-destructive">High Risk</span>
+                  </div>
+                </div>
+                <div className="mt-4 p-3 bg-accent/10 rounded-lg">
+                  <p className="text-sm font-medium text-foreground">
+                    Your Score: {calculateCardiovascularScore()} → {getCVRiskLevel().level}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Reversible with lifestyle improvements
+                  </p>
                 </div>
               </Card>
 
-              <Card className="p-6 space-y-4">
-                <h3 className="text-xl font-semibold text-accent">Body Composition</h3>
+              {/* Heart Age Explanation */}
+              <Card className="p-6">
+                <h3 className="text-xl font-semibold text-accent mb-4">💓 What is Heart Age?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Heart Age tells you how old your heart behaves biologically, not your actual age.
+                </p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  If your heart age is higher than your real age, it means higher risk due to factors like weight, activity, sleep, or nutrition.
+                </p>
+                {assessment.heart_age && assessment.age && (
+                  <div className="mt-4 p-3 bg-accent/10 rounded-lg">
+                    <p className="text-sm font-medium text-foreground mb-2">
+                      Your Heart Age: {assessment.heart_age} years
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      Your Actual Age: {assessment.age} years
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {getHeartAgeMessage()}
+                    </p>
+                  </div>
+                )}
+              </Card>
+
+              {/* Risk Percentage Explanation */}
+              <Card className="p-6">
+                <h3 className="text-xl font-semibold text-accent mb-4">⚠️ What is Heart Risk %?</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This is your chance of developing a heart problem in the next 10 years.
+                </p>
                 <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">BMI:</span>
-                    <span className="font-semibold">{assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}</span>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">&lt; 5%</span>
+                    <span className="font-medium text-green-600">Excellent</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Category:</span>
-                    <span className="font-semibold">{getBMICategory()}</span>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">5 - 10%</span>
+                    <span className="font-medium text-green-500">Good</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Age:</span>
-                    <span className="font-semibold">{assessment.age || "N/A"} years</span>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">10 - 20%</span>
+                    <span className="font-medium text-yellow-600">Moderate</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2">
+                    <span className="text-muted-foreground">&gt; 20%</span>
+                    <span className="font-medium text-destructive">High</span>
                   </div>
                 </div>
+                {assessment.risk_score && (
+                  <div className="mt-4 p-3 bg-accent/10 rounded-lg">
+                    <p className="text-sm font-medium text-foreground">
+                      Your Risk: {assessment.risk_score.toFixed(1)}% → {getRiskCategory().level}
+                    </p>
+                  </div>
+                )}
               </Card>
             </div>
+
+            {/* Blood Pressure Details */}
+            <Card className="p-6">
+              <h3 className="text-xl font-semibold text-accent mb-4">🩺 Blood Pressure Reading</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Blood pressure shows the force of blood against your artery walls.
+                  </p>
+                  <div className="space-y-3">
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-foreground">Systolic</span>
+                        <span className="text-2xl font-bold text-accent">{assessment.systolic || "N/A"}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Pressure when heart beats</p>
+                    </div>
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-foreground">Diastolic</span>
+                        <span className="text-2xl font-bold text-accent">{assessment.diastolic || "N/A"}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Pressure when heart relaxes</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-accent/10 rounded-lg">
+                    <p className="text-sm font-medium text-foreground">
+                      Your BP: {assessment.systolic}/{assessment.diastolic} mmHg
+                    </p>
+                    <p className="text-sm font-medium text-foreground">
+                      Category: {getBPCategory()}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-foreground mb-3">BP Categories:</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm pb-2 border-b border-border">
+                      <span className="text-muted-foreground">&lt;120/80</span>
+                      <span className="font-medium text-green-600">Normal</span>
+                    </div>
+                    <div className="flex justify-between text-sm pb-2 border-b border-border">
+                      <span className="text-muted-foreground">120-129/&lt;80</span>
+                      <span className="font-medium text-yellow-600">Elevated</span>
+                    </div>
+                    <div className="flex justify-between text-sm pb-2 border-b border-border">
+                      <span className="text-muted-foreground">130-139/80-89</span>
+                      <span className="font-medium text-orange-600">Stage 1 High</span>
+                    </div>
+                    <div className="flex justify-between text-sm pb-2">
+                      <span className="text-muted-foreground">≥140/≥90</span>
+                      <span className="font-medium text-destructive">Stage 2 High</span>
+                    </div>
+                  </div>
+                  {getBPCategory() === "Normal" && assessment.systolic && assessment.systolic < 100 && (
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                      <p className="text-xs text-blue-900 dark:text-blue-100">
+                        💡 Low-normal BP is common in athletes and active individuals. If you experience dizziness or fatigue, consult your doctor.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+
+            {/* Summary Section */}
+            <Card className="p-6 bg-accent/5">
+              <h3 className="text-2xl font-bold text-accent mb-4">📋 Your Health Summary</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">BMI</span>
+                    <span className="text-sm font-bold text-accent">
+                      {assessment.bmi?.toFixed(1)} - {getBMICategory()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">CV Score</span>
+                    <span className="text-sm font-bold text-accent">
+                      {calculateCardiovascularScore()} - {getCVRiskLevel().level}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Heart Age</span>
+                    <span className="text-sm font-bold text-accent">
+                      {assessment.heart_age || assessment.age} years
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">10-Year Risk</span>
+                    <span className="text-sm font-bold text-accent">
+                      {assessment.risk_score?.toFixed(1)}% - {getRiskCategory().level}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Blood Pressure</span>
+                    <span className="text-sm font-bold text-accent">
+                      {assessment.systolic}/{assessment.diastolic} - {getBPCategory()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Age</span>
+                    <span className="text-sm font-bold text-accent">
+                      {assessment.age} years
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-6">
