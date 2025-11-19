@@ -66,6 +66,7 @@ const Index = () => {
             </Button>
             <Button
               variant="outline"
+              onClick={() => navigate(user ? "/chat" : "/auth")}
               className="border-primary text-primary hover:bg-primary/5 px-8"
               size="lg"
             >
