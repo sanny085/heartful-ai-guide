@@ -24,6 +24,8 @@ export default function HeartHealthAssessment() {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [existingAssessment, setExistingAssessment] = useState<any>(null);
+  const [showExistingReport, setShowExistingReport] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -89,6 +91,8 @@ export default function HeartHealthAssessment() {
         if (error) throw error;
 
         if (data) {
+          setExistingAssessment(data);
+          setShowExistingReport(true);
           setFormData({
             name: data.name || "",
             mobile: data.mobile || "",
@@ -155,37 +159,56 @@ export default function HeartHealthAssessment() {
         ? calculateBMI(Number(formData.height), Number(formData.weight))
         : null;
 
-      // Save assessment
-      const { data, error } = await supabase
-        .from("heart_health_assessments")
-        .insert({
-          user_id: profile.user_id,
-          name: formData.name,
-          mobile: formData.mobile,
-          age: formData.age ? parseInt(formData.age) : null,
-          gender: formData.gender,
-          height: formData.height ? parseFloat(formData.height) : null,
-          weight: formData.weight ? parseFloat(formData.weight) : null,
-          diet: formData.diet,
-          exercise: formData.exercise,
-          sleep_hours: formData.sleepHours ? parseFloat(formData.sleepHours) : null,
-          smoking: formData.smoking,
-          tobacco_use: formData.tobacco,
-          knows_lipids: formData.knowsLipids,
-          high_cholesterol: formData.highCholesterol,
-          diabetes: formData.diabetes,
-          systolic: formData.systolic ? parseInt(formData.systolic) : null,
-          diastolic: formData.diastolic ? parseInt(formData.diastolic) : null,
-          bmi: bmi
-        })
-        .select()
-        .single();
+      const assessmentData = {
+        user_id: profile.user_id,
+        name: formData.name,
+        mobile: formData.mobile,
+        age: formData.age ? parseInt(formData.age) : null,
+        gender: formData.gender,
+        height: formData.height ? parseFloat(formData.height) : null,
+        weight: formData.weight ? parseFloat(formData.weight) : null,
+        diet: formData.diet,
+        exercise: formData.exercise,
+        sleep_hours: formData.sleepHours ? parseFloat(formData.sleepHours) : null,
+        smoking: formData.smoking,
+        tobacco_use: formData.tobacco,
+        knows_lipids: formData.knowsLipids,
+        high_cholesterol: formData.highCholesterol,
+        diabetes: formData.diabetes,
+        systolic: formData.systolic ? parseInt(formData.systolic) : null,
+        diastolic: formData.diastolic ? parseInt(formData.diastolic) : null,
+        bmi: bmi
+      };
 
-      if (error) throw error;
+      let assessmentId: string;
+
+      // Update existing assessment or create new one
+      if (existingAssessment) {
+        const { data, error } = await supabase
+          .from("heart_health_assessments")
+          .update(assessmentData)
+          .eq("id", existingAssessment.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        assessmentId = data.id;
+        toast.success("Assessment updated successfully!");
+      } else {
+        const { data, error } = await supabase
+          .from("heart_health_assessments")
+          .insert(assessmentData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        assessmentId = data.id;
+        toast.success("Assessment saved successfully!");
+      }
 
       // Call edge function to generate AI insights
       const { error: insightsError } = await supabase.functions.invoke("generate-health-insights", {
-        body: { assessmentId: data.id }
+        body: { assessmentId }
       });
 
       if (insightsError) {
@@ -193,8 +216,7 @@ export default function HeartHealthAssessment() {
         toast.error("Assessment saved but insights generation failed");
       }
 
-      toast.success("Assessment saved successfully!");
-      navigate(`/heart-health-results?id=${data.id}`);
+      navigate(`/heart-health-results?id=${assessmentId}`);
     } catch (error) {
       console.error("Error saving assessment:", error);
       toast.error("Failed to save assessment. Please try again.");
@@ -522,56 +544,94 @@ export default function HeartHealthAssessment() {
                 Discover Your Heart Health : Begin Now!
               </h1>
               <p className="text-muted-foreground">
-                Answer a few simple questions to reveal your heart age and cardiovascular risk.
+                {existingAssessment 
+                  ? "Update your assessment to get fresh insights" 
+                  : "Answer a few simple questions to reveal your heart age and cardiovascular risk."}
               </p>
             </div>
 
-            {/* Progress Steps */}
-            <div className="space-y-4">
-              {STEPS.map((step, index) => (
-                <div key={step} className="flex items-center gap-3">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                      index === currentStep
-                        ? "bg-accent text-white"
-                        : index < currentStep
-                        ? "bg-primary text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {index < currentStep ? "✓" : ""}
+            {/* Show existing report option */}
+            {showExistingReport && existingAssessment && (
+              <Card className="p-4 bg-accent/10 border-accent/20">
+                <div className="space-y-3">
+                  <div>
+                    <p className="font-semibold text-foreground">You have an existing health report</p>
+                    <p className="text-sm text-muted-foreground">
+                      Last updated: {new Date(existingAssessment.updated_at).toLocaleDateString()}
+                    </p>
                   </div>
-                  <span
-                    className={`text-sm ${
-                      index === currentStep ? "text-foreground font-medium" : "text-muted-foreground"
-                    }`}
-                  >
-                    {step}
-                  </span>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      onClick={() => navigate(`/heart-health-results?id=${existingAssessment.id}`)}
+                      variant="default"
+                      className="w-full"
+                    >
+                      View Your Report
+                    </Button>
+                    <Button
+                      onClick={() => setShowExistingReport(false)}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Take New Assessment
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </Card>
+            )}
+
+            {/* Progress Steps */}
+            {!showExistingReport && (
+              <div className="space-y-4">
+                {STEPS.map((step, index) => (
+                  <div key={step} className="flex items-center gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        index === currentStep
+                          ? "bg-accent text-white"
+                          : index < currentStep
+                          ? "bg-primary text-white"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {index < currentStep ? "✓" : ""}
+                    </div>
+                    <span
+                      className={`text-sm ${
+                        index === currentStep ? "text-foreground font-medium" : "text-muted-foreground"
+                      }`}
+                    >
+                      {step}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Main Content */}
-          <Card className="p-8 shadow-lg">
-            <div className="max-w-2xl mx-auto">
-              <h2 className="text-2xl font-bold mb-8">Take the 10000Hearts Health Test</h2>
+          {!showExistingReport && (
+            <Card className="p-8 shadow-lg">
+              <div className="max-w-2xl mx-auto">
+                <h2 className="text-2xl font-bold mb-8">
+                  {existingAssessment ? "Update Your Health Assessment" : "Take the 10000Hearts Health Test"}
+                </h2>
 
-              {renderStepContent()}
+                {renderStepContent()}
 
-              <div className="mt-8">
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceed() || saving}
-                  className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                  size="lg"
-                >
-                  {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : "View Results"}
-                </Button>
+                <div className="mt-8">
+                  <Button
+                    onClick={handleNext}
+                    disabled={!canProceed() || saving}
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                    size="lg"
+                  >
+                    {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : existingAssessment ? "Update & View Results" : "View Results"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
     </div>
