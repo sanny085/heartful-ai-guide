@@ -198,14 +198,10 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Include file text with compact formatting
+      // Compact message format
       let finalContent = validationResult.data.content;
       if (uploadedFileText && uploadedFileName) {
-        // User's question about the file with compact context
-        finalContent = `Q: ${validationResult.data.content}
-
-Document: ${uploadedFileName}
-${uploadedFileText}`;
+        finalContent = `${validationResult.data.content}\n\nDoc: ${uploadedFileName}\n${uploadedFileText}`;
       }
 
       const { error: insertError } = await supabase
@@ -368,19 +364,19 @@ ${uploadedFileText}`;
 
       const { text } = await extractResponse.json();
 
-      // Limit text length - keep it conservative to leave room for user questions and prompt
-      const MAX_CHARS = 8000;
+      // Very conservative limit to ensure total message stays under 100K
+      const MAX_CHARS = 5000;
       let processedText = text;
       let wasTruncated = false;
       
       if (text.length > MAX_CHARS) {
-        // For very large files, take content from beginning, middle, and end
+        // For large files, extract key sections
         const chunkSize = Math.floor(MAX_CHARS / 3);
         const start = text.substring(0, chunkSize);
         const middle = text.substring(Math.floor(text.length / 2) - chunkSize / 2, Math.floor(text.length / 2) + chunkSize / 2);
         const end = text.substring(text.length - chunkSize);
         
-        processedText = `${start}\n\n[... content trimmed ...]\n\n${middle}\n\n[... content trimmed ...]\n\n${end}`;
+        processedText = `${start}\n\n... [Large document - showing key sections] ...\n\n${middle}\n\n... [continuing] ...\n\n${end}`;
         wasTruncated = true;
       }
 
@@ -389,7 +385,7 @@ ${uploadedFileText}`;
       setUploadedFileName(file.name);
 
       if (wasTruncated) {
-        toast.success(`File uploaded! Large document summarized to key sections.`);
+        toast.success(`File uploaded! Extracted key sections from large document.`);
       } else {
         toast.success('File uploaded! Type a message or send directly.');
       }
@@ -417,18 +413,8 @@ ${uploadedFileText}`;
     setIsLoading(true);
 
     try {
-      // Compact prompt for large files
-      const userContent = `Uploaded: ${fileName}
-
-Analyze and provide:
-1. Summary
-2. Key findings
-3. Important values
-4. Recommendations
-5. Prevention tips
-
-Content:
-${fileText}`;
+      // Ultra-compact prompt
+      const userContent = `File: ${fileName}\n\nAnalyze:\n${fileText}`;
       
       const { error: insertError } = await supabase
         .from('messages')
