@@ -219,6 +219,45 @@ export type Database = {
         }
         Relationships: []
       }
+      wellness_leads: {
+        Row: {
+          age: number
+          country_code: string
+          created_at: string
+          full_name: string
+          gender: string
+          health_challenges: string | null
+          health_conditions: string | null
+          id: string
+          mobile: string
+          state: string
+        }
+        Insert: {
+          age: number
+          country_code?: string
+          created_at?: string
+          full_name: string
+          gender: string
+          health_challenges?: string | null
+          health_conditions?: string | null
+          id?: string
+          mobile: string
+          state: string
+        }
+        Update: {
+          age?: number
+          country_code?: string
+          created_at?: string
+          full_name?: string
+          gender?: string
+          health_challenges?: string | null
+          health_conditions?: string | null
+          id?: string
+          mobile?: string
+          state?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
