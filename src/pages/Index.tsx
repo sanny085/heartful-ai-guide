@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/hero-health.jpg";
 import aiDashboard from "@/assets/ai-dashboard.jpg";
+import logo from "@/assets/logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -55,10 +56,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Heart className="w-10 h-10 text-accent fill-accent" />
-            <span className="text-3xl font-bold text-primary">10000Hearts</span>
+        <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+          <div className="flex items-center">
+            <img src={logo} alt="10000Hearts Logo" className="h-12 w-auto" />
           </div>
           {!loading &&
             (user ? (
@@ -453,7 +453,7 @@ const Index = () => {
 
             <div className="flex flex-wrap gap-4 justify-center mb-12">
               <Button
-                onClick={() => navigate(user ? "/chat" : "/auth")}
+                onClick={() => navigate("/wellness-campaign")}
                 className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 shadow-lg hover:shadow-xl transition-all"
                 size="lg"
               >
@@ -461,7 +461,10 @@ const Index = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate(user ? "/heart-health" : "/auth")}
+                onClick={() => {
+                  const howItWorksSection = document.getElementById("how-it-works");
+                  howItWorksSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 className="border-primary text-primary hover:bg-primary/5 px-8"
                 size="lg"
               >
