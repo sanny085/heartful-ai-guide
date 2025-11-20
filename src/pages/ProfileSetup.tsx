@@ -44,11 +44,11 @@ const ProfileSetup = () => {
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (data) {
       // Profile exists, redirect to home
-      window.location.href = "https://10000hearts.com/";
+      navigate('/');
     }
   };
 
@@ -110,12 +110,17 @@ const ProfileSetup = () => {
         medical_category: validationResult.data.medical_category,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Profile creation error:", error);
+        toast.error(error.message || "Failed to create profile");
+        return;
+      }
 
       toast.success("Profile created successfully!");
-      window.location.href = "https://10000hearts.com/";
+      navigate('/');
     } catch (error: any) {
-      toast.error("Failed to create profile");
+      console.error("Profile creation error:", error);
+      toast.error(error.message || "Failed to create profile");
     }
   };
 
