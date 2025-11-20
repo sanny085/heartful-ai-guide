@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { profileSchema } from "@/lib/validation";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -81,7 +82,6 @@ const Profile = () => {
       }
 
       // Validate using zod schema
-      const { profileSchema } = await import("@/lib/validation");
       const validationResult = profileSchema.safeParse({
         name: formData.name,
         age: ageNum,
