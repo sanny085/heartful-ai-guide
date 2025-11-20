@@ -320,15 +320,15 @@ const Index = () => {
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="text-5xl font-bold text-primary mb-2">English</div>
-              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">English</h3>
-              <p className="text-muted-foreground">Accessible to English-speaking users nationwide</p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
               <div className="text-5xl font-bold text-success mb-2">हिन्दी</div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Hindi</h3>
               <p className="text-muted-foreground">Comprehensive Hindi language support</p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="text-5xl font-bold text-primary mb-2">English</div>
+              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">English</h3>
+              <p className="text-muted-foreground">Accessible to English-speaking users nationwide</p>
             </div>
           </div>
 
