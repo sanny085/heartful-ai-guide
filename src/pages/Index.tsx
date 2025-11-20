@@ -64,13 +64,9 @@ const Index = () => {
 
   const checkProfileComplete = async () => {
     if (!user) return false;
-    
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    
+
+    const { data, error } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+
     if (error || !data) return false;
     return true;
   };
@@ -81,14 +77,14 @@ const Index = () => {
       navigate("/auth");
       return;
     }
-    
+
     const hasProfile = await checkProfileComplete();
     if (!hasProfile) {
       toast.error("Please complete your profile first");
       navigate("/profile-setup");
       return;
     }
-    
+
     navigate("/chat");
   };
 
@@ -98,14 +94,14 @@ const Index = () => {
       navigate("/auth");
       return;
     }
-    
+
     const hasProfile = await checkProfileComplete();
     if (!hasProfile) {
       toast.error("Please complete your profile first");
       navigate("/profile-setup");
       return;
     }
-    
+
     navigate("/heart-health");
   };
 
@@ -119,7 +115,7 @@ const Index = () => {
               src={logo}
               alt="10000Hearts Logo"
               className={`w-auto transition-all duration-300 cursor-pointer ${isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"}`}
-              onClick={() => window.location.href = "https://10000hearts.com/"}
+              onClick={() => (window.location.href = "https://10000hearts.com/")}
             />
           </div>
           {!loading &&
@@ -296,7 +292,8 @@ const Index = () => {
 
           {/* Description */}
           <p className="text-lg text-muted-foreground text-center max-w-3xl mx-auto mb-10">
-            Answer a few simple questions to reveal your heart age and cardiovascular risk. Then chat with our AI physician for personalized health guidance.
+            Answer a few simple questions to reveal your heart age and cardiovascular risk. Then chat with our AI
+            physician for personalized health guidance.
           </p>
 
           {/* CTA Buttons */}
@@ -309,7 +306,7 @@ const Index = () => {
               <Heart className="w-5 h-5 mr-2" />
               View/Update Health Report
             </Button>
-            <Button
+            {/* <Button
               size="lg"
               variant="outline"
               onClick={handleChatClick}
@@ -317,7 +314,7 @@ const Index = () => {
             >
               <MessageCircle className="w-5 h-5 mr-2" />
               Chat with AI Doctor
-            </Button>
+            </Button> */}
           </div>
 
           {/* Feature Cards */}
