@@ -102,7 +102,7 @@ const Index = () => {
 
             <div className="flex flex-wrap gap-4">
               <Button
-                onClick={() => navigate(user ? "/chat" : "/auth")}
+                onClick={() => navigate("/wellness-campaign")}
                 className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 shadow-lg hover:shadow-xl transition-all"
                 size="lg"
               >
@@ -110,7 +110,10 @@ const Index = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate(user ? "/heart-health" : "/auth")}
+                onClick={() => {
+                  const howItWorksSection = document.getElementById("how-it-works");
+                  howItWorksSection?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 className="border-primary text-primary hover:bg-primary/5 px-8"
                 size="lg"
               >
@@ -212,7 +215,7 @@ const Index = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20">
+      <section id="how-it-works" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
