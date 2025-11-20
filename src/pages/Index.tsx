@@ -20,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import heroImage from "@/assets/hero-health.jpg";
 import aiDashboard from "@/assets/ai-dashboard.jpg";
 import logo from "@/assets/logo.png";
@@ -61,6 +62,53 @@ const Index = () => {
     }
   };
 
+  const checkProfileComplete = async () => {
+    if (!user) return false;
+    
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+    
+    if (error || !data) return false;
+    return true;
+  };
+
+  const handleChatClick = async () => {
+    if (!user) {
+      toast.error("Please sign in to chat with AI Doctor");
+      navigate("/auth");
+      return;
+    }
+    
+    const hasProfile = await checkProfileComplete();
+    if (!hasProfile) {
+      toast.error("Please complete your profile first");
+      navigate("/profile-setup");
+      return;
+    }
+    
+    navigate("/chat");
+  };
+
+  const handleHealthReportClick = async () => {
+    if (!user) {
+      toast.error("Please sign in to access Health Report");
+      navigate("/auth");
+      return;
+    }
+    
+    const hasProfile = await checkProfileComplete();
+    if (!hasProfile) {
+      toast.error("Please complete your profile first");
+      navigate("/profile-setup");
+      return;
+    }
+    
+    navigate("/heart-health");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
       {/* Header */}
@@ -70,7 +118,8 @@ const Index = () => {
             <img
               src={logo}
               alt="10000Hearts Logo"
-              className={`w-auto transition-all duration-300 ${isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"}`}
+              className={`w-auto transition-all duration-300 cursor-pointer ${isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"}`}
+              onClick={() => window.location.href = "https://10000hearts.com/"}
             />
           </div>
           {!loading &&
@@ -254,7 +303,7 @@ const Index = () => {
           <div className="flex flex-wrap justify-center gap-4 mb-16">
             <Button
               size="lg"
-              onClick={() => navigate("/heart-health")}
+              onClick={handleHealthReportClick}
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
             >
               <Heart className="w-5 h-5 mr-2" />
@@ -263,7 +312,7 @@ const Index = () => {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate("/chat")}
+              onClick={handleChatClick}
               className="border-primary text-primary hover:bg-primary/5 px-8 py-6 text-lg"
             >
               <MessageCircle className="w-5 h-5 mr-2" />

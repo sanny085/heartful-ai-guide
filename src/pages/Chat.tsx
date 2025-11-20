@@ -490,7 +490,7 @@ const Chat = () => {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate('/')}
+          onClick={() => window.location.href = "https://10000hearts.com/"}
           className="text-primary-foreground hover:bg-primary/90"
         >
           <ArrowLeft className="h-5 w-5" />

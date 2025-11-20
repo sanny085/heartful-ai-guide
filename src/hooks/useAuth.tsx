@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error signing out:', error.message);
       throw error;
     }
-    navigate('/');
+    window.location.href = "https://10000hearts.com/";
   };
 
   return (

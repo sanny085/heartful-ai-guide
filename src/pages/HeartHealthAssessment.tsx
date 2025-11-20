@@ -539,7 +539,7 @@ export default function HeartHealthAssessment() {
                 <span className="text-2xl font-bold text-primary">10000Hearts</span>
               </div>
               <button
-                onClick={() => navigate("/")}
+                onClick={() => window.location.href = "https://10000hearts.com/"}
                 className="p-2 rounded-lg hover:bg-accent/10 transition-colors"
                 aria-label="Go to home"
               >

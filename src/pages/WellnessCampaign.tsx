@@ -154,7 +154,7 @@ const WellnessCampaign = () => {
       });
       
       // Redirect to home after successful submission
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => window.location.href = "https://10000hearts.com/", 2000);
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle validation errors
@@ -180,7 +180,7 @@ const WellnessCampaign = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => window.location.href = "https://10000hearts.com/"}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <Heart className="w-10 h-10 text-accent fill-accent" />
