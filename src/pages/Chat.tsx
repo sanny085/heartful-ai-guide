@@ -198,14 +198,13 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Include file text if available with proper context
+      // Include file text with compact formatting
       let finalContent = validationResult.data.content;
       if (uploadedFileText && uploadedFileName) {
-        // User typed a question about the file
-        finalContent = `Regarding the uploaded document "${uploadedFileName}", ${validationResult.data.content}
+        // User's question about the file with compact context
+        finalContent = `Q: ${validationResult.data.content}
 
-Please answer based on this document content:
-
+Document: ${uploadedFileName}
 ${uploadedFileText}`;
       }
 
@@ -369,13 +368,19 @@ ${uploadedFileText}`;
 
       const { text } = await extractResponse.json();
 
-      // Limit text length to prevent API errors (max ~15000 chars for context)
-      const MAX_CHARS = 15000;
+      // Limit text length - keep it conservative to leave room for user questions and prompt
+      const MAX_CHARS = 8000;
       let processedText = text;
       let wasTruncated = false;
       
       if (text.length > MAX_CHARS) {
-        processedText = text.substring(0, MAX_CHARS);
+        // For very large files, take content from beginning, middle, and end
+        const chunkSize = Math.floor(MAX_CHARS / 3);
+        const start = text.substring(0, chunkSize);
+        const middle = text.substring(Math.floor(text.length / 2) - chunkSize / 2, Math.floor(text.length / 2) + chunkSize / 2);
+        const end = text.substring(text.length - chunkSize);
+        
+        processedText = `${start}\n\n[... content trimmed ...]\n\n${middle}\n\n[... content trimmed ...]\n\n${end}`;
         wasTruncated = true;
       }
 
@@ -384,7 +389,7 @@ ${uploadedFileText}`;
       setUploadedFileName(file.name);
 
       if (wasTruncated) {
-        toast.success(`File uploaded! Content was large, showing first ${MAX_CHARS} characters.`);
+        toast.success(`File uploaded! Large document summarized to key sections.`);
       } else {
         toast.success('File uploaded! Type a message or send directly.');
       }
@@ -412,18 +417,17 @@ ${uploadedFileText}`;
     setIsLoading(true);
 
     try {
-      // Prompt for document analysis
-      const userContent = `I have uploaded a document: "${fileName}"
+      // Compact prompt for large files
+      const userContent = `Uploaded: ${fileName}
 
-Please analyze this document and provide:
-1. A clear summary of what this document contains
-2. Key findings and what they mean
-3. Any important values or patterns to note
-4. Recommendations based on the content
-5. Prevention tips or lifestyle changes suggested by the findings
+Analyze and provide:
+1. Summary
+2. Key findings
+3. Important values
+4. Recommendations
+5. Prevention tips
 
-Here is the document content:
-
+Content:
 ${fileText}`;
       
       const { error: insertError } = await supabase
