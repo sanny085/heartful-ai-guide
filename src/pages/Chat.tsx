@@ -201,7 +201,8 @@ const Chat = () => {
       // Include file text if available
       let finalContent = validationResult.data.content;
       if (uploadedFileText && uploadedFileName) {
-        finalContent = `${validationResult.data.content}\n\n[Context from uploaded file: ${uploadedFileName}]\n\n${uploadedFileText}`;
+        // Add file context in a more structured way
+        finalContent = `${validationResult.data.content}\n\n---\nReference document: ${uploadedFileName}\n${uploadedFileText}\n---`;
       }
 
       const { error: insertError } = await supabase
@@ -364,11 +365,25 @@ const Chat = () => {
 
       const { text } = await extractResponse.json();
 
+      // Limit text length to prevent API errors (max ~15000 chars for context)
+      const MAX_CHARS = 15000;
+      let processedText = text;
+      let wasTruncated = false;
+      
+      if (text.length > MAX_CHARS) {
+        processedText = text.substring(0, MAX_CHARS);
+        wasTruncated = true;
+      }
+
       // Store extracted text and filename
-      setUploadedFileText(text);
+      setUploadedFileText(processedText);
       setUploadedFileName(file.name);
 
-      toast.success('File uploaded! Type a message or send directly.');
+      if (wasTruncated) {
+        toast.success(`File uploaded! Content was large, showing first ${MAX_CHARS} characters.`);
+      } else {
+        toast.success('File uploaded! Type a message or send directly.');
+      }
       
       // Auto-send if no input text
       if (!input.trim()) {
@@ -393,7 +408,8 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      const userContent = `[Uploaded file: ${fileName}]\n\n${fileText}`;
+      // Add file context in a structured way
+      const userContent = `I have uploaded a file named "${fileName}". Here is the content:\n\n${fileText}\n\nPlease analyze this content and help me understand it.`;
       
       const { error: insertError } = await supabase
         .from('messages')
