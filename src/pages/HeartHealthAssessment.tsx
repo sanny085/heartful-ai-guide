@@ -26,6 +26,7 @@ export default function HeartHealthAssessment() {
   const [saving, setSaving] = useState(false);
   const [latestAssessment, setLatestAssessment] = useState<any>(null);
   const [showExistingReport, setShowExistingReport] = useState(false);
+  const [heightUnit, setHeightUnit] = useState<"cm" | "inch">("cm");
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -122,8 +123,10 @@ export default function HeartHealthAssessment() {
   }, [user, navigate]);
 
   const calculateBMI = (height: number, weight: number) => {
+    // Convert height to cm if in inches
+    const heightInCm = heightUnit === "inch" ? height * 2.54 : height;
     // Height in cm, convert to meters
-    const heightInMeters = height / 100;
+    const heightInMeters = heightInCm / 100;
     return weight / (heightInMeters * heightInMeters);
   };
 
@@ -267,11 +270,29 @@ export default function HeartHealthAssessment() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="height">Height (cm)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="height">Height ({heightUnit})</Label>
+                  <div className="flex gap-2 text-sm">
+                    <button
+                      type="button"
+                      onClick={() => setHeightUnit("cm")}
+                      className={`px-2 py-1 rounded ${heightUnit === "cm" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                    >
+                      cm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHeightUnit("inch")}
+                      className={`px-2 py-1 rounded ${heightUnit === "inch" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                    >
+                      inch
+                    </button>
+                  </div>
+                </div>
                 <Input
                   id="height"
                   type="number"
-                  placeholder="Enter Height in cm"
+                  placeholder={`Enter Height in ${heightUnit}`}
                   value={formData.height}
                   onChange={(e) => updateFormData("height", e.target.value)}
                 />
