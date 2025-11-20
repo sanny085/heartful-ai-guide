@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Menu, ArrowLeft } from 'lucide-react';
+import { Send, Menu, ArrowLeft, Paperclip, Mic, MicOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -22,7 +22,14 @@ const Chat = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [userLanguage, setUserLanguage] = useState('English');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,6 +39,7 @@ const Chat = () => {
 
   useEffect(() => {
     if (user) {
+      fetchUserLanguage();
       initializeConversation();
     }
   }, [user]);
@@ -43,6 +51,24 @@ const Chat = () => {
   const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
+  const fetchUserLanguage = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('preferred_language')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (data?.preferred_language) {
+        setUserLanguage(data.preferred_language);
+      }
+    } catch (error) {
+      console.error('Error fetching user language:', error);
     }
   };
 
@@ -84,9 +110,41 @@ const Chat = () => {
 
       if (error) throw error;
       setConversationId(data.id);
+      
+      // Add greeting message
+      await addGreetingMessage(data.id);
     } catch (error) {
       console.error('Error creating conversation:', error);
       toast.error('Failed to create conversation');
+    }
+  };
+
+  const addGreetingMessage = async (convId: string) => {
+    const greetings: Record<string, string> = {
+      English: "Hi! I'm your AI Health Coach. I'm here to support your wellness journey. How can I help you today?",
+      Hindi: "नमस्ते! मैं आपका AI स्वास्थ्य कोच हूं। मैं आपकी स्वास्थ्य यात्रा में आपका साथ देने के लिए यहां हूं। मैं आज आपकी कैसे मदद कर सकता हूं?",
+      Spanish: "¡Hola! Soy tu entrenador de salud de IA. Estoy aquí para apoyar tu viaje de bienestar. ¿Cómo puedo ayudarte hoy?",
+      French: "Bonjour! Je suis votre coach santé IA. Je suis là pour soutenir votre parcours de bien-être. Comment puis-je vous aider aujourd'hui?",
+      German: "Hallo! Ich bin Ihr KI-Gesundheitscoach. Ich bin hier, um Ihre Wellness-Reise zu unterstützen. Wie kann ich Ihnen heute helfen?"
+    };
+
+    const greeting = greetings[userLanguage] || greetings.English;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: convId,
+          role: 'assistant',
+          content: greeting,
+        });
+
+      if (error) throw error;
+      
+      // Reload messages to show greeting
+      await loadMessages(convId);
+    } catch (error) {
+      console.error('Error adding greeting:', error);
     }
   };
 
@@ -100,6 +158,11 @@ const Chat = () => {
 
       if (error) throw error;
       setMessages((data || []) as Message[]);
+      
+      // Add greeting if no messages
+      if (!data || data.length === 0) {
+        await addGreetingMessage(convId);
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
     }
@@ -243,6 +306,147 @@ const Chat = () => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingFile(true);
+    try {
+      // Upload to storage
+      const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('chat-files')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get summary
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const summaryResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-file`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fileUrl: fileName,
+            fileName: file.name,
+          }),
+        }
+      );
+
+      if (!summaryResponse.ok) throw new Error('Failed to generate summary');
+
+      const { summary } = await summaryResponse.json();
+
+      // Add summary to chat
+      if (conversationId) {
+        const { error } = await supabase.from('messages').insert([
+          {
+            conversation_id: conversationId,
+            role: 'user',
+            content: `[Uploaded file: ${file.name}]`,
+          },
+          {
+            conversation_id: conversationId,
+            role: 'assistant',
+            content: summary,
+          },
+        ]);
+
+        if (error) throw error;
+        await loadMessages(conversationId);
+      }
+
+      toast.success('File analyzed successfully!');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast.error('Failed to analyze file');
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await transcribeAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error('Failed to start recording. Please check microphone permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      
+      await new Promise((resolve) => {
+        reader.onloadend = resolve;
+      });
+
+      const base64Audio = (reader.result as string).split(',')[1];
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-audio`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({ audio: base64Audio }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to transcribe audio');
+
+      const { text } = await response.json();
+      setInput(text);
+      toast.success('Audio transcribed!');
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      toast.error('Failed to transcribe audio');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -321,23 +525,58 @@ const Chat = () => {
 
       {/* Input */}
       <div className="border-t bg-background p-4">
-        <div className="max-w-4xl mx-auto flex gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            className="min-h-[50px] max-h-[150px] resize-none"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={sendMessage}
-            disabled={!input.trim() || isLoading}
-            size="icon"
-            className="h-[50px] w-[50px] rounded-full"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
+        <div className="max-w-4xl mx-auto space-y-2">
+          {(isTranscribing || uploadingFile) && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{isTranscribing ? 'Transcribing audio...' : 'Analyzing file...'}</span>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileUpload}
+              accept="image/*,.pdf,.doc,.docx,.txt"
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || uploadingFile || isTranscribing}
+              className="h-[50px] w-[50px] rounded-full shrink-0"
+            >
+              <Paperclip className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isLoading || uploadingFile || isTranscribing}
+              className={`h-[50px] w-[50px] rounded-full shrink-0 ${
+                isRecording ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''
+              }`}
+            >
+              {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            </Button>
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+              className="min-h-[50px] max-h-[150px] resize-none flex-1"
+              disabled={isLoading || isRecording}
+            />
+            <Button
+              onClick={sendMessage}
+              disabled={!input.trim() || isLoading || isRecording}
+              size="icon"
+              className="h-[50px] w-[50px] rounded-full shrink-0"
+            >
+              <Send className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
