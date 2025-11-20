@@ -198,11 +198,15 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Include file text if available
+      // Include file text if available with proper context
       let finalContent = validationResult.data.content;
       if (uploadedFileText && uploadedFileName) {
-        // Add file context in a more structured way
-        finalContent = `${validationResult.data.content}\n\n---\nReference document: ${uploadedFileName}\n${uploadedFileText}\n---`;
+        // User typed a question about the file
+        finalContent = `Regarding the uploaded document "${uploadedFileName}", ${validationResult.data.content}
+
+Please answer based on this document content:
+
+${uploadedFileText}`;
       }
 
       const { error: insertError } = await supabase
@@ -408,8 +412,19 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Add file context in a structured way
-      const userContent = `I have uploaded a file named "${fileName}". Here is the content:\n\n${fileText}\n\nPlease analyze this content and help me understand it.`;
+      // Prompt for document analysis
+      const userContent = `I have uploaded a document: "${fileName}"
+
+Please analyze this document and provide:
+1. A clear summary of what this document contains
+2. Key findings and what they mean
+3. Any important values or patterns to note
+4. Recommendations based on the content
+5. Prevention tips or lifestyle changes suggested by the findings
+
+Here is the document content:
+
+${fileText}`;
       
       const { error: insertError } = await supabase
         .from('messages')
