@@ -40,7 +40,7 @@ serve(async (req) => {
 
     const language = profile?.preferred_language || 'English';
 
-    const { fileUrl, fileName } = await req.json();
+    const { fileUrl, fileName, additionalContext } = await req.json();
     
     if (!fileUrl || !fileName) {
       throw new Error('File URL and name are required');
@@ -87,16 +87,45 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a helpful health assistant. Analyze the provided file and create a concise summary in ${language}. Focus on health-related information if present.`
+            content: `You are an experienced medical doctor analyzing health reports. Provide a comprehensive analysis in ${language} with the following structure:
+
+📋 **REPORT SUMMARY**
+Brief overview of the report type and key findings
+
+🔍 **MAIN FINDINGS**
+- List the most important results
+- Highlight any abnormal values or concerns
+
+✅ **DO'S (Recommendations)**
+- Specific actions to take
+- Lifestyle modifications
+- Follow-up tests if needed
+
+❌ **DON'TS (Things to Avoid)**
+- Activities or habits to avoid
+- Foods or substances to limit
+
+🛡️ **PREVENTIVE MEASURES**
+- Long-term health strategies
+- Monitoring suggestions
+- Risk reduction tips
+
+⚠️ **IMPORTANT NOTE**
+Always consult with your healthcare provider for personalized medical advice.
+
+Be empathetic, clear, and actionable in your analysis.`
           },
           {
             role: 'user',
             content: isImage 
               ? [
-                  { type: 'text', text: `Please analyze this medical/health document image and provide a summary in ${language}.` },
+                  { 
+                    type: 'text', 
+                    text: `Please analyze this medical report and provide detailed insights with do's, don'ts, and preventive measures in ${language}.${additionalContext ? `\n\nAdditional context: ${additionalContext}` : ''}` 
+                  },
                   { type: 'image_url', image_url: { url: content } }
                 ]
-              : `Please summarize this document in ${language}:\n\n${content.slice(0, 10000)}`
+              : `Please analyze this medical document and provide detailed insights with do's, don'ts, and preventive measures in ${language}${additionalContext ? `\n\nAdditional context: ${additionalContext}` : ''}:\n\n${content.slice(0, 10000)}`
           }
         ],
       }),
