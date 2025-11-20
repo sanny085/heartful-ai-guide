@@ -69,7 +69,7 @@ const Index = () => {
       .from("profiles")
       .select("*")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
     
     if (error || !data) return false;
     return true;
