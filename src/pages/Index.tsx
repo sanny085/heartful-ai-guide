@@ -56,9 +56,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-2 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <img src={logo} alt="10000Hearts Logo" className="h-12 w-auto" />
+            <img src={logo} alt="10000Hearts Logo" className="h-16 md:h-20 w-auto" />
           </div>
           {!loading &&
             (user ? (
@@ -83,7 +83,7 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
+      <section className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-full text-sm font-medium text-accent">
