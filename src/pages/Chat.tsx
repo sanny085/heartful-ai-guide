@@ -311,6 +311,9 @@ const Chat = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    // Prompt user for additional context
+    const additionalContext = prompt('Add any additional context about this report (optional):');
+
     setUploadingFile(true);
     try {
       // Upload to storage
@@ -321,7 +324,7 @@ const Chat = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get summary
+      // Get detailed medical analysis
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
@@ -336,21 +339,22 @@ const Chat = () => {
           body: JSON.stringify({
             fileUrl: fileName,
             fileName: file.name,
+            additionalContext: additionalContext || undefined,
           }),
         }
       );
 
-      if (!summaryResponse.ok) throw new Error('Failed to generate summary');
+      if (!summaryResponse.ok) throw new Error('Failed to generate analysis');
 
       const { summary } = await summaryResponse.json();
 
-      // Add summary to chat
+      // Add analysis to chat
       if (conversationId) {
         const { error } = await supabase.from('messages').insert([
           {
             conversation_id: conversationId,
             role: 'user',
-            content: `[Uploaded file: ${file.name}]`,
+            content: `[Uploaded medical report: ${file.name}]${additionalContext ? `\nContext: ${additionalContext}` : ''}`,
           },
           {
             conversation_id: conversationId,
@@ -363,10 +367,10 @@ const Chat = () => {
         await loadMessages(conversationId);
       }
 
-      toast.success('File analyzed successfully!');
+      toast.success('Medical report analyzed successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error('Failed to analyze file');
+      toast.error('Failed to analyze report');
     } finally {
       setUploadingFile(false);
       if (fileInputRef.current) {
