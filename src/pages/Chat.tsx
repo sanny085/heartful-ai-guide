@@ -311,8 +311,8 @@ const Chat = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Prompt user for additional context
-    const additionalContext = prompt('Add any additional context about this report (optional):');
+    // Use message input as additional context
+    const additionalContext = input.trim();
 
     setUploadingFile(true);
     try {
@@ -368,6 +368,8 @@ const Chat = () => {
       }
 
       toast.success('Medical report analyzed successfully!');
+      // Clear message input after successful upload
+      setInput('');
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error('Failed to analyze report');
