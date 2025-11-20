@@ -67,12 +67,10 @@ const Index = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border transition-all duration-300">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <img 
-              src={logo} 
-              alt="10000Hearts Logo" 
-              className={`w-auto transition-all duration-300 ${
-                isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"
-              }`}
+            <img
+              src={logo}
+              alt="10000Hearts Logo"
+              className={`w-auto transition-all duration-300 ${isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"}`}
             />
           </div>
           {!loading &&
@@ -111,7 +109,7 @@ const Index = () => {
             </h1>
 
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Meet your personal AI companion that understands you in Telugu, English, and Hindi. Get preventive health
+              Meet your personal AI companion that understands you in Telugu, Hindi and English. Get preventive health
               insights, wellness guidance, and compassionate care - available 24/7.
             </p>
 
@@ -160,96 +158,6 @@ const Index = () => {
               alt="Healthcare team with AI technology"
               className="relative rounded-3xl shadow-2xl w-full h-auto"
             />
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Health Journey Section */}
-      <section className="py-20 bg-gradient-to-br from-accent/5 via-background to-primary/5">
-        <div className="container mx-auto px-4">
-          <div className="text-center max-w-4xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-full text-sm font-medium text-accent mb-6">
-              <Activity className="w-4 h-4" />
-              Your AI Health Companion
-            </div>
-            
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Discover Your Heart Health<br />
-              <span className="text-accent">Begin Your Journey Now</span>
-            </h2>
-            
-            <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              Answer a few simple questions to reveal your heart age and cardiovascular risk. 
-              Then chat with our AI physician for personalized health guidance.
-            </p>
-
-            <div className="flex flex-wrap gap-4 justify-center mb-16">
-              <Button
-                onClick={() => navigate("/heart-health")}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 shadow-lg hover:shadow-xl transition-all"
-                size="lg"
-              >
-                Take Heart Health Test
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/chat")}
-                className="border-accent text-accent hover:bg-accent/5 px-8"
-                size="lg"
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Chat with AI Doctor
-              </Button>
-            </div>
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
-            <div className="bg-card/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-border hover:shadow-xl transition-all">
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-6">
-                <Heart className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground">Heart Health Assessment</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Comprehensive evaluation of your cardiovascular health with instant results and personalized insights.
-              </p>
-            </div>
-
-            <div className="bg-card/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-border hover:shadow-xl transition-all">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-                <MessageCircle className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground">AI Health Companion</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Chat with our AI physician 24/7. Get answers to your health questions with personalized recommendations.
-              </p>
-            </div>
-
-            <div className="bg-card/80 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-border hover:shadow-xl transition-all">
-              <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mb-6">
-                <Activity className="w-8 h-8 text-success" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-foreground">Track Your Progress</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Monitor your health metrics over time and receive actionable insights to improve your wellbeing.
-              </p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto text-center">
-            <div>
-              <div className="text-5xl font-bold text-accent mb-2">10,000+</div>
-              <div className="text-lg text-muted-foreground">Health Assessments Completed</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-primary mb-2">24/7</div>
-              <div className="text-lg text-muted-foreground">AI Support Available</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-success mb-2">95%</div>
-              <div className="text-lg text-muted-foreground">User Satisfaction Rate</div>
-            </div>
           </div>
         </div>
       </section>
