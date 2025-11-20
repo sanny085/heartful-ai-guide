@@ -26,6 +26,8 @@ const Chat = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadedFileText, setUploadedFileText] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [userLanguage, setUserLanguage] = useState('English');
   const scrollRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -170,7 +172,15 @@ const Chat = () => {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || !conversationId || !user) return;
+    if (!conversationId || !user) return;
+    
+    // If there's a file but no input, send the file
+    if (uploadedFileText && !input.trim()) {
+      await sendMessageWithFile(uploadedFileText, uploadedFileName || 'file');
+      return;
+    }
+    
+    if (!input.trim()) return;
 
     const userMessage = input.trim();
     
@@ -188,12 +198,18 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
+      // Include file text if available
+      let finalContent = validationResult.data.content;
+      if (uploadedFileText && uploadedFileName) {
+        finalContent = `${validationResult.data.content}\n\n[Context from uploaded file: ${uploadedFileName}]\n\n${uploadedFileText}`;
+      }
+
       const { error: insertError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
           role: 'user',
-          content: validationResult.data.content,
+          content: finalContent,
         });
 
       if (insertError) throw insertError;
@@ -201,10 +217,14 @@ const Chat = () => {
       const newUserMsg: Message = {
         id: crypto.randomUUID(),
         role: 'user',
-        content: validationResult.data.content,
+        content: finalContent,
         created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, newUserMsg]);
+      
+      // Clear file state after sending
+      setUploadedFileText(null);
+      setUploadedFileName(null);
 
       const allMessages = [...messages, newUserMsg].map(m => ({
         role: m.role,
@@ -321,12 +341,12 @@ const Chat = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get summary
+      // Extract text from file
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
-      const summaryResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/summarize-file`,
+      const extractResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-file-text`,
         {
           method: 'POST',
           headers: {
@@ -340,38 +360,154 @@ const Chat = () => {
         }
       );
 
-      if (!summaryResponse.ok) throw new Error('Failed to generate summary');
+      if (!extractResponse.ok) throw new Error('Failed to extract text');
 
-      const { summary } = await summaryResponse.json();
+      const { text } = await extractResponse.json();
 
-      // Add summary to chat
-      if (conversationId) {
-        const { error } = await supabase.from('messages').insert([
-          {
-            conversation_id: conversationId,
-            role: 'user',
-            content: `[Uploaded file: ${file.name}]`,
-          },
-          {
-            conversation_id: conversationId,
-            role: 'assistant',
-            content: summary,
-          },
-        ]);
+      // Store extracted text and filename
+      setUploadedFileText(text);
+      setUploadedFileName(file.name);
 
-        if (error) throw error;
-        await loadMessages(conversationId);
+      toast.success('File uploaded! Type a message or send directly.');
+      
+      // Auto-send if no input text
+      if (!input.trim()) {
+        setTimeout(() => {
+          sendMessageWithFile(text, file.name);
+        }, 500);
       }
-
-      toast.success('File analyzed successfully!');
     } catch (error) {
       console.error('Error uploading file:', error);
-      toast.error('Failed to analyze file');
+      toast.error('Failed to process file');
     } finally {
       setUploadingFile(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+    }
+  };
+
+  const sendMessageWithFile = async (fileText: string, fileName: string) => {
+    if (!conversationId || !user) return;
+
+    setIsLoading(true);
+
+    try {
+      const userContent = `[Uploaded file: ${fileName}]\n\n${fileText}`;
+      
+      const { error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          role: 'user',
+          content: userContent,
+        });
+
+      if (insertError) throw insertError;
+
+      const newUserMsg: Message = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: userContent,
+        created_at: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, newUserMsg]);
+
+      const allMessages = [...messages, newUserMsg].map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            messages: allMessages,
+            conversationId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+
+      if (!response.body) throw new Error('No response body');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
+      const assistantMsgId = crypto.randomUUID();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMsgId,
+          role: 'assistant',
+          content: '',
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (let line of lines) {
+          line = line.trim();
+          if (!line || line.startsWith(':')) continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              assistantContent += content;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantMsgId
+                    ? { ...m, content: assistantContent }
+                    : m
+                )
+              );
+            }
+          } catch (e) {
+            console.error('Error parsing SSE:', e);
+          }
+        }
+      }
+
+      await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        role: 'assistant',
+        content: assistantContent,
+      });
+
+      // Clear file state
+      setUploadedFileText(null);
+      setUploadedFileName(null);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to send message');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -545,7 +681,24 @@ const Chat = () => {
           {(isTranscribing || uploadingFile) && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>{isTranscribing ? 'Transcribing audio...' : 'Analyzing file...'}</span>
+              <span>{isTranscribing ? 'Transcribing audio...' : 'Processing file...'}</span>
+            </div>
+          )}
+          {uploadedFileName && !uploadingFile && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-primary/10 rounded-lg text-sm">
+              <Paperclip className="h-4 w-4 text-primary" />
+              <span className="text-foreground">{uploadedFileName} ready</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setUploadedFileText(null);
+                  setUploadedFileName(null);
+                }}
+                className="ml-auto h-6 px-2"
+              >
+                Remove
+              </Button>
             </div>
           )}
           <div className="flex gap-2">
@@ -586,9 +739,9 @@ const Chat = () => {
             />
             <Button
               onClick={sendMessage}
-              disabled={!input.trim() || isLoading || isRecording}
+              disabled={(!input.trim() && !uploadedFileText) || isLoading || isRecording}
               size="icon"
-              className="h-[50px] w-[50px] rounded-full shrink-0"
+              className="h-[50px] w-[50px] rounded-full shrink-0 bg-cyan-500 hover:bg-cyan-600 text-white"
             >
               <Send className="h-5 w-5" />
             </Button>
