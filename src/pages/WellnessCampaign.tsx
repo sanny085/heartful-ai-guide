@@ -28,31 +28,87 @@ const INDIAN_STATES = [
   "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
 ];
 
+const COUNTRY_CODES = [
+  { code: "+91", country: "India" },
+  { code: "+1", country: "USA/Canada" },
+  { code: "+44", country: "UK" },
+  { code: "+61", country: "Australia" },
+  { code: "+971", country: "UAE" },
+];
+
+// Spam/inappropriate words filter
+const BLOCKED_WORDS = [
+  "love",
+  "breakup",
+  "phishing",
+  "scam",
+  "fake",
+  "spam",
+  "test",
+  "dummy",
+  "joke",
+  "fun",
+  "prank",
+  "troll",
+  "hate",
+  "kill",
+  "die",
+  "suicide",
+];
+
 const wellnessSchema = z.object({
   fullName: z.string()
     .trim()
     .min(3, { message: "Name must be at least 3 characters" })
-    .max(100, { message: "Name must be less than 100 characters" }),
-  countryCode: z.string().default("+91"),
+    .max(100, { message: "Name must be less than 100 characters" })
+    .refine(
+      (val) => {
+        const lowerVal = val.toLowerCase();
+        return !BLOCKED_WORDS.some((word) => lowerVal.includes(word));
+      },
+      { message: "Please provide a valid name without inappropriate content" }
+    ),
+  countryCode: z.string().nonempty({ message: "Please select a country code" }),
   mobile: z.string()
     .trim()
-    .regex(/^\d{10}$/, { message: "Mobile number must be exactly 10 digits" }),
+    .regex(/^[0-9]{10}$/, { message: "Mobile number must be exactly 10 digits" }),
   age: z.coerce.number()
-    .int()
-    .min(18, { message: "Age must be between 18 and 120" })
-    .max(120, { message: "Age must be between 18 and 120" }),
-  gender: z.string()
-    .min(1, { message: "Please select your gender" }),
+    .int({ message: "Age must be a whole number" })
+    .min(18, { message: "You must be at least 18 years old" })
+    .max(120, { message: "Please enter a valid age" }),
+  gender: z.enum(["male", "female", "other"], {
+    message: "Please select a gender",
+  }),
   state: z.string()
-    .min(1, { message: "Please select your state" }),
+    .nonempty({ message: "Please select a state" }),
   healthChallenges: z.string()
     .trim()
-    .max(500, { message: "Health challenges must be less than 500 characters" })
-    .optional(),
+    .min(5, { message: "Please describe your challenges (at least 5 characters)" })
+    .max(500, { message: "Challenges description must be less than 500 characters" })
+    .refine(
+      (val) => {
+        const lowerVal = val.toLowerCase();
+        return !BLOCKED_WORDS.some((word) => lowerVal.includes(word));
+      },
+      { message: "Please provide genuine health challenges" }
+    ),
   healthConditions: z.string()
     .trim()
-    .max(1000, { message: "Health conditions must be less than 1000 characters" })
-    .optional(),
+    .min(10, {
+      message:
+        "Please provide detailed health information (minimum 10 characters) and avoid using words such as 'love', 'breakup', 'phishing', 'scam', 'fake', 'spam', 'test', 'dummy', 'joke', 'fun', 'prank', 'troll', 'hate', 'kill', 'die', or 'suicide'",
+    })
+    .max(1000, { message: "Health issues description must be less than 1000 characters" })
+    .refine(
+      (val) => {
+        const lowerVal = val.toLowerCase();
+        return !BLOCKED_WORDS.some((word) => lowerVal.includes(word));
+      },
+      {
+        message:
+          "Please provide detailed health information (minimum 10 characters) and avoid using words such as 'love', 'breakup', 'phishing', 'scam', 'fake', 'spam', 'test', 'dummy', 'joke', 'fun', 'prank', 'troll', 'hate', 'kill', 'die', or 'suicide'",
+      }
+    ),
 });
 
 type WellnessFormData = z.infer<typeof wellnessSchema>;
@@ -93,17 +149,26 @@ const WellnessCampaign = () => {
 
       if (error) throw error;
 
-      toast.success("Registration submitted successfully!", {
-        description: "We'll be in touch with you soon.",
+      toast.success("Registration Successful!", {
+        description: "Thank you for joining our wellness campaign.",
       });
       
       // Redirect to home after successful submission
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error("Failed to submit registration", {
-        description: "Please try again later.",
-      });
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const firstIssue = error.issues[0];
+        toast.error("Please fix the following errors:", {
+          description: firstIssue.message,
+          duration: 5000,
+        });
+      } else {
+        toast.error("Registration Failed", {
+          description: error.message,
+          duration: 5000,
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -150,6 +215,7 @@ const WellnessCampaign = () => {
                 id="fullName"
                 placeholder="Enter your full name (minimum 3 characters)"
                 {...register("fullName")}
+                required
                 className={errors.fullName ? "border-destructive" : ""}
               />
               {errors.fullName && (
@@ -165,21 +231,30 @@ const WellnessCampaign = () => {
                   value={watch("countryCode")}
                   onValueChange={(value) => setValue("countryCode", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.countryCode ? "border-destructive" : ""}>
                     <SelectValue placeholder="+91 (India)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="+91">+91 (India)</SelectItem>
+                    {COUNTRY_CODES.map(({ code, country }) => (
+                      <SelectItem key={code} value={code}>
+                        {code} ({country})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
+                {errors.countryCode && (
+                  <p className="text-sm text-destructive mt-1">{errors.countryCode.message}</p>
+                )}
               </div>
 
               <div>
                 <Label htmlFor="mobile">Mobile Number *</Label>
                 <Input
                   id="mobile"
+                  type="tel"
                   placeholder="Enter exactly 10 digits"
                   {...register("mobile")}
+                  required
                   maxLength={10}
                   className={errors.mobile ? "border-destructive" : ""}
                 />
@@ -198,6 +273,9 @@ const WellnessCampaign = () => {
                   type="number"
                   placeholder="Enter your age (18-120)"
                   {...register("age")}
+                  required
+                  min={18}
+                  max={120}
                   className={errors.age ? "border-destructive" : ""}
                 />
                 {errors.age && (
@@ -207,14 +285,14 @@ const WellnessCampaign = () => {
 
               <div>
                 <Label htmlFor="gender">Gender *</Label>
-                <Select value={gender} onValueChange={(value) => setValue("gender", value)}>
+                <Select value={gender} onValueChange={(value) => setValue("gender", value as "male" | "female" | "other")}>
                   <SelectTrigger className={errors.gender ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select your gender" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.gender && (
@@ -246,12 +324,13 @@ const WellnessCampaign = () => {
             {/* Health Challenges */}
             <div>
               <Label htmlFor="healthChallenges">
-                What health challenges are you currently facing?
+                What health challenges are you currently facing? *
               </Label>
               <Input
                 id="healthChallenges"
-                placeholder="E.g., Managing blood pressure, staying active, healthy eating"
+                placeholder="E.g., Managing blood pressure, staying active, healthy eating (minimum 5 characters)"
                 {...register("healthChallenges")}
+                required
                 className={errors.healthChallenges ? "border-destructive" : ""}
               />
               {errors.healthChallenges && (
@@ -262,12 +341,13 @@ const WellnessCampaign = () => {
             {/* Health Conditions */}
             <div>
               <Label htmlFor="healthConditions">
-                Please describe any specific health conditions or diseases you're dealing with
+                Please describe any specific health conditions or diseases you're dealing with *
               </Label>
               <Textarea
                 id="healthConditions"
-                placeholder="Share details about your health conditions, symptoms, or concerns. This helps us provide better personalized care."
+                placeholder="Share details about your health conditions, symptoms, or concerns (minimum 10 characters). This helps us provide better personalized care."
                 {...register("healthConditions")}
+                required
                 rows={4}
                 className={errors.healthConditions ? "border-destructive" : ""}
               />
