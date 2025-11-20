@@ -24,7 +24,7 @@ export default function HeartHealthAssessment() {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [existingAssessment, setExistingAssessment] = useState<any>(null);
+  const [latestAssessment, setLatestAssessment] = useState<any>(null);
   const [showExistingReport, setShowExistingReport] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -77,8 +77,8 @@ export default function HeartHealthAssessment() {
       return;
     }
 
-    // Load existing assessment data if available
-    const loadExistingData = async () => {
+    // Load latest assessment data to pre-fill form
+    const loadLatestAssessment = async () => {
       try {
         const { data, error } = await supabase
           .from("heart_health_assessments")
@@ -91,7 +91,7 @@ export default function HeartHealthAssessment() {
         if (error) throw error;
 
         if (data) {
-          setExistingAssessment(data);
+          setLatestAssessment(data);
           setShowExistingReport(true);
           setFormData({
             name: data.name || "",
@@ -114,11 +114,11 @@ export default function HeartHealthAssessment() {
           });
         }
       } catch (error) {
-        console.error("Error loading existing data:", error);
+        console.error("Error loading latest assessment:", error);
       }
     };
 
-    loadExistingData();
+    loadLatestAssessment();
   }, [user, navigate]);
 
   const calculateBMI = (height: number, weight: number) => {
@@ -182,29 +182,16 @@ export default function HeartHealthAssessment() {
 
       let assessmentId: string;
 
-      // Update existing assessment or create new one
-      if (existingAssessment) {
-        const { data, error } = await supabase
-          .from("heart_health_assessments")
-          .update(assessmentData)
-          .eq("id", existingAssessment.id)
-          .select()
-          .single();
+      // Always create a new assessment record
+      const { data, error } = await supabase
+        .from("heart_health_assessments")
+        .insert(assessmentData)
+        .select()
+        .single();
 
-        if (error) throw error;
-        assessmentId = data.id;
-        toast.success("Assessment updated successfully!");
-      } else {
-        const { data, error } = await supabase
-          .from("heart_health_assessments")
-          .insert(assessmentData)
-          .select()
-          .single();
-
-        if (error) throw error;
-        assessmentId = data.id;
-        toast.success("Assessment saved successfully!");
-      }
+      if (error) throw error;
+      assessmentId = data.id;
+      toast.success("New health report created successfully!");
 
       // Call edge function to generate AI insights
       const { error: insightsError } = await supabase.functions.invoke("generate-health-insights", {
@@ -544,25 +531,25 @@ export default function HeartHealthAssessment() {
                 Discover Your Heart Health : Begin Now!
               </h1>
               <p className="text-muted-foreground">
-                {existingAssessment 
-                  ? "Update your assessment to get fresh insights" 
+                {latestAssessment 
+                  ? "Create a new report or view your latest assessment" 
                   : "Answer a few simple questions to reveal your heart age and cardiovascular risk."}
               </p>
             </div>
 
             {/* Show existing report option */}
-            {showExistingReport && existingAssessment && (
+            {showExistingReport && latestAssessment && (
               <Card className="p-4 bg-accent/10 border-accent/20">
                 <div className="space-y-3">
                   <div>
                     <p className="font-semibold text-foreground">You have an existing health report</p>
                     <p className="text-sm text-muted-foreground">
-                      Last updated: {new Date(existingAssessment.updated_at).toLocaleDateString()}
+                      Last updated: {new Date(latestAssessment.updated_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Button
-                      onClick={() => navigate(`/heart-health-results?id=${existingAssessment.id}`)}
+                      onClick={() => navigate(`/heart-health-results?id=${latestAssessment.id}`)}
                       variant="default"
                       className="w-full"
                     >
@@ -614,7 +601,7 @@ export default function HeartHealthAssessment() {
             <Card className="p-8 shadow-lg">
               <div className="max-w-2xl mx-auto">
                 <h2 className="text-2xl font-bold mb-8">
-                  {existingAssessment ? "Update Your Health Assessment" : "Take the 10000Hearts Health Test"}
+                  Take the 10000Hearts Health Test
                 </h2>
 
                 {renderStepContent()}
@@ -626,7 +613,7 @@ export default function HeartHealthAssessment() {
                     className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
                     size="lg"
                   >
-                    {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : existingAssessment ? "Update & View Results" : "View Results"}
+                    {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : "Create New Report"}
                   </Button>
                 </div>
               </div>
