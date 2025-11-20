@@ -306,71 +306,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* About Section */}
-      <section className="bg-background/50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              About <span className="text-accent">10000Hearts</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We're on a mission to save Indian citizens from heart disease, diabetes, obesity, and mental health
-              challenges through AI-driven awareness and preventive care.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
-                <Heart className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Care & Compassion</h3>
-              <p className="text-muted-foreground">
-                Every interaction is designed with empathy and understanding at its core
-              </p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-                <Users className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Accessibility for All</h3>
-              <p className="text-muted-foreground">
-                Healthcare guidance in your language, available to every Indian citizen
-              </p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mb-4">
-                <Brain className="w-8 h-8 text-success" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">AI-Powered Intelligence</h3>
-              <p className="text-muted-foreground">Advanced AI that learns and adapts to your unique health patterns</p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
-              <div className="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center mb-4">
-                <Shield className="w-8 h-8 text-warning" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Prevention First</h3>
-              <p className="text-muted-foreground">
-                Focus on awareness and prevention to save lives before emergencies
-              </p>
-            </div>
-          </div>
-
-          {/* Vision */}
-          <div className="bg-accent/5 rounded-3xl p-12 text-center border border-accent/20">
-            <h3 className="text-3xl font-bold mb-4">Our Vision</h3>
-            <p className="text-lg text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              To create an intelligent AI ecosystem that guides every Indian toward better health, combining
-              cutting-edge technology with doctor insights and personalized wellness programs. Together, we're building
-              a healthier India, one heart at a time.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* How It Works */}
       <section id="how-it-works" className="py-20">
         <div className="container mx-auto px-4">
@@ -450,6 +385,71 @@ const Index = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section className="bg-background/50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              About <span className="text-accent">10000Hearts</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              We're on a mission to save Indian citizens from heart disease, diabetes, obesity, and mental health
+              challenges through AI-driven awareness and preventive care.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
+                <Heart className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Care & Compassion</h3>
+              <p className="text-muted-foreground">
+                Every interaction is designed with empathy and understanding at its core
+              </p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                <Users className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Accessibility for All</h3>
+              <p className="text-muted-foreground">
+                Healthcare guidance in your language, available to every Indian citizen
+              </p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mb-4">
+                <Brain className="w-8 h-8 text-success" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">AI-Powered Intelligence</h3>
+              <p className="text-muted-foreground">Advanced AI that learns and adapts to your unique health patterns</p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
+              <div className="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center mb-4">
+                <Shield className="w-8 h-8 text-warning" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Prevention First</h3>
+              <p className="text-muted-foreground">
+                Focus on awareness and prevention to save lives before emergencies
+              </p>
+            </div>
+          </div>
+
+          {/* Vision */}
+          <div className="bg-accent/5 rounded-3xl p-12 text-center border border-accent/20">
+            <h3 className="text-3xl font-bold mb-4">Our Vision</h3>
+            <p className="text-lg text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              To create an intelligent AI ecosystem that guides every Indian toward better health, combining
+              cutting-edge technology with doctor insights and personalized wellness programs. Together, we're building
+              a healthier India, one heart at a time.
+            </p>
           </div>
         </div>
       </section>
