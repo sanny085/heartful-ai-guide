@@ -571,7 +571,17 @@ export default function HeartHealthAssessment() {
             {!showExistingReport && (
               <div className="space-y-4">
                 {STEPS.map((step, index) => (
-                  <div key={step} className="flex items-center gap-3">
+                  <div 
+                    key={step} 
+                    className={`flex items-center gap-3 ${
+                      index <= currentStep ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-not-allowed opacity-60'
+                    }`}
+                    onClick={() => {
+                      if (index <= currentStep) {
+                        setCurrentStep(index);
+                      }
+                    }}
+                  >
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                         index === currentStep
@@ -581,7 +591,7 @@ export default function HeartHealthAssessment() {
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {index < currentStep ? "✓" : ""}
+                      {index < currentStep ? "✓" : index + 1}
                     </div>
                     <span
                       className={`text-sm ${
@@ -606,11 +616,21 @@ export default function HeartHealthAssessment() {
 
                 {renderStepContent()}
 
-                <div className="mt-8">
+                <div className="mt-8 flex gap-4">
+                  {currentStep > 0 && (
+                    <Button
+                      onClick={() => setCurrentStep(prev => prev - 1)}
+                      variant="outline"
+                      className="flex-1"
+                      size="lg"
+                    >
+                      Previous
+                    </Button>
+                  )}
                   <Button
                     onClick={handleNext}
                     disabled={!canProceed() || saving}
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+                    className={`${currentStep === 0 ? 'w-full' : 'flex-1'} bg-accent hover:bg-accent/90 text-accent-foreground`}
                     size="lg"
                   >
                     {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : "Create New Report"}
