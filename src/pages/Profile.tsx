@@ -44,7 +44,8 @@ const Profile = () => {
 
     if (error) {
       console.error('Error fetching profile:', error);
-      toast.error("Failed to load profile");
+      toast.error("Failed to load profile. Please sign in again.");
+      navigate('/auth');
       return;
     }
 
@@ -133,7 +134,7 @@ const Profile = () => {
       <div className="container mx-auto max-w-4xl py-8">
         <Button
           variant="outline"
-          onClick={() => navigate('/')}
+          onClick={() => window.location.href = "https://10000hearts.com/"}
           className="mb-6 border-primary text-primary hover:bg-primary/5"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

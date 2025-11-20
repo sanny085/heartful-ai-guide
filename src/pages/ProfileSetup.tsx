@@ -48,7 +48,7 @@ const ProfileSetup = () => {
 
     if (data) {
       // Profile exists, redirect to home
-      navigate('/');
+      window.location.href = "https://10000hearts.com/";
     }
   };
 
@@ -113,7 +113,7 @@ const ProfileSetup = () => {
       if (error) throw error;
 
       toast.success("Profile created successfully!");
-      navigate('/');
+      window.location.href = "https://10000hearts.com/";
     } catch (error: any) {
       toast.error("Failed to create profile");
     }

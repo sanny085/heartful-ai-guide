@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle }
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Assessment {
   id: string;
@@ -25,6 +26,7 @@ interface Assessment {
 
 export default function HeartHealthResults() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const assessmentId = searchParams.get("id");
   const [assessment, setAssessment] = useState<Assessment | null>(null);
@@ -33,15 +35,25 @@ export default function HeartHealthResults() {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Please sign in to view your results");
+      navigate("/auth");
+      return;
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
     if (!assessmentId) {
       toast.error("No assessment found");
       navigate("/heart-health");
       return;
     }
 
-    loadAssessment();
-    loadUserAndAssessments();
-  }, [assessmentId]);
+    if (user) {
+      loadAssessment();
+      loadUserAndAssessments();
+    }
+  }, [assessmentId, user]);
 
   const loadUserAndAssessments = async () => {
     try {
@@ -166,7 +178,7 @@ export default function HeartHealthResults() {
       <div className="container mx-auto px-4 max-w-5xl">
         <Button
           variant="ghost"
-          onClick={() => navigate("/")}
+          onClick={() => window.location.href = "https://10000hearts.com/"}
           className="mb-4"
         >
           <Home className="mr-2 h-4 w-4" />
