@@ -5,7 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Menu, ArrowLeft, Paperclip, Mic, MicOff, Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Send, Menu, ArrowLeft, Paperclip, Mic, MicOff, Loader2, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -486,10 +487,15 @@ const Chat = () => {
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
+              className={`flex gap-2 items-end ${
                 message.role === 'user' ? 'justify-end' : 'justify-start'
               }`}
             >
+              {message.role === 'assistant' && (
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback className="text-lg">🩺</AvatarFallback>
+                </Avatar>
+              )}
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2 ${
                   message.role === 'user'
@@ -507,10 +513,20 @@ const Chat = () => {
                   })}
                 </span>
               </div>
+              {message.role === 'user' && (
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+              )}
             </div>
           ))}
           {isLoading && (
-            <div className="flex justify-start">
+            <div className="flex gap-2 items-end justify-start">
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="text-lg">🩺</AvatarFallback>
+              </Avatar>
               <div className="bg-muted rounded-2xl px-4 py-2">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce" />
