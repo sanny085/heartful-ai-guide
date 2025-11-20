@@ -233,52 +233,60 @@ const Index = () => {
               />
             </div>
 
-            <div className="space-y-8 order-1 lg:order-2">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">Talk Naturally</h3>
-                  <p className="text-muted-foreground">
-                    Interact with your AI companion in Telugu, English, or Hindi through voice or text
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Activity className="w-6 h-6 text-success" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">Share Your Health</h3>
-                  <p className="text-muted-foreground">
-                    Upload reports and share symptoms — our AI understands and analyzes your health data
-                  </p>
+            <div className="space-y-6 order-1 lg:order-2">
+              <div className="bg-gradient-to-br from-card/80 via-card to-accent/5 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex gap-5">
+                  <div className="w-14 h-14 bg-accent/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-7 h-7 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-3 text-foreground">Talk Naturally</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Interact with your AI companion in Telugu, English, or Hindi through voice or text
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Lightbulb className="w-6 h-6 text-warning" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">Get Insights</h3>
-                  <p className="text-muted-foreground">
-                    Receive personalized preventive lessons and wellness recommendations
-                  </p>
+              <div className="bg-gradient-to-br from-card/80 via-card to-success/5 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex gap-5">
+                  <div className="w-14 h-14 bg-success/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Activity className="w-7 h-7 text-success" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-3 text-foreground">Share Your Health</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Upload reports and share symptoms — our AI understands and analyzes your health data
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Heart className="w-6 h-6 text-primary" />
+              <div className="bg-gradient-to-br from-card/80 via-card to-warning/5 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex gap-5">
+                  <div className="w-14 h-14 bg-warning/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Lightbulb className="w-7 h-7 text-warning" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-3 text-foreground">Get Insights</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Receive personalized preventive lessons and wellness recommendations
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">Stay Healthy</h3>
-                  <p className="text-muted-foreground">
-                    Follow daily guidance and track your wellness journey with continuous AI support
-                  </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-card/80 via-card to-primary/5 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex gap-5">
+                  <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-7 h-7 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold mb-3 text-foreground">Stay Healthy</h3>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Follow daily guidance and track your wellness journey with continuous AI support
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
