@@ -175,8 +175,7 @@ const Index = () => {
 
           {/* Title */}
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-6 leading-tight">
-            Discover Your Heart Health<br />
-            <span className="text-primary">Begin Your Journey Now</span>
+            <span className="text-primary">Discover Your Heart Health</span>
           </h2>
 
           {/* Description */}
@@ -235,22 +234,6 @@ const Index = () => {
               <p className="text-muted-foreground">
                 Monitor your health metrics over time and receive actionable insights to improve your wellbeing.
               </p>
-            </div>
-          </div>
-
-          {/* Stats Section */}
-          <div className="grid grid-cols-3 gap-8 text-center border-t border-border pt-12">
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">10,000+</div>
-              <div className="text-sm md:text-base text-muted-foreground">Health Assessments Completed</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-accent mb-2">24/7</div>
-              <div className="text-sm md:text-base text-muted-foreground">AI Support Available</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-success mb-2">95%</div>
-              <div className="text-sm md:text-base text-muted-foreground">User Satisfaction Rate</div>
             </div>
           </div>
         </div>
