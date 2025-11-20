@@ -10,7 +10,7 @@ const corsHeaders = {
 // Validation schema for incoming messages
 const messageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
-  content: z.string().trim().min(1).max(4000),
+  content: z.string().trim().min(1).max(100000),
 });
 
 const requestSchema = z.object({
@@ -110,7 +110,15 @@ Key Guidelines:
 - Use simple, clear language
 - Ask clarifying questions when needed${healthContext}
 
-Remember: You're a supportive coach, not a replacement for professional medical advice.`;
+When analyzing uploaded documents (reports, test results, medical records):
+- Provide a clear, structured summary of the document
+- Explain key findings and what they mean in simple terms
+- Highlight any concerning values or patterns
+- Suggest preventive measures and lifestyle changes based on the content
+- Break down medical terminology into easy-to-understand language
+- Organize your response with clear sections: Summary, Key Findings, Recommendations, Prevention Tips
+
+Remember: You're a supportive coach, not a replacement for professional medical advice. Always recommend consulting with healthcare professionals for proper diagnosis and treatment.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
