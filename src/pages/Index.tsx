@@ -162,6 +162,100 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Featured Health Journey Section */}
+      <section className="container mx-auto px-4 py-16">
+        <div className="max-w-6xl mx-auto">
+          {/* Badge */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-sm font-medium text-primary border border-primary/20">
+              <Activity className="w-4 h-4" />
+              Your AI Health Companion
+            </div>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-6 leading-tight">
+            Discover Your Heart Health<br />
+            <span className="text-primary">Begin Your Journey Now</span>
+          </h2>
+
+          {/* Description */}
+          <p className="text-lg text-muted-foreground text-center max-w-3xl mx-auto mb-10">
+            Answer a few simple questions to reveal your heart age and cardiovascular risk. Then chat with our AI physician for personalized health guidance.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-wrap justify-center gap-4 mb-16">
+            <Button
+              size="lg"
+              onClick={() => navigate("/heart-health")}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
+            >
+              <Heart className="w-5 h-5 mr-2" />
+              View/Update Health Report
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => navigate("/auth")}
+              className="border-primary text-primary hover:bg-primary/5 px-8 py-6 text-lg"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Chat with AI Doctor
+            </Button>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-xl transition-all border border-border">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-card-foreground">Heart Health Assessment</h3>
+              <p className="text-muted-foreground">
+                Comprehensive evaluation of your cardiovascular health with instant results and personalized insights.
+              </p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-xl transition-all border border-border">
+              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4">
+                <MessageCircle className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-card-foreground">AI Health Companion</h3>
+              <p className="text-muted-foreground">
+                Chat with our AI physician 24/7. Get answers to your health questions with personalized recommendations.
+              </p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-xl transition-all border border-border">
+              <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mb-4">
+                <Activity className="w-8 h-8 text-success" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-card-foreground">Track Your Progress</h3>
+              <p className="text-muted-foreground">
+                Monitor your health metrics over time and receive actionable insights to improve your wellbeing.
+              </p>
+            </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="grid grid-cols-3 gap-8 text-center border-t border-border pt-12">
+            <div>
+              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">10,000+</div>
+              <div className="text-sm md:text-base text-muted-foreground">Health Assessments Completed</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold text-accent mb-2">24/7</div>
+              <div className="text-sm md:text-base text-muted-foreground">AI Support Available</div>
+            </div>
+            <div>
+              <div className="text-4xl md:text-5xl font-bold text-success mb-2">95%</div>
+              <div className="text-sm md:text-base text-muted-foreground">User Satisfaction Rate</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* About Section */}
       <section className="bg-background/50 py-20">
         <div className="container mx-auto px-4">
