@@ -206,15 +206,20 @@ export default function HeartHealthResults() {
                   onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
                 >
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-foreground">
-                        Report #{allAssessments.length - index}
-                      </h4>
-                      {item.id === assessmentId && (
-                        <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
-                          Viewing
-                        </span>
-                      )}
+                    <div className="space-y-2">
+                      <h3 className="font-bold text-foreground text-lg">
+                        {item.name}
+                      </h3>
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm text-muted-foreground">
+                          Report #{allAssessments.length - index}
+                        </h4>
+                        {item.id === assessmentId && (
+                          <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
+                            Viewing
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
