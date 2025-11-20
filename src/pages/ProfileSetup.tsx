@@ -24,6 +24,13 @@ const ProfileSetup = () => {
     medical_category: "",
   });
 
+  // Pre-fill name from Google profile if available
+  useEffect(() => {
+    if (user?.user_metadata?.full_name && !formData.name) {
+      setFormData(prev => ({ ...prev, name: user.user_metadata.full_name }));
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
