@@ -1,5 +1,21 @@
 import { Button } from "@/components/ui/button";
-import { Heart, Activity, MessageCircle, User, Users, Brain, Shield, MessageSquare, Mic, Lightbulb, TrendingUp, Smile, UsersRound, Globe, Headphones } from "lucide-react";
+import {
+  Heart,
+  Activity,
+  MessageCircle,
+  User,
+  Users,
+  Brain,
+  Shield,
+  MessageSquare,
+  Mic,
+  Lightbulb,
+  TrendingUp,
+  Smile,
+  UsersRound,
+  Globe,
+  Headphones,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
@@ -44,11 +60,11 @@ const Index = () => {
             <Heart className="w-10 h-10 text-accent fill-accent" />
             <span className="text-3xl font-bold text-primary">10000Hearts</span>
           </div>
-          {!loading && (
-            user ? (
+          {!loading &&
+            (user ? (
               <Button
                 variant="outline"
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate("/profile")}
                 className="border-primary text-primary hover:bg-primary/5"
               >
                 <User className="w-4 h-4 mr-2" />
@@ -57,13 +73,12 @@ const Index = () => {
             ) : (
               <Button
                 variant="outline"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate("/auth")}
                 className="border-primary text-primary hover:bg-primary/5"
               >
                 Sign In
               </Button>
-            )
-          )}
+            ))}
         </div>
       </header>
 
@@ -75,15 +90,14 @@ const Index = () => {
               <Heart className="w-4 h-4" />
               Saving Hearts, Building Health
             </div>
-            
+
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
-              Your AI Wellness Partner for a{" "}
-              <span className="text-accent">Healthier Tomorrow</span>
+              Your AI Wellness Partner for a <span className="text-accent">Healthier Tomorrow</span>
             </h1>
-            
+
             <p className="text-xl text-muted-foreground leading-relaxed">
-              Meet your personal AI companion that understands you in Telugu, English, and Hindi. 
-              Get preventive health insights, wellness guidance, and compassionate care - available 24/7.
+              Meet your personal AI companion that understands you in Telugu, English, and Hindi. Get preventive health
+              insights, wellness guidance, and compassionate care - available 24/7.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -107,7 +121,7 @@ const Index = () => {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-6 pt-8">
               <div>
-                <div className="text-4xl font-bold text-accent mb-1">10K+</div>
+                <div className="text-4xl font-bold text-accent mb-1">1000+</div>
                 <div className="text-sm text-muted-foreground">Hearts Saved</div>
               </div>
               <div>
@@ -123,7 +137,7 @@ const Index = () => {
 
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-primary/20 blur-3xl rounded-full"></div>
-            <img 
+            <img
               src={heroImage}
               alt="Healthcare team with AI technology"
               className="relative rounded-3xl shadow-2xl w-full h-auto"
@@ -140,8 +154,8 @@ const Index = () => {
               About <span className="text-accent">10000Hearts</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We're on a mission to save Indian citizens from heart disease, diabetes, obesity, and mental 
-              health challenges through AI-driven awareness and preventive care.
+              We're on a mission to save Indian citizens from heart disease, diabetes, obesity, and mental health
+              challenges through AI-driven awareness and preventive care.
             </p>
           </div>
 
@@ -171,9 +185,7 @@ const Index = () => {
                 <Brain className="w-8 h-8 text-success" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-card-foreground">AI-Powered Intelligence</h3>
-              <p className="text-muted-foreground">
-                Advanced AI that learns and adapts to your unique health patterns
-              </p>
+              <p className="text-muted-foreground">Advanced AI that learns and adapts to your unique health patterns</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border">
@@ -191,9 +203,9 @@ const Index = () => {
           <div className="bg-accent/5 rounded-3xl p-12 text-center border border-accent/20">
             <h3 className="text-3xl font-bold mb-4">Our Vision</h3>
             <p className="text-lg text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-              To create an intelligent AI ecosystem that guides every Indian toward better health, 
-              combining cutting-edge technology with doctor insights and personalized wellness programs. 
-              Together, we're building a healthier India, one heart at a time.
+              To create an intelligent AI ecosystem that guides every Indian toward better health, combining
+              cutting-edge technology with doctor insights and personalized wellness programs. Together, we're building
+              a healthier India, one heart at a time.
             </p>
           </div>
         </div>
@@ -214,7 +226,7 @@ const Index = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="relative order-2 lg:order-1">
               <div className="absolute inset-0 bg-gradient-to-br from-success/20 to-accent/20 blur-3xl rounded-full"></div>
-              <img 
+              <img
                 src={aiDashboard}
                 alt="AI Health Dashboard"
                 className="relative rounded-3xl shadow-2xl w-full h-auto"
@@ -286,8 +298,8 @@ const Index = () => {
               Speak Your <span className="text-accent">Language</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Healthcare should never have language barriers. Talk to your AI companion in the language 
-              you're most comfortable with.
+              Healthcare should never have language barriers. Talk to your AI companion in the language you're most
+              comfortable with.
             </p>
           </div>
 
@@ -296,25 +308,19 @@ const Index = () => {
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
               <div className="text-5xl font-bold text-accent mb-2">తెలుగు</div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Telugu</h3>
-              <p className="text-muted-foreground">
-                Full support for Telugu speakers across India
-              </p>
+              <p className="text-muted-foreground">Full support for Telugu speakers across India</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
               <div className="text-5xl font-bold text-primary mb-2">English</div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">English</h3>
-              <p className="text-muted-foreground">
-                Accessible to English-speaking users nationwide
-              </p>
+              <p className="text-muted-foreground">Accessible to English-speaking users nationwide</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
               <div className="text-5xl font-bold text-success mb-2">हिन्दी</div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Hindi</h3>
-              <p className="text-muted-foreground">
-                Comprehensive Hindi language support
-              </p>
+              <p className="text-muted-foreground">Comprehensive Hindi language support</p>
             </div>
           </div>
 
@@ -325,9 +331,7 @@ const Index = () => {
                 <MessageCircle className="w-8 h-8 text-warning" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-card-foreground">Text & Voice</h3>
-              <p className="text-muted-foreground">
-                Choose how you want to communicate — type or speak naturally
-              </p>
+              <p className="text-muted-foreground">Choose how you want to communicate — type or speak naturally</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
@@ -335,9 +339,7 @@ const Index = () => {
                 <Mic className="w-8 h-8 text-accent" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-card-foreground">Emotion Detection</h3>
-              <p className="text-muted-foreground">
-                Our AI understands your tone and emotions for better care
-              </p>
+              <p className="text-muted-foreground">Our AI understands your tone and emotions for better care</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
@@ -345,9 +347,7 @@ const Index = () => {
                 <Heart className="w-8 h-8 text-primary" />
               </div>
               <h3 className="text-xl font-semibold mb-2 text-card-foreground">Cultural Context</h3>
-              <p className="text-muted-foreground">
-                Health advice that respects Indian culture and lifestyle
-              </p>
+              <p className="text-muted-foreground">Health advice that respects Indian culture and lifestyle</p>
             </div>
           </div>
         </div>
@@ -410,9 +410,7 @@ const Index = () => {
                 <UsersRound className="w-8 h-8 text-success" />
               </div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Family Health Tracking</h3>
-              <p className="text-muted-foreground">
-                Monitor and manage health for your entire family in one place
-              </p>
+              <p className="text-muted-foreground">Monitor and manage health for your entire family in one place</p>
             </div>
           </div>
 
@@ -438,8 +436,8 @@ const Index = () => {
               Your <span className="text-accent">AI Health Companion</span> is Waiting
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Join thousands of Indians taking control of their health with AI-powered guidance, 
-              preventive care, and compassionate support — available 24/7 in your language.
+              Join thousands of Indians taking control of their health with AI-powered guidance, preventive care, and
+              compassionate support — available 24/7 in your language.
             </p>
 
             <div className="flex flex-wrap gap-4 justify-center mb-12">
