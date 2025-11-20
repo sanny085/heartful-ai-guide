@@ -40,12 +40,11 @@ const Profile = () => {
       .from('profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching profile:', error);
-      toast.error("Failed to load profile. Please sign in again.");
-      navigate('/auth');
+      toast.error("Failed to load profile data.");
       return;
     }
 
@@ -61,6 +60,7 @@ const Profile = () => {
         medical_category: data.medical_category || "",
       });
     } else {
+      // No profile exists, redirect to setup
       navigate('/profile-setup');
     }
   };
