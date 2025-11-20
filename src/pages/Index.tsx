@@ -316,13 +316,13 @@ const Index = () => {
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
               <div className="text-5xl font-bold text-accent mb-2">తెలుగు</div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Telugu</h3>
-              <p className="text-muted-foreground">Full support for Telugu speakers across India</p>
+              <p className="text-muted-foreground">భారతదేశంలోని తెలుగు మాట్లాడేవారికి పూర్తి మద్దతు</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
               <div className="text-5xl font-bold text-success mb-2">हिन्दी</div>
               <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Hindi</h3>
-              <p className="text-muted-foreground">Comprehensive Hindi language support</p>
+              <p className="text-muted-foreground">व्यापक हिंदी भाषा समर्थन</p>
             </div>
 
             <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
