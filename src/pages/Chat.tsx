@@ -206,10 +206,31 @@ const Chat = () => {
       };
       setMessages((prev) => [...prev, newUserMsg]);
 
-      const allMessages = [...messages, newUserMsg].map(m => ({
-        role: m.role,
-        content: m.content,
-      }));
+      // Prepare messages for API: truncate long content and keep last 20 messages
+      const allMessages = [...messages, newUserMsg]
+        .slice(-20) // Keep only last 20 messages
+        .map(m => {
+          let content = m.content;
+          
+          // If message contains file upload marker but is too long, truncate
+          if (content.startsWith('[Uploaded')) {
+            // Keep only the file name, remove any file content
+            const fileNameMatch = content.match(/\[Uploaded [^:]+: ([^\]]+)\]/);
+            if (fileNameMatch) {
+              content = `[Uploaded file: ${fileNameMatch[1]}]`;
+            }
+          }
+          
+          // Truncate any message longer than 2000 characters
+          if (content.length > 2000) {
+            content = content.substring(0, 2000) + '... [truncated]';
+          }
+          
+          return {
+            role: m.role,
+            content,
+          };
+        });
 
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
