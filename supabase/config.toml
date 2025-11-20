@@ -1,1 +1,13 @@
 project_id = "khkbaiabktpmjgpnxxse"
+
+[functions.chat]
+verify_jwt = true
+
+[functions.generate-health-insights]
+verify_jwt = true
+
+[functions.summarize-file]
+verify_jwt = true
+
+[functions.transcribe-audio]
+verify_jwt = true

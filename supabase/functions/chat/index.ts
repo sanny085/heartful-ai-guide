@@ -65,6 +65,53 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Get user's profile for personalization
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, preferred_language, medical_category')
+      .eq('user_id', user.id)
+      .single();
+
+    const language = profile?.preferred_language || 'English';
+    const userName = profile?.name || 'there';
+    const medicalFocus = profile?.medical_category || 'general health';
+
+    // Get user's latest health assessment if available
+    const { data: latestAssessment } = await supabase
+      .from('heart_health_assessments')
+      .select('age, gender, bmi, risk_score, heart_age')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    let healthContext = '';
+    if (latestAssessment) {
+      healthContext = `\n\nUser's Health Profile:
+- Age: ${latestAssessment.age}
+- Gender: ${latestAssessment.gender}
+- BMI: ${latestAssessment.bmi}
+- Heart Risk Score: ${latestAssessment.risk_score}/100
+- Heart Age: ${latestAssessment.heart_age}
+
+Use this information to provide personalized health advice when relevant.`;
+    }
+
+    const systemPrompt = `You are a compassionate AI Health Coach specializing in ${medicalFocus}. Your name is HealthAI.
+
+Key Guidelines:
+- Respond in ${language}
+- Address the user as ${userName}
+- Provide evidence-based health information
+- Be empathetic and supportive
+- Encourage healthy lifestyle choices
+- When discussing medical topics, remind users to consult healthcare professionals for diagnosis
+- Focus on preventive care and wellness
+- Use simple, clear language
+- Ask clarifying questions when needed${healthContext}
+
+Remember: You're a supportive coach, not a replacement for professional medical advice.`;
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -72,11 +119,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5',
+        model: 'google/gemini-2.5-flash',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a helpful AI assistant. Keep your responses clear, concise, and friendly.' 
+            content: systemPrompt
           },
           ...messages,
         ],
