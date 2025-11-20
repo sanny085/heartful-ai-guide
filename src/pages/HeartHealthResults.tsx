@@ -178,9 +178,100 @@ export default function HeartHealthResults() {
             <Heart className="w-12 h-12 text-accent fill-accent" />
             <div>
               <h2 className="text-2xl font-bold">Hi {assessment.name},</h2>
-              <h1 className="text-3xl font-bold">Here's a snapshot of your heart health report</h1>
+              <h1 className="text-3xl font-bold">Heart Health Reports</h1>
             </div>
           </div>
+        </div>
+
+        {/* Report History Section - Now at the top */}
+        {allAssessments.length > 0 && (
+          <Card className="p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-foreground">Your Reports</h3>
+              <Button 
+                onClick={() => navigate("/heart-health")}
+                size="sm"
+                className="bg-accent hover:bg-accent/90"
+              >
+                + Create New Report
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allAssessments.map((item, index) => (
+                <Card 
+                  key={item.id} 
+                  className={`p-4 cursor-pointer transition-all hover:shadow-lg ${
+                    item.id === assessmentId ? 'border-accent border-2 bg-accent/10' : 'border-border hover:border-accent/50'
+                  }`}
+                  onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-foreground">
+                        Report #{allAssessments.length - index}
+                      </h4>
+                      {item.id === assessmentId && (
+                        <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
+                          Viewing
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Date</span>
+                        <span className="text-xs font-medium text-foreground">
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Heart Age</span>
+                        <span className="text-xs font-medium text-foreground">
+                          {item.heart_age || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Risk</span>
+                        <span className="text-xs font-medium text-foreground">
+                          {item.risk_score ? `${item.risk_score.toFixed(1)}%` : 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">BMI</span>
+                        <span className="text-xs font-medium text-foreground">
+                          {item.bmi ? item.bmi.toFixed(1) : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {item.id !== assessmentId && (
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        className="w-full mt-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/heart-health-results?id=${item.id}`);
+                        }}
+                      >
+                        View Report
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Current Report Details */}
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold text-foreground">
+            Report Details - {new Date(assessment.created_at).toLocaleDateString()}
+          </h2>
         </div>
 
         <Tabs defaultValue="health" className="w-full">
@@ -188,7 +279,6 @@ export default function HeartHealthResults() {
             <TabsTrigger value="health">Heart Health</TabsTrigger>
             <TabsTrigger value="insights">Insights</TabsTrigger>
             <TabsTrigger value="risk">Risk Contributors</TabsTrigger>
-            <TabsTrigger value="history">Report History</TabsTrigger>
           </TabsList>
 
           <TabsContent value="health" className="space-y-8">
@@ -611,87 +701,6 @@ export default function HeartHealthResults() {
                   </div>
                 )}
               </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-6">
-            <Card className="p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Your Report History</h2>
-              {allAssessments.length > 0 ? (
-                <div className="space-y-4">
-                  {allAssessments.map((item, index) => (
-                    <Card 
-                      key={item.id} 
-                      className={`p-6 cursor-pointer transition-all hover:shadow-lg ${
-                        item.id === assessmentId ? 'border-accent border-2 bg-accent/5' : 'border-border'
-                      }`}
-                      onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-foreground">
-                              Report #{allAssessments.length - index}
-                            </h3>
-                            {item.id === assessmentId && (
-                              <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
-                                Currently Viewing
-                              </span>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">Created</p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {new Date(item.created_at).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Heart Age</p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {item.heart_age || 'N/A'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">Risk Score</p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {item.risk_score ? `${item.risk_score.toFixed(1)}%` : 'N/A'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-muted-foreground">BMI</p>
-                              <p className="text-sm font-semibold text-foreground">
-                                {item.bmi ? item.bmi.toFixed(1) : 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <Button 
-                          variant={item.id === assessmentId ? "default" : "outline"}
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/heart-health-results?id=${item.id}`);
-                          }}
-                        >
-                          {item.id === assessmentId ? 'Current' : 'View'}
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-lg text-muted-foreground">No reports found</p>
-                  <Button 
-                    onClick={() => navigate("/heart-health")} 
-                    className="mt-4"
-                  >
-                    Take New Assessment
-                  </Button>
-                </div>
-              )}
             </Card>
           </TabsContent>
         </Tabs>
