@@ -162,6 +162,73 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Language Support */}
+      <section className="bg-background/50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-success/10 px-4 py-2 rounded-full text-sm font-medium text-success mb-6">
+              <Globe className="w-4 h-4" />
+              Multilingual Healthcare
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Speak Your <span className="text-accent">Language</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Healthcare should never have language barriers. Talk to your AI companion in the language you're most
+              comfortable with.
+            </p>
+          </div>
+
+          {/* Language Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="text-5xl font-bold text-accent mb-2">తెలుగు</div>
+              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Telugu</h3>
+              <p className="text-muted-foreground">భారతదేశంలోని తెలుగు మాట్లాడేవారికి పూర్తి మద్దతు</p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="text-5xl font-bold text-success mb-2">हिन्दी</div>
+              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Hindi</h3>
+              <p className="text-muted-foreground">व्यापक हिंदी भाषा समर्थन</p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="text-5xl font-bold text-primary mb-2">English</div>
+              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">English</h3>
+              <p className="text-muted-foreground">Accessible to English-speaking users nationwide</p>
+            </div>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                <MessageCircle className="w-8 h-8 text-warning" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Text & Voice</h3>
+              <p className="text-muted-foreground">Choose how you want to communicate — type or speak naturally</p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                <Mic className="w-8 h-8 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Emotion Detection</h3>
+              <p className="text-muted-foreground">Our AI understands your tone and emotions for better care</p>
+            </div>
+
+            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Cultural Context</h3>
+              <p className="text-muted-foreground">Health advice that respects Indian culture and lifestyle</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Health Journey Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="max-w-6xl mx-auto">
@@ -382,73 +449,6 @@ const Index = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Language Support */}
-      <section className="bg-background/50 py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-success/10 px-4 py-2 rounded-full text-sm font-medium text-success mb-6">
-              <Globe className="w-4 h-4" />
-              Multilingual Healthcare
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Speak Your <span className="text-accent">Language</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Healthcare should never have language barriers. Talk to your AI companion in the language you're most
-              comfortable with.
-            </p>
-          </div>
-
-          {/* Language Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="text-5xl font-bold text-accent mb-2">తెలుగు</div>
-              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Telugu</h3>
-              <p className="text-muted-foreground">భారతదేశంలోని తెలుగు మాట్లాడేవారికి పూర్తి మద్దతు</p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="text-5xl font-bold text-success mb-2">हिन्दी</div>
-              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">Hindi</h3>
-              <p className="text-muted-foreground">व्यापक हिंदी भाषा समर्थन</p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="text-5xl font-bold text-primary mb-2">English</div>
-              <h3 className="text-2xl font-semibold mb-2 text-card-foreground">English</h3>
-              <p className="text-muted-foreground">Accessible to English-speaking users nationwide</p>
-            </div>
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                <MessageCircle className="w-8 h-8 text-warning" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Text & Voice</h3>
-              <p className="text-muted-foreground">Choose how you want to communicate — type or speak naturally</p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                <Mic className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Emotion Detection</h3>
-              <p className="text-muted-foreground">Our AI understands your tone and emotions for better care</p>
-            </div>
-
-            <div className="bg-card p-8 rounded-2xl shadow-md hover:shadow-lg transition-shadow border border-border text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                <Heart className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-card-foreground">Cultural Context</h3>
-              <p className="text-muted-foreground">Health advice that respects Indian culture and lifestyle</p>
             </div>
           </div>
         </div>
