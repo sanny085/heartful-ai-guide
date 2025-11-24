@@ -57,7 +57,9 @@ export default function HeartHealthResults() {
 
   const loadUserAndAssessments = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         setCurrentUser(user);
         const { data, error } = await supabase
@@ -105,7 +107,7 @@ export default function HeartHealthResults() {
     if (!assessment?.systolic || !assessment?.diastolic) return "Unknown";
     const sys = assessment.systolic;
     const dia = assessment.diastolic;
-    
+
     if (sys < 120 && dia < 80) return "Normal";
     if (sys < 130 && dia < 80) return "Elevated";
     if (sys < 140 || dia < 90) return "High (Stage 1)";
@@ -115,7 +117,7 @@ export default function HeartHealthResults() {
   const getBMICategory = () => {
     if (!assessment?.bmi) return "Unknown";
     const bmi = assessment.bmi;
-    
+
     if (bmi < 18.5) return "Underweight";
     if (bmi < 25) return "Normal";
     if (bmi < 30) return "Overweight";
@@ -176,11 +178,7 @@ export default function HeartHealthResults() {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-5xl">
-        <Button
-          variant="ghost"
-          onClick={() => window.location.href = "https://10000hearts.com/"}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => (window.location.href = "https://10000hearts.com/")} className="mb-4">
           <Home className="mr-2 h-4 w-4" />
           Back to Home
         </Button>
@@ -200,32 +198,26 @@ export default function HeartHealthResults() {
           <Card className="p-6 mb-8">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-foreground">Your Reports</h3>
-              <Button 
-                onClick={() => navigate("/heart-health")}
-                size="sm"
-                className="bg-accent hover:bg-accent/90"
-              >
+              <Button onClick={() => navigate("/heart-health")} size="sm" className="bg-accent hover:bg-accent/90">
                 + Create New Report
               </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {allAssessments.map((item, index) => (
-                <Card 
-                  key={item.id} 
+                <Card
+                  key={item.id}
                   className={`p-4 cursor-pointer transition-all hover:shadow-lg ${
-                    item.id === assessmentId ? 'border-accent border-2 bg-accent/10' : 'border-border hover:border-accent/50'
+                    item.id === assessmentId
+                      ? "border-accent border-2 bg-accent/10"
+                      : "border-border hover:border-accent/50"
                   }`}
                   onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
                 >
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <h3 className="font-bold text-foreground text-lg">
-                        {item.name}
-                      </h3>
+                      <h3 className="font-bold text-foreground text-lg">{item.name}</h3>
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm text-muted-foreground">
-                          Report #{allAssessments.length - index}
-                        </h4>
+                        <h4 className="text-sm text-muted-foreground">Report #{allAssessments.length - index}</h4>
                         {item.id === assessmentId && (
                           <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
                             Viewing
@@ -233,7 +225,7 @@ export default function HeartHealthResults() {
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Date</span>
@@ -241,31 +233,29 @@ export default function HeartHealthResults() {
                           {new Date(item.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Heart Age</span>
-                        <span className="text-xs font-medium text-foreground">
-                          {item.heart_age || 'N/A'}
-                        </span>
+                        <span className="text-xs font-medium text-foreground">{item.heart_age || "N/A"}</span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Risk</span>
                         <span className="text-xs font-medium text-foreground">
-                          {item.risk_score ? `${item.risk_score.toFixed(1)}%` : 'N/A'}
+                          {item.risk_score ? `${item.risk_score.toFixed(1)}%` : "N/A"}
                         </span>
                       </div>
-                      
+
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">BMI</span>
                         <span className="text-xs font-medium text-foreground">
-                          {item.bmi ? item.bmi.toFixed(1) : 'N/A'}
+                          {item.bmi ? item.bmi.toFixed(1) : "N/A"}
                         </span>
                       </div>
                     </div>
 
                     {item.id !== assessmentId && (
-                      <Button 
+                      <Button
                         variant="outline"
                         size="sm"
                         className="w-full mt-2"
@@ -311,13 +301,9 @@ export default function HeartHealthResults() {
               </Card>
 
               <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
-                <div className="text-4xl font-bold text-foreground">
-                  {calculateCardiovascularScore()}
-                </div>
+                <div className="text-4xl font-bold text-foreground">{calculateCardiovascularScore()}</div>
                 <h3 className="text-lg font-semibold text-accent">CV Score</h3>
-                <p className={`text-xs font-medium ${getCVRiskLevel().color}`}>
-                  {getCVRiskLevel().level}
-                </p>
+                <p className={`text-xs font-medium ${getCVRiskLevel().color}`}>{getCVRiskLevel().level}</p>
                 <p className="text-xs text-muted-foreground mt-2">Cardiovascular Risk</p>
               </Card>
 
@@ -335,9 +321,7 @@ export default function HeartHealthResults() {
                   {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}%
                 </div>
                 <h3 className="text-lg font-semibold text-accent">Heart Risk</h3>
-                <p className={`text-xs font-medium ${getRiskCategory().color}`}>
-                  {getRiskCategory().level}
-                </p>
+                <p className={`text-xs font-medium ${getRiskCategory().color}`}>{getRiskCategory().level}</p>
                 <p className="text-xs text-muted-foreground mt-2">10-Year Risk</p>
               </Card>
             </div>
@@ -397,9 +381,7 @@ export default function HeartHealthResults() {
                   <p className="text-sm font-medium text-foreground">
                     Your Score: {calculateCardiovascularScore()} → {getCVRiskLevel().level}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Reversible with lifestyle improvements
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">Reversible with lifestyle improvements</p>
                 </div>
               </Card>
 
@@ -410,19 +392,16 @@ export default function HeartHealthResults() {
                   Heart Age tells you how old your heart behaves biologically, not your actual age.
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  If your heart age is higher than your real age, it means higher risk due to factors like weight, activity, sleep, or nutrition.
+                  If your heart age is higher than your real age, it means higher risk due to factors like weight,
+                  activity, sleep, or nutrition.
                 </p>
                 {assessment.heart_age && assessment.age && (
                   <div className="mt-4 p-3 bg-accent/10 rounded-lg">
                     <p className="text-sm font-medium text-foreground mb-2">
                       Your Heart Age: {assessment.heart_age} years
                     </p>
-                    <p className="text-sm font-medium text-foreground">
-                      Your Actual Age: {assessment.age} years
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {getHeartAgeMessage()}
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Your Actual Age: {assessment.age} years</p>
+                    <p className="text-xs text-muted-foreground mt-2">{getHeartAgeMessage()}</p>
                   </div>
                 )}
               </Card>
@@ -489,9 +468,7 @@ export default function HeartHealthResults() {
                     <p className="text-sm font-medium text-foreground">
                       Your BP: {assessment.systolic}/{assessment.diastolic} mmHg
                     </p>
-                    <p className="text-sm font-medium text-foreground">
-                      Category: {getBPCategory()}
-                    </p>
+                    <p className="text-sm font-medium text-foreground">Category: {getBPCategory()}</p>
                   </div>
                 </div>
                 <div>
@@ -517,7 +494,8 @@ export default function HeartHealthResults() {
                   {getBPCategory() === "Normal" && assessment.systolic && assessment.systolic < 100 && (
                     <div className="mt-4 p-3 bg-health-lightBlue rounded-lg">
                       <p className="text-xs text-foreground">
-                        💡 Low-normal BP is common in athletes and active individuals. If you experience dizziness or fatigue, consult your doctor.
+                        💡 Low-normal BP is common in athletes and active individuals. If you experience dizziness or
+                        fatigue, consult your doctor.
                       </p>
                     </div>
                   )}
@@ -564,9 +542,7 @@ export default function HeartHealthResults() {
                   </div>
                   <div className="flex justify-between items-center pb-2 border-b border-border">
                     <span className="text-sm font-medium text-foreground">Age</span>
-                    <span className="text-sm font-bold text-accent">
-                      {assessment.age} years
-                    </span>
+                    <span className="text-sm font-bold text-accent">{assessment.age} years</span>
                   </div>
                 </div>
               </div>
@@ -581,12 +557,10 @@ export default function HeartHealthResults() {
                     <Activity className="w-8 h-8 text-accent" />
                     <h2 className="text-3xl font-bold text-foreground">Your Personalized Health Insights</h2>
                   </div>
-                  
+
                   {assessment.ai_insights.summary && (
                     <div className="mb-8 pb-6 border-b border-border">
-                      <p className="text-lg leading-relaxed text-foreground">
-                        {assessment.ai_insights.summary}
-                      </p>
+                      <p className="text-lg leading-relaxed text-foreground">{assessment.ai_insights.summary}</p>
                     </div>
                   )}
 
@@ -594,89 +568,105 @@ export default function HeartHealthResults() {
                     <div className="space-y-6">
                       <h3 className="text-2xl font-semibold text-foreground mb-4">Recommended Actions</h3>
                       <div className="space-y-4">
-                        {assessment.ai_insights.recommendations.map((rec: any, idx: number) => {
-                          // Handle various data formats defensively
-                          let title = '';
-                          let description = '';
-                          
-                          if (typeof rec === 'object' && rec !== null) {
-                            title = rec.title || '';
-                            description = rec.description || '';
-                          } else if (typeof rec === 'string') {
-                            // If it's a string, use it as description
-                            description = rec;
-                            title = `Recommendation ${idx + 1}`;
-                          }
-                          
-                          // Clean up any JSON artifacts that might have slipped through
-                          title = title.replace(/^["']\s*title["']?\s*:\s*["']?/i, '').replace(/["'],?\s*$/, '').trim();
-                          description = description.replace(/^["']\s*description["']?\s*:\s*["']?/i, '').replace(/["'],?\s*$/, '').trim();
-                          
-                          // Skip if both are empty or just contain artifacts
-                          if (!title && !description) return null;
-                          if (title === '}' || description === '}' || description === '{') return null;
-                          
-                          return (
-                            <Card key={idx} className="p-6 bg-muted/30 border-l-4 border-accent">
-                              <div className="flex gap-4">
-                                <div className="flex-shrink-0 mt-1">
-                                  <CheckCircle className="w-6 h-6 text-accent" />
+                        {assessment.ai_insights.recommendations
+                          .map((rec: any, idx: number) => {
+                            // Handle various data formats defensively
+                            let title = "";
+                            let description = "";
+
+                            if (typeof rec === "object" && rec !== null) {
+                              title = rec.title || "";
+                              description = rec.description || "";
+                            } else if (typeof rec === "string") {
+                              // If it's a string, use it as description
+                              description = rec;
+                              title = `Recommendation ${idx + 1}`;
+                            }
+
+                            // Clean up any JSON artifacts that might have slipped through
+                            title = title
+                              .replace(/^["']\s*title["']?\s*:\s*["']?/i, "")
+                              .replace(/["'],?\s*$/, "")
+                              .trim();
+                            description = description
+                              .replace(/^["']\s*description["']?\s*:\s*["']?/i, "")
+                              .replace(/["'],?\s*$/, "")
+                              .trim();
+
+                            // Skip if both are empty or just contain artifacts
+                            if (!title && !description) return null;
+                            if (title === "}" || description === "}" || description === "{") return null;
+
+                            return (
+                              <Card key={idx} className="p-6 bg-muted/30 border-l-4 border-accent">
+                                <div className="flex gap-4">
+                                  <div className="flex-shrink-0 mt-1">
+                                    <CheckCircle className="w-6 h-6 text-accent" />
+                                  </div>
+                                  <div className="flex-1">
+                                    {title && <h4 className="text-lg font-semibold text-foreground mb-2">{title}</h4>}
+                                    {description && (
+                                      <p className="text-base leading-relaxed text-foreground/90">{description}</p>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="flex-1">
-                                  {title && <h4 className="text-lg font-semibold text-foreground mb-2">{title}</h4>}
-                                  {description && <p className="text-base leading-relaxed text-foreground/90">{description}</p>}
-                                </div>
-                              </div>
-                            </Card>
-                          );
-                        }).filter(Boolean)}
+                              </Card>
+                            );
+                          })
+                          .filter(Boolean)}
                       </div>
                     </div>
                   )}
 
                   {/* Do's and Don'ts Section - Show only if risk score is moderate or high */}
-                  {(assessment.risk_score && assessment.risk_score >= 10) && (assessment.ai_insights.dos || assessment.ai_insights.donts) && (
-                    <div className="mt-8 space-y-6">
-                      <h3 className="text-2xl font-semibold text-foreground mb-4">Important Guidelines</h3>
-                      <div className="grid md:grid-cols-2 gap-6">
-                        {/* Do's Section */}
-                        {assessment.ai_insights.dos && Array.isArray(assessment.ai_insights.dos) && assessment.ai_insights.dos.length > 0 && (
-                          <Card className="p-6 bg-success/5 border-l-4 border-success shadow-[0_4px_20px_-4px_hsl(var(--success)/0.3)]">
-                            <div className="flex items-center gap-3 mb-4">
-                              <CheckCircle className="w-6 h-6 text-success" />
-                              <h4 className="text-xl font-semibold text-success">Do's</h4>
-                            </div>
-                            <ul className="space-y-3">
-                              {assessment.ai_insights.dos.map((item: string, idx: number) => (
-                                <li key={idx} className="flex gap-3 text-foreground">
-                                  <span className="text-success mt-1">✓</span>
-                                  <span className="text-base leading-relaxed">{item}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </Card>
-                        )}
+                  {assessment.risk_score &&
+                    assessment.risk_score >= 10 &&
+                    (assessment.ai_insights.dos || assessment.ai_insights.donts) && (
+                      <div className="mt-8 space-y-6">
+                        <h3 className="text-2xl font-semibold text-foreground mb-4">Important Guidelines</h3>
+                        <div className="grid md:grid-cols-2 gap-6">
+                          {/* Do's Section */}
+                          {assessment.ai_insights.dos &&
+                            Array.isArray(assessment.ai_insights.dos) &&
+                            assessment.ai_insights.dos.length > 0 && (
+                              <Card className="p-6 bg-success/5 border-l-4 border-success shadow-[0_4px_20px_-4px_hsl(var(--success)/0.3)]">
+                                <div className="flex items-center gap-3 mb-4">
+                                  <CheckCircle className="w-6 h-6 text-success" />
+                                  <h4 className="text-xl font-semibold text-success">Do's</h4>
+                                </div>
+                                <ul className="space-y-3">
+                                  {assessment.ai_insights.dos.map((item: string, idx: number) => (
+                                    <li key={idx} className="flex gap-3 text-foreground">
+                                      <span className="text-success mt-1">✓</span>
+                                      <span className="text-base leading-relaxed">{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </Card>
+                            )}
 
-                        {/* Don'ts Section */}
-                        {assessment.ai_insights.donts && Array.isArray(assessment.ai_insights.donts) && assessment.ai_insights.donts.length > 0 && (
-                          <Card className="p-6 bg-warning/5 border-l-4 border-warning shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.4)]">
-                            <div className="flex items-center gap-3 mb-4">
-                              <AlertCircle className="w-6 h-6 text-warning" />
-                              <h4 className="text-xl font-semibold text-warning">Don'ts</h4>
-                            </div>
-                            <ul className="space-y-3">
-                              {assessment.ai_insights.donts.map((item: string, idx: number) => (
-                                <li key={idx} className="flex gap-3 text-foreground">
-                                  <span className="text-warning mt-1">✗</span>
-                                  <span className="text-base leading-relaxed">{item}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </Card>
-                        )}
+                          {/* Don'ts Section */}
+                          {assessment.ai_insights.donts &&
+                            Array.isArray(assessment.ai_insights.donts) &&
+                            assessment.ai_insights.donts.length > 0 && (
+                              <Card className="p-6 bg-warning/5 border-l-4 border-warning shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.4)]">
+                                <div className="flex items-center gap-3 mb-4">
+                                  <AlertCircle className="w-6 h-6 text-warning" />
+                                  <h4 className="text-xl font-semibold text-warning">Don'ts</h4>
+                                </div>
+                                <ul className="space-y-3">
+                                  {assessment.ai_insights.donts.map((item: string, idx: number) => (
+                                    <li key={idx} className="flex gap-3 text-foreground">
+                                      <span className="text-warning mt-1">✗</span>
+                                      <span className="text-base leading-relaxed">{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </Card>
+                            )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </Card>
               </div>
             ) : (
@@ -743,10 +733,10 @@ export default function HeartHealthResults() {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold mb-2">Talk to Our Team</h3>
                 <p className="text-sm text-muted-foreground mb-4">Speak with a health advisor</p>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
-                  onClick={() => window.open('https://10000hearts.com/register', '_blank')}
+                  onClick={() => window.open("https://10000hearts.com/register", "_blank")}
                 >
                   Schedule Call
                 </Button>
@@ -757,10 +747,10 @@ export default function HeartHealthResults() {
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2024 10000hearts. All rights reserved.</p>
+          <p>© 2025 10000hearts. All rights reserved.</p>
           <p className="mt-2">
-            This assessment is for informational purposes only and does not constitute medical advice.
-            Please consult with a healthcare professional for medical concerns.
+            This assessment is for informational purposes only and does not constitute medical advice. Please consult
+            with a healthcare professional for medical concerns.
           </p>
         </div>
       </div>
