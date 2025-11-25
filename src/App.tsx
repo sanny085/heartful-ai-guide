@@ -10,6 +10,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import Profile from "./pages/Profile";
 import HeartHealthAssessment from "./pages/HeartHealthAssessment";
 import HeartHealthResults from "./pages/HeartHealthResults";
+import HealthCheckup from "./pages/HealthCheckup";
 import Chat from "./pages/Chat";
 import WellnessCampaign from "./pages/WellnessCampaign";
 import Reviews from "./pages/Reviews";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/profile-setup" element={<ProfileSetup />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/health-checkup" element={<HealthCheckup />} />
             <Route path="/heart-health" element={<HeartHealthAssessment />} />
             <Route path="/heart-health-results" element={<HeartHealthResults />} />
             <Route path="/chat" element={<Chat />} />
