@@ -680,187 +680,192 @@ export default function HeartHealthResults() {
 
             {assessment.ai_insights ? (
               <div className="space-y-6">
-                <Card className="p-8 bg-card border-accent/20">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Activity className="w-8 h-8 text-accent" />
-                    <h2 className="text-3xl font-bold text-foreground">Your Personalized Health Insights</h2>
+                {/* Summary Section */}
+                {assessment.ai_insights.summary && (
+                  <Card className="p-8 bg-card border-accent/20">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Activity className="w-8 h-8 text-accent" />
+                      <h2 className="text-2xl font-bold text-foreground">Summary of Patient</h2>
+                    </div>
+                    <div className="p-6 bg-muted/20 rounded-lg">
+                      <p className="text-lg leading-relaxed text-foreground">{assessment.ai_insights.summary}</p>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Recommendation Cards */}
+                {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-semibold text-foreground">Recommended Actions</h3>
+                    {assessment.ai_insights.recommendations
+                      .map((rec: any, idx: number) => {
+                        let title = "";
+                        let description = "";
+
+                        if (typeof rec === "object" && rec !== null) {
+                          title = rec.title || "";
+                          description = rec.description || "";
+                        } else if (typeof rec === "string") {
+                          description = rec;
+                          title = `Recommendation ${idx + 1}`;
+                        }
+
+                        // Clean up all metadata and JSON artifacts
+                        title = title
+                          .replace(/[{}\[\]"']/g, "")
+                          .replace(/^(title|recommendations)\s*:\s*/i, "")
+                          .trim();
+                        description = description
+                          .replace(/[{}\[\]"']/g, "")
+                          .replace(/^description\s*:\s*/i, "")
+                          .trim();
+
+                        if (!title || !description || title.length < 2 || description.length < 5) return null;
+
+                        return (
+                          <Card key={idx} className="p-6 bg-background border border-accent/20">
+                            <h4 className="text-xl font-semibold text-foreground mb-3">{title}</h4>
+                            <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
+                          </Card>
+                        );
+                      })
+                      .filter(Boolean)}
                   </div>
+                )}
 
-                  {/* Summary Section */}
-                  {assessment.ai_insights.summary && (
-                    <div className="mb-8">
-                      <h3 className="text-2xl font-semibold text-foreground mb-4">Summary</h3>
-                      <div className="p-6 bg-muted/20 rounded-lg">
-                        <p className="text-lg leading-relaxed text-foreground">{assessment.ai_insights.summary}</p>
-                      </div>
+                {/* Diet Plan Card - Separate */}
+                {assessment.ai_insights.diet_plan && (
+                  <Card className="p-8 bg-gradient-to-br from-health-lightBlue/20 to-accent/5">
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="text-4xl">🥗</span>
+                      <h3 className="text-2xl font-semibold text-foreground">Your Personalized Diet Plan</h3>
                     </div>
-                  )}
 
-                  {/* Recommended Actions */}
-                  {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
-                    <div className="mb-8">
-                      <h3 className="text-2xl font-semibold text-foreground mb-4">Recommended Actions</h3>
-                      <div className="grid gap-4">
-                        {assessment.ai_insights.recommendations
-                          .map((rec: any, idx: number) => {
-                            let title = "";
-                            let description = "";
-
-                            if (typeof rec === "object" && rec !== null) {
-                              title = rec.title || "";
-                              description = rec.description || "";
-                            } else if (typeof rec === "string") {
-                              description = rec;
-                              title = `Recommendation ${idx + 1}`;
-                            }
-
-                            // Clean up JSON artifacts
-                            title = title.replace(/[{}"']/g, "").replace(/^title\s*:\s*/i, "").trim();
-                            description = description.replace(/[{}"']/g, "").replace(/^description\s*:\s*/i, "").trim();
-
-                            if (!title || !description || title.length < 2 || description.length < 5) return null;
-
-                            return (
-                              <Card key={idx} className="p-6 bg-background border border-accent/20">
-                                <h4 className="text-xl font-semibold text-foreground mb-3">{title}</h4>
-                                <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
-                              </Card>
-                            );
-                          })
-                          .filter(Boolean)}
+                    {assessment.ai_insights.diet_plan.summary && (
+                      <div className="mb-6">
+                        <p className="text-lg leading-relaxed text-foreground/90">
+                          {assessment.ai_insights.diet_plan.summary}
+                        </p>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Do's and Don'ts Section */}
-                  {(assessment.ai_insights.dos || assessment.ai_insights.donts) && (
-                    <div className="space-y-4">
-                      <h3 className="text-2xl font-semibold text-foreground mb-4">Important Guidelines</h3>
-                      
-                      {/* Do's - Green Cards */}
-                      {assessment.ai_insights.dos && Array.isArray(assessment.ai_insights.dos) && assessment.ai_insights.dos.length > 0 && (
-                        <div className="space-y-3">
-                          {assessment.ai_insights.dos.map((item: string, idx: number) => (
-                            <Card key={idx} className="p-4 bg-success/10 border-l-4 border-success">
-                              <div className="flex gap-3 items-start">
-                                <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                                <p className="text-base text-foreground">{item}</p>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Foods to Eat */}
+                      {assessment.ai_insights.diet_plan.foods_to_eat && 
+                       Array.isArray(assessment.ai_insights.diet_plan.foods_to_eat) &&
+                       assessment.ai_insights.diet_plan.foods_to_eat.length > 0 && (
+                        <Card className="p-6 bg-success/5 border-l-4 border-success">
+                          <div className="flex items-center gap-2 mb-4">
+                            <CheckCircle className="w-5 h-5 text-success" />
+                            <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
+                          </div>
+                          <ul className="space-y-2">
+                            {assessment.ai_insights.diet_plan.foods_to_eat.map((food: string, idx: number) => (
+                              <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                <span className="text-success mt-0.5">✓</span>
+                                <span>{food}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </Card>
                       )}
 
-                      {/* Don'ts - Red Cards */}
-                      {assessment.ai_insights.donts && Array.isArray(assessment.ai_insights.donts) && assessment.ai_insights.donts.length > 0 && (
-                        <div className="space-y-3 mt-6">
-                          {assessment.ai_insights.donts.map((item: string, idx: number) => (
-                            <Card key={idx} className="p-4 bg-destructive/10 border-l-4 border-destructive">
-                              <div className="flex gap-3 items-start">
-                                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                                <p className="text-base text-foreground">{item}</p>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
+                      {/* Foods to Avoid */}
+                      {assessment.ai_insights.diet_plan.foods_to_avoid && 
+                       Array.isArray(assessment.ai_insights.diet_plan.foods_to_avoid) &&
+                       assessment.ai_insights.diet_plan.foods_to_avoid.length > 0 && (
+                        <Card className="p-6 bg-warning/5 border-l-4 border-warning">
+                          <div className="flex items-center gap-2 mb-4">
+                            <AlertCircle className="w-5 h-5 text-warning" />
+                            <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
+                          </div>
+                          <ul className="space-y-2">
+                            {assessment.ai_insights.diet_plan.foods_to_avoid.map((food: string, idx: number) => (
+                              <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                <span className="text-warning mt-0.5">✗</span>
+                                <span>{food}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </Card>
                       )}
                     </div>
-                  )}
 
-                  {/* Diet Plan Section */}
-                  {assessment.ai_insights.diet_plan && (
-                    <div className="mt-8">
-                      <Card className="p-8 bg-gradient-to-br from-health-lightBlue/20 to-accent/5">
-                        <div className="flex items-center gap-3 mb-6">
-                          <span className="text-4xl">🥗</span>
-                          <h3 className="text-2xl font-semibold text-foreground">Your Personalized Diet Plan</h3>
-                        </div>
-
-                        {assessment.ai_insights.diet_plan.summary && (
-                          <div className="mb-6">
-                            <p className="text-lg leading-relaxed text-foreground/90">
-                              {assessment.ai_insights.diet_plan.summary}
+                    {(assessment.risk_score && assessment.risk_score > 20) && (
+                      <div className="mt-6 p-4 bg-warning/10 border-l-4 border-warning rounded">
+                        <div className="flex items-start gap-3">
+                          <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                          <div>
+                            <p className="font-semibold text-warning mb-1">Important Note:</p>
+                            <p className="text-sm text-foreground/90">
+                              Based on your risk score, we strongly recommend consulting with a healthcare provider 
+                              or registered dietitian for a comprehensive dietary plan tailored to your specific needs.
                             </p>
                           </div>
-                        )}
-
-                        <div className="grid md:grid-cols-2 gap-6 mb-6">
-                          {/* Foods to Eat */}
-                          {assessment.ai_insights.diet_plan.foods_to_eat && 
-                           Array.isArray(assessment.ai_insights.diet_plan.foods_to_eat) &&
-                           assessment.ai_insights.diet_plan.foods_to_eat.length > 0 && (
-                            <Card className="p-6 bg-success/5 border-l-4 border-success">
-                              <div className="flex items-center gap-2 mb-4">
-                                <CheckCircle className="w-5 h-5 text-success" />
-                                <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
-                              </div>
-                              <ul className="space-y-2">
-                                {assessment.ai_insights.diet_plan.foods_to_eat.map((food: string, idx: number) => (
-                                  <li key={idx} className="flex gap-2 text-sm text-foreground">
-                                    <span className="text-success mt-0.5">✓</span>
-                                    <span>{food}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </Card>
-                          )}
-
-                          {/* Foods to Avoid */}
-                          {assessment.ai_insights.diet_plan.foods_to_avoid && 
-                           Array.isArray(assessment.ai_insights.diet_plan.foods_to_avoid) &&
-                           assessment.ai_insights.diet_plan.foods_to_avoid.length > 0 && (
-                            <Card className="p-6 bg-warning/5 border-l-4 border-warning">
-                              <div className="flex items-center gap-2 mb-4">
-                                <AlertCircle className="w-5 h-5 text-warning" />
-                                <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
-                              </div>
-                              <ul className="space-y-2">
-                                {assessment.ai_insights.diet_plan.foods_to_avoid.map((food: string, idx: number) => (
-                                  <li key={idx} className="flex gap-2 text-sm text-foreground">
-                                    <span className="text-warning mt-0.5">✗</span>
-                                    <span>{food}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </Card>
-                          )}
                         </div>
+                      </div>
+                    )}
+                  </Card>
+                )}
 
-                        {/* Meal Suggestions */}
-                        {assessment.ai_insights.diet_plan.meal_suggestions && 
-                         Array.isArray(assessment.ai_insights.diet_plan.meal_suggestions) &&
-                         assessment.ai_insights.diet_plan.meal_suggestions.length > 0 && (
-                          <div>
-                            <h4 className="text-lg font-semibold text-foreground mb-4">🍽️ Sample Meal Ideas</h4>
-                            <div className="grid md:grid-cols-3 gap-4">
-                              {assessment.ai_insights.diet_plan.meal_suggestions.map((meal: string, idx: number) => (
-                                <Card key={idx} className="p-4 bg-background">
-                                  <p className="text-sm text-foreground">{meal}</p>
-                                </Card>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {(assessment.risk_score && assessment.risk_score > 20) && (
-                          <div className="mt-6 p-4 bg-warning/10 border-l-4 border-warning rounded">
-                            <div className="flex items-start gap-3">
-                              <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
-                              <div>
-                                <p className="font-semibold text-warning mb-1">Important Note:</p>
-                                <p className="text-sm text-foreground/90">
-                                  Based on your risk score, we strongly recommend consulting with a healthcare provider 
-                                  or registered dietitian for a comprehensive dietary plan tailored to your specific needs.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </Card>
+                {/* Meal Suggestions Card - Separate */}
+                {assessment.ai_insights.diet_plan?.meal_suggestions && 
+                 Array.isArray(assessment.ai_insights.diet_plan.meal_suggestions) &&
+                 assessment.ai_insights.diet_plan.meal_suggestions.length > 0 && (
+                  <Card className="p-8 bg-gradient-to-br from-accent/10 to-background">
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="text-4xl">🍽️</span>
+                      <h3 className="text-2xl font-semibold text-foreground">Sample Meal Suggestions</h3>
                     </div>
-                  )}
-                 </Card>
-               </div>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {assessment.ai_insights.diet_plan.meal_suggestions.map((meal: string, idx: number) => (
+                        <Card key={idx} className="p-4 bg-background border border-accent/20">
+                          <p className="text-sm text-foreground">{meal}</p>
+                        </Card>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {/* DON'Ts Section - Two separate cards at bottom */}
+                {assessment.ai_insights.donts && Array.isArray(assessment.ai_insights.donts) && assessment.ai_insights.donts.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-semibold text-foreground">Important Precautions</h3>
+                    
+                    {/* Mild Cautions - Green/Yellow Card */}
+                    <Card className="p-6 bg-success/10 border-l-4 border-success">
+                      <div className="flex items-center gap-3 mb-4">
+                        <AlertCircle className="w-6 h-6 text-success" />
+                        <h4 className="text-xl font-semibold text-success">Things to Be Careful About</h4>
+                      </div>
+                      <div className="space-y-3">
+                        {assessment.ai_insights.donts.slice(0, Math.ceil(assessment.ai_insights.donts.length / 2)).map((item: string, idx: number) => (
+                          <div key={idx} className="flex gap-3 items-start">
+                            <span className="text-success mt-1">⚠</span>
+                            <p className="text-base text-foreground">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+
+                    {/* Strict Warnings - Orange/Red Card */}
+                    <Card className="p-6 bg-destructive/10 border-l-4 border-destructive">
+                      <div className="flex items-center gap-3 mb-4">
+                        <AlertCircle className="w-6 h-6 text-destructive" />
+                        <h4 className="text-xl font-semibold text-destructive">Strictly Avoid</h4>
+                      </div>
+                      <div className="space-y-3">
+                        {assessment.ai_insights.donts.slice(Math.ceil(assessment.ai_insights.donts.length / 2)).map((item: string, idx: number) => (
+                          <div key={idx} className="flex gap-3 items-start">
+                            <span className="text-destructive mt-1">✗</span>
+                            <p className="text-base text-foreground">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  </div>
+                )}
+              </div>
              ) : (
                <Card className="p-8 text-center">
                  <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
