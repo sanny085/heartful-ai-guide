@@ -22,6 +22,20 @@ interface Assessment {
   created_at: string;
   exercise: string | null;
   smoking: string | null;
+  // New fields from revamp
+  chest_pain: boolean | null;
+  shortness_of_breath: boolean | null;
+  dizziness: boolean | null;
+  fatigue: boolean | null;
+  ldl: number | null;
+  hdl: number | null;
+  fasting_sugar: number | null;
+  post_meal_sugar: number | null;
+  swelling: boolean | null;
+  palpitations: boolean | null;
+  family_history: boolean | null;
+  user_notes: string | null;
+  diet_plan: string | null;
 }
 
 export default function HeartHealthResults() {
@@ -503,6 +517,83 @@ export default function HeartHealthResults() {
               </div>
             </Card>
 
+            {/* Cholesterol Section */}
+            {(assessment.ldl || assessment.hdl) && (
+              <Card className="p-6">
+                <h3 className="text-xl font-semibold text-accent mb-4">🧪 Cholesterol Levels</h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <div className="space-y-4">
+                      {assessment.ldl && (
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium">LDL (Bad Cholesterol)</span>
+                            <span className={`text-2xl font-bold ${
+                              assessment.ldl > 160 ? 'text-warning' :
+                              assessment.ldl > 130 ? 'text-health-orange' :
+                              'text-success'
+                            }`}>
+                              {assessment.ldl}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">mg/dL</p>
+                          <div className="mt-2 text-sm font-medium">
+                            {assessment.ldl < 100 && <span className="text-success">✓ Optimal</span>}
+                            {assessment.ldl >= 100 && assessment.ldl < 130 && <span className="text-health-green">Near Optimal</span>}
+                            {assessment.ldl >= 130 && assessment.ldl < 160 && <span className="text-health-orange">⚠ Borderline High</span>}
+                            {assessment.ldl >= 160 && assessment.ldl < 190 && <span className="text-warning">⚠ High</span>}
+                            {assessment.ldl >= 190 && <span className="text-warning">⚠ Very High</span>}
+                          </div>
+                        </div>
+                      )}
+
+                      {assessment.hdl && (
+                        <div className="p-4 bg-muted/30 rounded-lg">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium">HDL (Good Cholesterol)</span>
+                            <span className={`text-2xl font-bold ${
+                              assessment.hdl < 40 ? 'text-warning' :
+                              assessment.hdl < 60 ? 'text-health-orange' :
+                              'text-success'
+                            }`}>
+                              {assessment.hdl}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">mg/dL</p>
+                          <div className="mt-2 text-sm font-medium">
+                            {assessment.hdl < 40 && <span className="text-warning">⚠ Low (Risk Factor)</span>}
+                            {assessment.hdl >= 40 && assessment.hdl < 60 && <span className="text-health-orange">Normal</span>}
+                            {assessment.hdl >= 60 && <span className="text-success">✓ High (Protective)</span>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-semibold text-foreground mb-3">Understanding Cholesterol:</h4>
+                    <div className="space-y-3 text-sm text-muted-foreground">
+                      <div className="p-3 bg-warning/10 rounded-lg">
+                        <p className="font-medium text-foreground mb-1">LDL (Bad Cholesterol):</p>
+                        <p>High levels can build up in arteries and increase heart disease risk. Keep it low!</p>
+                      </div>
+                      <div className="p-3 bg-success/10 rounded-lg">
+                        <p className="font-medium text-foreground mb-1">HDL (Good Cholesterol):</p>
+                        <p>Helps remove bad cholesterol from arteries. Higher is better!</p>
+                      </div>
+                    </div>
+                    
+                    {assessment.ai_insights?.cholesterol_advice && (
+                      <div className="mt-4 p-3 bg-accent/10 rounded-lg">
+                        <p className="text-sm font-medium text-foreground mb-1">💡 Recommendation:</p>
+                        <p className="text-sm text-foreground/90">{assessment.ai_insights.cholesterol_advice}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* Summary Section */}
             <Card className="p-6 bg-accent/5">
               <h3 className="text-2xl font-bold text-accent mb-4">📋 Your Health Summary</h3>
@@ -665,19 +756,112 @@ export default function HeartHealthResults() {
                               </Card>
                             )}
                         </div>
-                      </div>
-                    )}
-                </Card>
-              </div>
-            ) : (
-              <Card className="p-8 text-center">
-                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-lg text-muted-foreground">
-                  No personalized insights available yet. Please check back later.
-                </p>
-              </Card>
-            )}
-          </TabsContent>
+                       </div>
+                     )}
+
+                  {/* Diet Plan Section */}
+                  {assessment.ai_insights.diet_plan && (
+                    <div className="mt-8">
+                      <Card className="p-8 bg-gradient-to-br from-health-lightBlue/20 to-accent/5">
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="text-4xl">🥗</span>
+                          <h3 className="text-2xl font-semibold text-foreground">Your Personalized Diet Plan</h3>
+                        </div>
+
+                        {assessment.ai_insights.diet_plan.summary && (
+                          <div className="mb-6">
+                            <p className="text-lg leading-relaxed text-foreground/90">
+                              {assessment.ai_insights.diet_plan.summary}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="grid md:grid-cols-2 gap-6 mb-6">
+                          {/* Foods to Eat */}
+                          {assessment.ai_insights.diet_plan.foods_to_eat && 
+                           Array.isArray(assessment.ai_insights.diet_plan.foods_to_eat) &&
+                           assessment.ai_insights.diet_plan.foods_to_eat.length > 0 && (
+                            <Card className="p-6 bg-success/5 border-l-4 border-success">
+                              <div className="flex items-center gap-2 mb-4">
+                                <CheckCircle className="w-5 h-5 text-success" />
+                                <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
+                              </div>
+                              <ul className="space-y-2">
+                                {assessment.ai_insights.diet_plan.foods_to_eat.map((food: string, idx: number) => (
+                                  <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                    <span className="text-success mt-0.5">✓</span>
+                                    <span>{food}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </Card>
+                          )}
+
+                          {/* Foods to Avoid */}
+                          {assessment.ai_insights.diet_plan.foods_to_avoid && 
+                           Array.isArray(assessment.ai_insights.diet_plan.foods_to_avoid) &&
+                           assessment.ai_insights.diet_plan.foods_to_avoid.length > 0 && (
+                            <Card className="p-6 bg-warning/5 border-l-4 border-warning">
+                              <div className="flex items-center gap-2 mb-4">
+                                <AlertCircle className="w-5 h-5 text-warning" />
+                                <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
+                              </div>
+                              <ul className="space-y-2">
+                                {assessment.ai_insights.diet_plan.foods_to_avoid.map((food: string, idx: number) => (
+                                  <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                    <span className="text-warning mt-0.5">✗</span>
+                                    <span>{food}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </Card>
+                          )}
+                        </div>
+
+                        {/* Meal Suggestions */}
+                        {assessment.ai_insights.diet_plan.meal_suggestions && 
+                         Array.isArray(assessment.ai_insights.diet_plan.meal_suggestions) &&
+                         assessment.ai_insights.diet_plan.meal_suggestions.length > 0 && (
+                          <div>
+                            <h4 className="text-lg font-semibold text-foreground mb-4">🍽️ Sample Meal Ideas</h4>
+                            <div className="grid md:grid-cols-3 gap-4">
+                              {assessment.ai_insights.diet_plan.meal_suggestions.map((meal: string, idx: number) => (
+                                <Card key={idx} className="p-4 bg-background">
+                                  <p className="text-sm text-foreground">{meal}</p>
+                                </Card>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {(assessment.risk_score && assessment.risk_score > 20) && (
+                          <div className="mt-6 p-4 bg-warning/10 border-l-4 border-warning rounded">
+                            <div className="flex items-start gap-3">
+                              <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                              <div>
+                                <p className="font-semibold text-warning mb-1">Important Note:</p>
+                                <p className="text-sm text-foreground/90">
+                                  Based on your risk score, we strongly recommend consulting with a healthcare provider 
+                                  or registered dietitian for a comprehensive dietary plan tailored to your specific needs.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Card>
+                    </div>
+                  )}
+                 </Card>
+               </div>
+             ) : (
+               <Card className="p-8 text-center">
+                 <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                 <p className="text-lg text-muted-foreground">
+                   No personalized insights available yet. Please check back later.
+                 </p>
+               </Card>
+             )}
+           </TabsContent>
 
           <TabsContent value="risk" className="space-y-6">
             <Card className="p-8">
