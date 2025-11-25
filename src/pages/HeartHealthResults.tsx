@@ -528,20 +528,30 @@ export default function HeartHealthResults() {
                         <div className="p-4 bg-muted/30 rounded-lg">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-medium">LDL (Bad Cholesterol)</span>
-                            <span className={`text-2xl font-bold ${
-                              assessment.ldl > 160 ? 'text-warning' :
-                              assessment.ldl > 130 ? 'text-health-orange' :
-                              'text-success'
-                            }`}>
+                            <span
+                              className={`text-2xl font-bold ${
+                                assessment.ldl > 160
+                                  ? "text-warning"
+                                  : assessment.ldl > 130
+                                    ? "text-health-orange"
+                                    : "text-success"
+                              }`}
+                            >
                               {assessment.ldl}
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">mg/dL</p>
                           <div className="mt-2 text-sm font-medium">
                             {assessment.ldl < 100 && <span className="text-success">✓ Optimal</span>}
-                            {assessment.ldl >= 100 && assessment.ldl < 130 && <span className="text-health-green">Near Optimal</span>}
-                            {assessment.ldl >= 130 && assessment.ldl < 160 && <span className="text-health-orange">⚠ Borderline High</span>}
-                            {assessment.ldl >= 160 && assessment.ldl < 190 && <span className="text-warning">⚠ High</span>}
+                            {assessment.ldl >= 100 && assessment.ldl < 130 && (
+                              <span className="text-health-green">Near Optimal</span>
+                            )}
+                            {assessment.ldl >= 130 && assessment.ldl < 160 && (
+                              <span className="text-health-orange">⚠ Borderline High</span>
+                            )}
+                            {assessment.ldl >= 160 && assessment.ldl < 190 && (
+                              <span className="text-warning">⚠ High</span>
+                            )}
                             {assessment.ldl >= 190 && <span className="text-warning">⚠ Very High</span>}
                           </div>
                         </div>
@@ -551,25 +561,31 @@ export default function HeartHealthResults() {
                         <div className="p-4 bg-muted/30 rounded-lg">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-medium">HDL (Good Cholesterol)</span>
-                            <span className={`text-2xl font-bold ${
-                              assessment.hdl < 40 ? 'text-warning' :
-                              assessment.hdl < 60 ? 'text-health-orange' :
-                              'text-success'
-                            }`}>
+                            <span
+                              className={`text-2xl font-bold ${
+                                assessment.hdl < 40
+                                  ? "text-warning"
+                                  : assessment.hdl < 60
+                                    ? "text-health-orange"
+                                    : "text-success"
+                              }`}
+                            >
                               {assessment.hdl}
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">mg/dL</p>
                           <div className="mt-2 text-sm font-medium">
                             {assessment.hdl < 40 && <span className="text-warning">⚠ Low (Risk Factor)</span>}
-                            {assessment.hdl >= 40 && assessment.hdl < 60 && <span className="text-health-orange">Normal</span>}
+                            {assessment.hdl >= 40 && assessment.hdl < 60 && (
+                              <span className="text-health-orange">Normal</span>
+                            )}
                             {assessment.hdl >= 60 && <span className="text-success">✓ High (Protective)</span>}
                           </div>
                         </div>
                       )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="text-sm font-semibold text-foreground mb-3">Understanding Cholesterol:</h4>
                     <div className="space-y-3 text-sm text-muted-foreground">
@@ -582,7 +598,7 @@ export default function HeartHealthResults() {
                         <p>Helps remove bad cholesterol from arteries. Higher is better!</p>
                       </div>
                     </div>
-                    
+
                     {assessment.ai_insights?.cholesterol_advice && (
                       <div className="mt-4 p-3 bg-accent/10 rounded-lg">
                         <p className="text-sm font-medium text-foreground mb-1">💡 Recommendation:</p>
@@ -751,55 +767,55 @@ export default function HeartHealthResults() {
 
                     <div className="grid md:grid-cols-2 gap-6">
                       {/* Foods to Eat */}
-                      {assessment.ai_insights.diet_plan.foods_to_eat && 
-                       Array.isArray(assessment.ai_insights.diet_plan.foods_to_eat) &&
-                       assessment.ai_insights.diet_plan.foods_to_eat.length > 0 && (
-                        <Card className="p-6 bg-success/5 border-l-4 border-success">
-                          <div className="flex items-center gap-2 mb-4">
-                            <CheckCircle className="w-5 h-5 text-success" />
-                            <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
-                          </div>
-                          <ul className="space-y-2">
-                            {assessment.ai_insights.diet_plan.foods_to_eat.map((food: string, idx: number) => (
-                              <li key={idx} className="flex gap-2 text-sm text-foreground">
-                                <span className="text-success mt-0.5">✓</span>
-                                <span>{food}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </Card>
-                      )}
+                      {assessment.ai_insights.diet_plan.foods_to_eat &&
+                        Array.isArray(assessment.ai_insights.diet_plan.foods_to_eat) &&
+                        assessment.ai_insights.diet_plan.foods_to_eat.length > 0 && (
+                          <Card className="p-6 bg-success/5 border-l-4 border-success">
+                            <div className="flex items-center gap-2 mb-4">
+                              <CheckCircle className="w-5 h-5 text-success" />
+                              <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
+                            </div>
+                            <ul className="space-y-2">
+                              {assessment.ai_insights.diet_plan.foods_to_eat.map((food: string, idx: number) => (
+                                <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                  <span className="text-success mt-0.5">✓</span>
+                                  <span>{food}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </Card>
+                        )}
 
                       {/* Foods to Avoid */}
-                      {assessment.ai_insights.diet_plan.foods_to_avoid && 
-                       Array.isArray(assessment.ai_insights.diet_plan.foods_to_avoid) &&
-                       assessment.ai_insights.diet_plan.foods_to_avoid.length > 0 && (
-                        <Card className="p-6 bg-warning/5 border-l-4 border-warning">
-                          <div className="flex items-center gap-2 mb-4">
-                            <AlertCircle className="w-5 h-5 text-warning" />
-                            <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
-                          </div>
-                          <ul className="space-y-2">
-                            {assessment.ai_insights.diet_plan.foods_to_avoid.map((food: string, idx: number) => (
-                              <li key={idx} className="flex gap-2 text-sm text-foreground">
-                                <span className="text-warning mt-0.5">✗</span>
-                                <span>{food}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </Card>
-                      )}
+                      {assessment.ai_insights.diet_plan.foods_to_avoid &&
+                        Array.isArray(assessment.ai_insights.diet_plan.foods_to_avoid) &&
+                        assessment.ai_insights.diet_plan.foods_to_avoid.length > 0 && (
+                          <Card className="p-6 bg-warning/5 border-l-4 border-warning">
+                            <div className="flex items-center gap-2 mb-4">
+                              <AlertCircle className="w-5 h-5 text-warning" />
+                              <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
+                            </div>
+                            <ul className="space-y-2">
+                              {assessment.ai_insights.diet_plan.foods_to_avoid.map((food: string, idx: number) => (
+                                <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                  <span className="text-warning mt-0.5">✗</span>
+                                  <span>{food}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </Card>
+                        )}
                     </div>
 
-                    {(assessment.risk_score && assessment.risk_score > 20) && (
+                    {assessment.risk_score && assessment.risk_score > 20 && (
                       <div className="mt-6 p-4 bg-warning/10 border-l-4 border-warning rounded">
                         <div className="flex items-start gap-3">
                           <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
                           <div>
                             <p className="font-semibold text-warning mb-1">Important Note:</p>
                             <p className="text-sm text-foreground/90">
-                              Based on your risk score, we strongly recommend consulting with a healthcare provider 
-                              or registered dietitian for a comprehensive dietary plan tailored to your specific needs.
+                              Based on your risk score, we strongly recommend consulting with a healthcare provider or
+                              registered dietitian for a comprehensive dietary plan tailored to your specific needs.
                             </p>
                           </div>
                         </div>
@@ -809,77 +825,85 @@ export default function HeartHealthResults() {
                 )}
 
                 {/* Meal Suggestions Card - Separate */}
-                {assessment.ai_insights.diet_plan?.meal_suggestions && 
-                 Array.isArray(assessment.ai_insights.diet_plan.meal_suggestions) &&
-                 assessment.ai_insights.diet_plan.meal_suggestions.length > 0 && (
-                  <Card className="p-8 bg-gradient-to-br from-accent/10 to-background">
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="text-4xl">🍽️</span>
-                      <h3 className="text-2xl font-semibold text-foreground">Sample Meal Suggestions</h3>
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      {assessment.ai_insights.diet_plan.meal_suggestions.map((meal: string, idx: number) => (
-                        <Card key={idx} className="p-4 bg-background border border-accent/20">
-                          <p className="text-sm text-foreground">{meal}</p>
-                        </Card>
-                      ))}
-                    </div>
-                  </Card>
-                )}
+                {assessment.ai_insights.diet_plan?.meal_suggestions &&
+                  Array.isArray(assessment.ai_insights.diet_plan.meal_suggestions) &&
+                  assessment.ai_insights.diet_plan.meal_suggestions.length > 0 && (
+                    <Card className="p-8 bg-gradient-to-br from-accent/10 to-background">
+                      <div className="flex items-center gap-3 mb-6">
+                        <span className="text-4xl">🍽️</span>
+                        <h3 className="text-2xl font-semibold text-foreground">Sample Meal Suggestions</h3>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        {assessment.ai_insights.diet_plan.meal_suggestions.map((meal: string, idx: number) => (
+                          <Card key={idx} className="p-4 bg-background border border-accent/20">
+                            <p className="text-sm text-foreground">{meal}</p>
+                          </Card>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
 
                 {/* DON'Ts Section - Two separate cards at bottom */}
-                {assessment.ai_insights.donts && Array.isArray(assessment.ai_insights.donts) && assessment.ai_insights.donts.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-semibold text-foreground">Important Precautions</h3>
-                    
-                    {/* Mild Cautions - Green/Yellow Card */}
-                    <Card className="p-6 bg-success/10 border-l-4 border-success">
-                      <div className="flex items-center gap-3 mb-4">
-                        <AlertCircle className="w-6 h-6 text-success" />
-                        <h4 className="text-xl font-semibold text-success">Things to Be Careful About</h4>
-                      </div>
-                      <div className="space-y-3">
-                        {assessment.ai_insights.donts.slice(0, Math.ceil(assessment.ai_insights.donts.length / 2)).map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-3 items-start">
-                            <span className="text-success mt-1">⚠</span>
-                            <p className="text-base text-foreground">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
+                {assessment.ai_insights.donts &&
+                  Array.isArray(assessment.ai_insights.donts) &&
+                  assessment.ai_insights.donts.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-2xl font-semibold text-foreground">Important Precautions</h3>
 
-                    {/* Strict Warnings - Orange/Red Card */}
-                    <Card className="p-6 bg-destructive/10 border-l-4 border-destructive">
-                      <div className="flex items-center gap-3 mb-4">
-                        <AlertCircle className="w-6 h-6 text-destructive" />
-                        <h4 className="text-xl font-semibold text-destructive">Strictly Avoid</h4>
-                      </div>
-                      <div className="space-y-3">
-                        {assessment.ai_insights.donts.slice(Math.ceil(assessment.ai_insights.donts.length / 2)).map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-3 items-start">
-                            <span className="text-destructive mt-1">✗</span>
-                            <p className="text-base text-foreground">{item}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </Card>
-                  </div>
-                )}
+                      {/* Mild Cautions - Green/Yellow Card */}
+                      <Card className="p-6 bg-success/10 border-l-4 border-success">
+                        <div className="flex items-center gap-3 mb-4">
+                          <AlertCircle className="w-6 h-6 text-success" />
+                          <h4 className="text-xl font-semibold text-success">Things to Be Careful About</h4>
+                        </div>
+                        <div className="space-y-3">
+                          {assessment.ai_insights.donts
+                            .slice(0, Math.ceil(assessment.ai_insights.donts.length / 2))
+                            .map((item: string, idx: number) => (
+                              <div key={idx} className="flex gap-3 items-start">
+                                <span className="text-success mt-1">⚠</span>
+                                <p className="text-base text-foreground">{item}</p>
+                              </div>
+                            ))}
+                        </div>
+                      </Card>
+
+                      {/* Strict Warnings - Orange/Red Card */}
+                      <Card className="p-6 bg-destructive/10 border-l-4 border-destructive">
+                        <div className="flex items-center gap-3 mb-4">
+                          <AlertCircle className="w-6 h-6 text-destructive" />
+                          <h4 className="text-xl font-semibold text-destructive">Strictly Avoid</h4>
+                        </div>
+                        <div className="space-y-3">
+                          {assessment.ai_insights.donts
+                            .slice(Math.ceil(assessment.ai_insights.donts.length / 2))
+                            .map((item: string, idx: number) => (
+                              <div key={idx} className="flex gap-3 items-start">
+                                <span className="text-destructive mt-1">✗</span>
+                                <p className="text-base text-foreground">{item}</p>
+                              </div>
+                            ))}
+                        </div>
+                      </Card>
+                    </div>
+                  )}
               </div>
-             ) : (
-               <Card className="p-8 text-center">
-                 <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                 <p className="text-lg text-muted-foreground">
-                   No personalized insights available yet. Please check back later.
-                 </p>
-               </Card>
-             )}
-           </TabsContent>
+            ) : (
+              <Card className="p-8 text-center">
+                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg text-muted-foreground">
+                  No personalized insights available yet. Please check back later.
+                </p>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="risk" className="space-y-6">
             <Card className="p-8">
               <h2 className="text-2xl font-bold text-foreground mb-6">Risk Contributors</h2>
-              <p className="text-muted-foreground mb-6">These factors are currently contributing to your heart health risk:</p>
+              <p className="text-muted-foreground mb-6">
+                These factors are currently contributing to your heart health risk:
+              </p>
               <div className="space-y-4">
                 {/* Only show actual risk contributors (negative factors) */}
                 {assessment.smoking && assessment.smoking !== "No" && assessment.smoking !== "Never" && (
@@ -889,50 +913,61 @@ export default function HeartHealthResults() {
                       <div className="flex-1">
                         <h4 className="font-semibold text-foreground mb-1">Smoking Status</h4>
                         <p className="text-sm text-muted-foreground">{assessment.smoking}</p>
-                        <p className="text-sm text-warning mt-2">⚠️ Smoking significantly increases cardiovascular risk</p>
+                        <p className="text-sm text-warning mt-2">
+                          ⚠️ Smoking significantly increases cardiovascular risk
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
-                
+
                 {assessment.systolic && assessment.systolic > 120 && (
                   <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
                       <div className="flex-1">
                         <h4 className="font-semibold text-foreground mb-1">Elevated Blood Pressure</h4>
-                        <p className="text-sm text-muted-foreground">{assessment.systolic}/{assessment.diastolic} mmHg - {getBPCategory()}</p>
-                        <p className="text-sm text-warning mt-2">⚠️ High blood pressure strains your heart and arteries</p>
+                        <p className="text-sm text-muted-foreground">
+                          {assessment.systolic}/{assessment.diastolic} mmHg - {getBPCategory()}
+                        </p>
+                        <p className="text-sm text-warning mt-2">
+                          ⚠️ High blood pressure strains your heart and arteries
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
-                
+
                 {assessment.bmi && assessment.bmi > 25 && (
                   <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
                       <div className="flex-1">
                         <h4 className="font-semibold text-foreground mb-1">Body Weight</h4>
-                        <p className="text-sm text-muted-foreground">BMI: {assessment.bmi.toFixed(1)} - {getBMICategory()}</p>
+                        <p className="text-sm text-muted-foreground">
+                          BMI: {assessment.bmi.toFixed(1)} - {getBMICategory()}
+                        </p>
                         <p className="text-sm text-warning mt-2">⚠️ Excess weight increases risk of heart disease</p>
                       </div>
                     </div>
                   </div>
                 )}
-                
-                {assessment.exercise && (assessment.exercise === "Sedentary" || assessment.exercise === "Light" || assessment.exercise === "None") && (
-                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground mb-1">Low Physical Activity</h4>
-                        <p className="text-sm text-muted-foreground">{assessment.exercise}</p>
-                        <p className="text-sm text-warning mt-2">⚠️ Lack of exercise weakens cardiovascular health</p>
+
+                {assessment.exercise &&
+                  (assessment.exercise === "Sedentary" ||
+                    assessment.exercise === "Light" ||
+                    assessment.exercise === "None") && (
+                    <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground mb-1">Low Physical Activity</h4>
+                          <p className="text-sm text-muted-foreground">{assessment.exercise}</p>
+                          <p className="text-sm text-warning mt-2">⚠️ Lack of exercise weakens cardiovascular health</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 {assessment.ldl && assessment.ldl > 130 && (
                   <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
@@ -974,17 +1009,24 @@ export default function HeartHealthResults() {
                 )}
 
                 {/* Show message if no significant risk factors */}
-                {!((assessment.smoking && assessment.smoking !== "No" && assessment.smoking !== "Never") ||
-                   (assessment.systolic && assessment.systolic > 120) ||
-                   (assessment.bmi && assessment.bmi > 25) ||
-                   (assessment.exercise && (assessment.exercise === "Sedentary" || assessment.exercise === "Light" || assessment.exercise === "None")) ||
-                   (assessment.ldl && assessment.ldl > 130) ||
-                   (assessment.hdl && assessment.hdl < 40) ||
-                   assessment.family_history) && (
+                {!(
+                  (assessment.smoking && assessment.smoking !== "No" && assessment.smoking !== "Never") ||
+                  (assessment.systolic && assessment.systolic > 120) ||
+                  (assessment.bmi && assessment.bmi > 25) ||
+                  (assessment.exercise &&
+                    (assessment.exercise === "Sedentary" ||
+                      assessment.exercise === "Light" ||
+                      assessment.exercise === "None")) ||
+                  (assessment.ldl && assessment.ldl > 130) ||
+                  (assessment.hdl && assessment.hdl < 40) ||
+                  assessment.family_history
+                ) && (
                   <div className="p-6 bg-success/5 border-l-4 border-success rounded-lg text-center">
                     <CheckCircle className="w-12 h-12 text-success mx-auto mb-3" />
                     <h4 className="font-semibold text-foreground mb-2">Great News!</h4>
-                    <p className="text-sm text-muted-foreground">No major risk contributors identified. Keep up the good work!</p>
+                    <p className="text-sm text-muted-foreground">
+                      No major risk contributors identified. Keep up the good work!
+                    </p>
                   </div>
                 )}
               </div>
@@ -1016,7 +1058,7 @@ export default function HeartHealthResults() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => window.open("https://10000hearts.com/register", "_blank")}
+                  onClick={() => window.open("https://10000hearts.com/wellness-campaign", "_blank")}
                 >
                   Schedule Call
                 </Button>
