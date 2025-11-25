@@ -15,13 +15,11 @@ import Chat from "./pages/Chat";
 import WellnessCampaign from "./pages/WellnessCampaign";
 import Reviews from "./pages/Reviews";
 import NotFound from "./pages/NotFound";
-import { useState } from "react";
 
-const App = () => {
-  const [queryClient] = useState(() => new QueryClient());
-  
-  return (
-    <QueryClientProvider client={queryClient}>
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -45,7 +43,6 @@ const App = () => {
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-  );
-};
+);
 
 export default App;
