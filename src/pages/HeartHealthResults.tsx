@@ -641,6 +641,43 @@ export default function HeartHealthResults() {
           </TabsContent>
 
           <TabsContent value="insights" className="space-y-6">
+            {/* Key Metrics Cards - Also shown on Insights tab */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-foreground">
+                  {assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"}
+                </div>
+                <h3 className="text-lg font-semibold text-accent">BMI</h3>
+                <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
+                <p className="text-xs text-muted-foreground mt-2">Body Mass Index</p>
+              </Card>
+
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-foreground">{calculateCardiovascularScore()}</div>
+                <h3 className="text-lg font-semibold text-accent">CV Score</h3>
+                <p className={`text-xs font-medium ${getCVRiskLevel().color}`}>{getCVRiskLevel().level}</p>
+                <p className="text-xs text-muted-foreground mt-2">Cardiovascular Risk</p>
+              </Card>
+
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-foreground">
+                  {assessment.heart_age || assessment.age || "N/A"}
+                </div>
+                <h3 className="text-lg font-semibold text-accent">Heart Age</h3>
+                <p className="text-xs text-muted-foreground">vs {assessment.age} years</p>
+                <p className="text-xs text-muted-foreground mt-2">Biological Age</p>
+              </Card>
+
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
+                <div className="text-4xl font-bold text-foreground">
+                  {assessment.risk_score ? assessment.risk_score.toFixed(1) : "N/A"}%
+                </div>
+                <h3 className="text-lg font-semibold text-accent">Heart Risk</h3>
+                <p className={`text-xs font-medium ${getRiskCategory().color}`}>{getRiskCategory().level}</p>
+                <p className="text-xs text-muted-foreground mt-2">10-Year Risk</p>
+              </Card>
+            </div>
+
             {assessment.ai_insights ? (
               <div className="space-y-6">
                 <Card className="p-8 bg-card border-accent/20">
@@ -649,19 +686,23 @@ export default function HeartHealthResults() {
                     <h2 className="text-3xl font-bold text-foreground">Your Personalized Health Insights</h2>
                   </div>
 
+                  {/* Summary Section - Display First */}
                   {assessment.ai_insights.summary && (
-                    <div className="mb-8 pb-6 border-b border-border">
-                      <p className="text-lg leading-relaxed text-foreground">{assessment.ai_insights.summary}</p>
+                    <div className="mb-8">
+                      <h3 className="text-2xl font-semibold text-foreground mb-4">Summary</h3>
+                      <div className="p-6 bg-muted/20 rounded-lg">
+                        <p className="text-lg leading-relaxed text-foreground">{assessment.ai_insights.summary}</p>
+                      </div>
                     </div>
                   )}
 
+                  {/* Recommended Actions - Clean display with title and description only */}
                   {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
                     <div className="space-y-6">
                       <h3 className="text-2xl font-semibold text-foreground mb-4">Recommended Actions</h3>
-                      <div className="space-y-4">
+                      <div className="grid gap-6">
                         {assessment.ai_insights.recommendations
                           .map((rec: any, idx: number) => {
-                            // Handle various data formats defensively
                             let title = "";
                             let description = "";
 
@@ -669,39 +710,31 @@ export default function HeartHealthResults() {
                               title = rec.title || "";
                               description = rec.description || "";
                             } else if (typeof rec === "string") {
-                              // If it's a string, use it as description
                               description = rec;
                               title = `Recommendation ${idx + 1}`;
                             }
 
-                            // Clean up any JSON artifacts that might have slipped through
+                            // Clean up JSON artifacts and formatting issues
                             title = title
-                              .replace(/^["']\s*title["']?\s*:\s*["']?/i, "")
-                              .replace(/["'],?\s*$/, "")
+                              .replace(/[{}"']/g, "")
+                              .replace(/^title\s*:\s*/i, "")
+                              .replace(/,\s*$/,"")
                               .trim();
                             description = description
-                              .replace(/^["']\s*description["']?\s*:\s*["']?/i, "")
-                              .replace(/["'],?\s*$/, "")
+                              .replace(/[{}"']/g, "")
+                              .replace(/^description\s*:\s*/i, "")
+                              .replace(/,\s*$/,"")
                               .trim();
 
-                            // Skip if both are empty or just contain artifacts
+                            // Skip invalid entries
                             if (!title && !description) return null;
-                            if (title === "}" || description === "}" || description === "{") return null;
+                            if (title.length < 2 || description.length < 5) return null;
 
                             return (
-                              <Card key={idx} className="p-6 bg-muted/30 border-l-4 border-accent">
-                                <div className="flex gap-4">
-                                  <div className="flex-shrink-0 mt-1">
-                                    <CheckCircle className="w-6 h-6 text-accent" />
-                                  </div>
-                                  <div className="flex-1">
-                                    {title && <h4 className="text-lg font-semibold text-foreground mb-2">{title}</h4>}
-                                    {description && (
-                                      <p className="text-base leading-relaxed text-foreground/90">{description}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              </Card>
+                              <div key={idx} className="p-6 bg-background border border-accent/20 rounded-lg">
+                                <h4 className="text-lg font-semibold text-foreground mb-3">{title}</h4>
+                                <p className="text-base leading-relaxed text-foreground/90">{description}</p>
+                              </div>
                             );
                           })
                           .filter(Boolean)}
@@ -865,30 +898,113 @@ export default function HeartHealthResults() {
 
           <TabsContent value="risk" className="space-y-6">
             <Card className="p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-6">Risk Factors</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-6">Risk Contributors</h2>
+              <p className="text-muted-foreground mb-6">These factors are currently contributing to your heart health risk:</p>
               <div className="space-y-4">
-                {assessment.exercise && (
-                  <div className="flex justify-between items-center pb-4 border-b border-border">
-                    <span className="text-base text-muted-foreground">Exercise Level:</span>
-                    <span className="text-base font-semibold text-foreground">{assessment.exercise}</span>
+                {/* Only show actual risk contributors (negative factors) */}
+                {assessment.smoking && assessment.smoking !== "No" && assessment.smoking !== "Never" && (
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Smoking Status</h4>
+                        <p className="text-sm text-muted-foreground">{assessment.smoking}</p>
+                        <p className="text-sm text-warning mt-2">⚠️ Smoking significantly increases cardiovascular risk</p>
+                      </div>
+                    </div>
                   </div>
                 )}
-                {assessment.smoking && (
-                  <div className="flex justify-between items-center pb-4 border-b border-border">
-                    <span className="text-base text-muted-foreground">Smoking Status:</span>
-                    <span className="text-base font-semibold text-foreground">{assessment.smoking}</span>
-                  </div>
-                )}
+                
                 {assessment.systolic && assessment.systolic > 120 && (
-                  <div className="flex justify-between items-center pb-4 border-b border-border">
-                    <span className="text-base text-muted-foreground">Blood Pressure:</span>
-                    <span className="text-base font-semibold text-accent">{getBPCategory()}</span>
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Elevated Blood Pressure</h4>
+                        <p className="text-sm text-muted-foreground">{assessment.systolic}/{assessment.diastolic} mmHg - {getBPCategory()}</p>
+                        <p className="text-sm text-warning mt-2">⚠️ High blood pressure strains your heart and arteries</p>
+                      </div>
+                    </div>
                   </div>
                 )}
+                
                 {assessment.bmi && assessment.bmi > 25 && (
-                  <div className="flex justify-between items-center pb-4 border-b border-border">
-                    <span className="text-base text-muted-foreground">Body Weight:</span>
-                    <span className="text-base font-semibold text-accent">{getBMICategory()}</span>
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Body Weight</h4>
+                        <p className="text-sm text-muted-foreground">BMI: {assessment.bmi.toFixed(1)} - {getBMICategory()}</p>
+                        <p className="text-sm text-warning mt-2">⚠️ Excess weight increases risk of heart disease</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {assessment.exercise && (assessment.exercise === "Sedentary" || assessment.exercise === "Light" || assessment.exercise === "None") && (
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Low Physical Activity</h4>
+                        <p className="text-sm text-muted-foreground">{assessment.exercise}</p>
+                        <p className="text-sm text-warning mt-2">⚠️ Lack of exercise weakens cardiovascular health</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {assessment.ldl && assessment.ldl > 130 && (
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">High LDL Cholesterol</h4>
+                        <p className="text-sm text-muted-foreground">LDL: {assessment.ldl} mg/dL</p>
+                        <p className="text-sm text-warning mt-2">⚠️ High bad cholesterol can clog arteries</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {assessment.hdl && assessment.hdl < 40 && (
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Low HDL Cholesterol</h4>
+                        <p className="text-sm text-muted-foreground">HDL: {assessment.hdl} mg/dL</p>
+                        <p className="text-sm text-warning mt-2">⚠️ Low good cholesterol reduces heart protection</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {assessment.family_history && (
+                  <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Family History</h4>
+                        <p className="text-sm text-muted-foreground">Family history of heart disease</p>
+                        <p className="text-sm text-warning mt-2">⚠️ Genetic factors increase your risk</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Show message if no significant risk factors */}
+                {!((assessment.smoking && assessment.smoking !== "No" && assessment.smoking !== "Never") ||
+                   (assessment.systolic && assessment.systolic > 120) ||
+                   (assessment.bmi && assessment.bmi > 25) ||
+                   (assessment.exercise && (assessment.exercise === "Sedentary" || assessment.exercise === "Light" || assessment.exercise === "None")) ||
+                   (assessment.ldl && assessment.ldl > 130) ||
+                   (assessment.hdl && assessment.hdl < 40) ||
+                   assessment.family_history) && (
+                  <div className="p-6 bg-success/5 border-l-4 border-success rounded-lg text-center">
+                    <CheckCircle className="w-12 h-12 text-success mx-auto mb-3" />
+                    <h4 className="font-semibold text-foreground mb-2">Great News!</h4>
+                    <p className="text-sm text-muted-foreground">No major risk contributors identified. Keep up the good work!</p>
                   </div>
                 )}
               </div>
