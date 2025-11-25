@@ -686,7 +686,7 @@ export default function HeartHealthResults() {
                     <h2 className="text-3xl font-bold text-foreground">Your Personalized Health Insights</h2>
                   </div>
 
-                  {/* Summary Section - Display First */}
+                  {/* Summary Section */}
                   {assessment.ai_insights.summary && (
                     <div className="mb-8">
                       <h3 className="text-2xl font-semibold text-foreground mb-4">Summary</h3>
@@ -696,11 +696,11 @@ export default function HeartHealthResults() {
                     </div>
                   )}
 
-                  {/* Recommended Actions - Clean display with title and description only */}
+                  {/* Recommended Actions */}
                   {assessment.ai_insights.recommendations && assessment.ai_insights.recommendations.length > 0 && (
-                    <div className="space-y-6">
+                    <div className="mb-8">
                       <h3 className="text-2xl font-semibold text-foreground mb-4">Recommended Actions</h3>
-                      <div className="grid gap-6">
+                      <div className="grid gap-4">
                         {assessment.ai_insights.recommendations
                           .map((rec: any, idx: number) => {
                             let title = "";
@@ -714,27 +714,17 @@ export default function HeartHealthResults() {
                               title = `Recommendation ${idx + 1}`;
                             }
 
-                            // Clean up JSON artifacts and formatting issues
-                            title = title
-                              .replace(/[{}"']/g, "")
-                              .replace(/^title\s*:\s*/i, "")
-                              .replace(/,\s*$/,"")
-                              .trim();
-                            description = description
-                              .replace(/[{}"']/g, "")
-                              .replace(/^description\s*:\s*/i, "")
-                              .replace(/,\s*$/,"")
-                              .trim();
+                            // Clean up JSON artifacts
+                            title = title.replace(/[{}"']/g, "").replace(/^title\s*:\s*/i, "").trim();
+                            description = description.replace(/[{}"']/g, "").replace(/^description\s*:\s*/i, "").trim();
 
-                            // Skip invalid entries
-                            if (!title && !description) return null;
-                            if (title.length < 2 || description.length < 5) return null;
+                            if (!title || !description || title.length < 2 || description.length < 5) return null;
 
                             return (
-                              <div key={idx} className="p-6 bg-background border border-accent/20 rounded-lg">
-                                <h4 className="text-lg font-semibold text-foreground mb-3">{title}</h4>
-                                <p className="text-base leading-relaxed text-foreground/90">{description}</p>
-                              </div>
+                              <Card key={idx} className="p-6 bg-background border border-accent/20">
+                                <h4 className="text-xl font-semibold text-foreground mb-3">{title}</h4>
+                                <p className="text-base leading-relaxed text-muted-foreground">{description}</p>
+                              </Card>
                             );
                           })
                           .filter(Boolean)}
@@ -742,55 +732,40 @@ export default function HeartHealthResults() {
                     </div>
                   )}
 
-                  {/* Do's and Don'ts Section - Show only if risk score is moderate or high */}
-                  {assessment.risk_score &&
-                    assessment.risk_score >= 10 &&
-                    (assessment.ai_insights.dos || assessment.ai_insights.donts) && (
-                      <div className="mt-8 space-y-6">
-                        <h3 className="text-2xl font-semibold text-foreground mb-4">Important Guidelines</h3>
-                        <div className="grid md:grid-cols-2 gap-6">
-                          {/* Do's Section */}
-                          {assessment.ai_insights.dos &&
-                            Array.isArray(assessment.ai_insights.dos) &&
-                            assessment.ai_insights.dos.length > 0 && (
-                              <Card className="p-6 bg-success/5 border-l-4 border-success shadow-[0_4px_20px_-4px_hsl(var(--success)/0.3)]">
-                                <div className="flex items-center gap-3 mb-4">
-                                  <CheckCircle className="w-6 h-6 text-success" />
-                                  <h4 className="text-xl font-semibold text-success">Do's</h4>
-                                </div>
-                                <ul className="space-y-3">
-                                  {assessment.ai_insights.dos.map((item: string, idx: number) => (
-                                    <li key={idx} className="flex gap-3 text-foreground">
-                                      <span className="text-success mt-1">✓</span>
-                                      <span className="text-base leading-relaxed">{item}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Card>
-                            )}
-
-                          {/* Don'ts Section */}
-                          {assessment.ai_insights.donts &&
-                            Array.isArray(assessment.ai_insights.donts) &&
-                            assessment.ai_insights.donts.length > 0 && (
-                              <Card className="p-6 bg-warning/5 border-l-4 border-warning shadow-[0_4px_20px_-4px_hsl(var(--warning)/0.4)]">
-                                <div className="flex items-center gap-3 mb-4">
-                                  <AlertCircle className="w-6 h-6 text-warning" />
-                                  <h4 className="text-xl font-semibold text-warning">Don'ts</h4>
-                                </div>
-                                <ul className="space-y-3">
-                                  {assessment.ai_insights.donts.map((item: string, idx: number) => (
-                                    <li key={idx} className="flex gap-3 text-foreground">
-                                      <span className="text-warning mt-1">✗</span>
-                                      <span className="text-base leading-relaxed">{item}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Card>
-                            )}
+                  {/* Do's and Don'ts Section */}
+                  {(assessment.ai_insights.dos || assessment.ai_insights.donts) && (
+                    <div className="space-y-4">
+                      <h3 className="text-2xl font-semibold text-foreground mb-4">Important Guidelines</h3>
+                      
+                      {/* Do's - Green Cards */}
+                      {assessment.ai_insights.dos && Array.isArray(assessment.ai_insights.dos) && assessment.ai_insights.dos.length > 0 && (
+                        <div className="space-y-3">
+                          {assessment.ai_insights.dos.map((item: string, idx: number) => (
+                            <Card key={idx} className="p-4 bg-success/10 border-l-4 border-success">
+                              <div className="flex gap-3 items-start">
+                                <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                                <p className="text-base text-foreground">{item}</p>
+                              </div>
+                            </Card>
+                          ))}
                         </div>
-                       </div>
-                     )}
+                      )}
+
+                      {/* Don'ts - Red Cards */}
+                      {assessment.ai_insights.donts && Array.isArray(assessment.ai_insights.donts) && assessment.ai_insights.donts.length > 0 && (
+                        <div className="space-y-3 mt-6">
+                          {assessment.ai_insights.donts.map((item: string, idx: number) => (
+                            <Card key={idx} className="p-4 bg-destructive/10 border-l-4 border-destructive">
+                              <div className="flex gap-3 items-start">
+                                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                                <p className="text-base text-foreground">{item}</p>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Diet Plan Section */}
                   {assessment.ai_insights.diet_plan && (
