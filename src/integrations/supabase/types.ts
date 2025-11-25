@@ -43,78 +43,117 @@ export type Database = {
           age: number | null
           ai_insights: Json | null
           bmi: number | null
+          chest_pain: boolean | null
           created_at: string
           diabetes: string | null
           diastolic: number | null
           diet: string | null
+          diet_plan: string | null
+          dizziness: boolean | null
           exercise: string | null
+          family_history: boolean | null
+          fasting_sugar: number | null
+          fatigue: boolean | null
           gender: string | null
+          hdl: number | null
           heart_age: number | null
           height: number | null
           high_cholesterol: string | null
           id: string
           knows_lipids: string | null
+          ldl: number | null
           mobile: string
           name: string
+          palpitations: boolean | null
+          post_meal_sugar: number | null
           risk_score: number | null
+          shortness_of_breath: boolean | null
           sleep_hours: number | null
           smoking: string | null
+          swelling: boolean | null
           systolic: number | null
           tobacco_use: string[] | null
           updated_at: string
           user_id: string
+          user_notes: string | null
           weight: number | null
         }
         Insert: {
           age?: number | null
           ai_insights?: Json | null
           bmi?: number | null
+          chest_pain?: boolean | null
           created_at?: string
           diabetes?: string | null
           diastolic?: number | null
           diet?: string | null
+          diet_plan?: string | null
+          dizziness?: boolean | null
           exercise?: string | null
+          family_history?: boolean | null
+          fasting_sugar?: number | null
+          fatigue?: boolean | null
           gender?: string | null
+          hdl?: number | null
           heart_age?: number | null
           height?: number | null
           high_cholesterol?: string | null
           id?: string
           knows_lipids?: string | null
+          ldl?: number | null
           mobile: string
           name: string
+          palpitations?: boolean | null
+          post_meal_sugar?: number | null
           risk_score?: number | null
+          shortness_of_breath?: boolean | null
           sleep_hours?: number | null
           smoking?: string | null
+          swelling?: boolean | null
           systolic?: number | null
           tobacco_use?: string[] | null
           updated_at?: string
           user_id: string
+          user_notes?: string | null
           weight?: number | null
         }
         Update: {
           age?: number | null
           ai_insights?: Json | null
           bmi?: number | null
+          chest_pain?: boolean | null
           created_at?: string
           diabetes?: string | null
           diastolic?: number | null
           diet?: string | null
+          diet_plan?: string | null
+          dizziness?: boolean | null
           exercise?: string | null
+          family_history?: boolean | null
+          fasting_sugar?: number | null
+          fatigue?: boolean | null
           gender?: string | null
+          hdl?: number | null
           heart_age?: number | null
           height?: number | null
           high_cholesterol?: string | null
           id?: string
           knows_lipids?: string | null
+          ldl?: number | null
           mobile?: string
           name?: string
+          palpitations?: boolean | null
+          post_meal_sugar?: number | null
           risk_score?: number | null
+          shortness_of_breath?: boolean | null
           sleep_hours?: number | null
           smoking?: string | null
+          swelling?: boolean | null
           systolic?: number | null
           tobacco_use?: string[] | null
           updated_at?: string
           user_id?: string
+          user_notes?: string | null
           weight?: number | null
         }
         Relationships: [

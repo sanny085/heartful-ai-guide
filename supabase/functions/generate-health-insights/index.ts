@@ -45,44 +45,80 @@ serve(async (req) => {
 
     console.log("Calculated heart age:", heartAge, "risk score:", riskScore);
 
-    // Generate AI insights
-    const prompt = `You are a compassionate health advisor. Based on this health assessment data, provide personalized insights and recommendations:
+    // Generate comprehensive AI insights including diet plan
+    const symptomsText = [
+      assessment.chest_pain && "chest pain",
+      assessment.shortness_of_breath && "shortness of breath",
+      assessment.dizziness && "dizziness",
+      assessment.fatigue && "fatigue",
+      assessment.swelling && "leg/feet swelling",
+      assessment.palpitations && "palpitations",
+      assessment.family_history && "family history of heart disease"
+    ].filter(Boolean).join(", ") || "none reported";
 
-BMI: ${assessment.bmi?.toFixed(1) || "N/A"}
-Blood Pressure: ${assessment.systolic}/${assessment.diastolic} mmHg
-Diet: ${assessment.diet || "Not specified"}
-Exercise: ${assessment.exercise || "Not specified"}
-Sleep: ${assessment.sleep_hours} hours
-Smoking: ${assessment.smoking || "Not specified"}
-Diabetes: ${assessment.diabetes || "Not specified"}
+    const lipidInfo = assessment.ldl && assessment.hdl 
+      ? `LDL: ${assessment.ldl} mg/dL, HDL: ${assessment.hdl} mg/dL`
+      : "Lipid levels not provided";
+    
+    const diabetesInfo = assessment.diabetes === "yes" && assessment.fasting_sugar && assessment.post_meal_sugar
+      ? `Fasting: ${assessment.fasting_sugar} mg/dL, Post-meal: ${assessment.post_meal_sugar} mg/dL`
+      : assessment.diabetes === "yes" ? "Has diabetes (levels not specified)" : "No diabetes";
+
+    const prompt = `You are a compassionate health advisor. Based on this comprehensive health assessment, provide personalized insights and a diet plan:
+
+PATIENT PROFILE:
 Age: ${assessment.age || "Not specified"}
 Gender: ${assessment.gender || "Not specified"}
+BMI: ${assessment.bmi?.toFixed(1) || "N/A"}
 
+SYMPTOMS: ${symptomsText}
+
+VITALS & LAB VALUES:
+Blood Pressure: ${assessment.systolic}/${assessment.diastolic} mmHg
+${lipidInfo}
+${diabetesInfo}
+
+LIFESTYLE:
+Diet: ${assessment.diet || "Not specified"}
+Exercise: ${assessment.exercise || "Not specified"}
+Sleep: ${assessment.sleep_hours} hours per night
+Smoking: ${assessment.smoking || "Not specified"}
+
+USER NOTES: ${assessment.user_notes || "None provided"}
+
+CALCULATED METRICS:
+Heart Age: ${heartAge} years (Actual: ${assessment.age})
 Risk Score: ${riskScore}%
 
-Provide a comprehensive health assessment with:
-1. A brief summary (3-4 sentences) describing their overall health status in an encouraging, supportive tone
+Provide a comprehensive assessment with:
+1. A brief summary (3-4 sentences) describing overall health status in an encouraging tone
 2. 4-5 specific, actionable recommendations for improving heart health
-3. If risk score is above 10%, include specific do's and don'ts (3-4 items each)
+3. Cholesterol interpretation with status (Normal/Borderline/High) and specific advice
+4. A personalized diet plan with specific foods to eat and avoid based on their conditions
+5. If risk score is above 10%, include specific do's and don'ts
 
-Return ONLY valid JSON (no markdown formatting, no code blocks) with this exact structure:
+Return ONLY valid JSON (no markdown, no code blocks) with this structure:
 {
-  "summary": "A brief encouraging summary of their health status",
+  "summary": "Brief encouraging health status summary",
   "recommendations": [
     {
-      "title": "Clear recommendation title",
-      "description": "Detailed explanation of what they should do and why"
+      "title": "Recommendation title",
+      "description": "Detailed actionable advice"
     }
   ],
-  "dos": [
-    "Specific action they should do"
-  ],
-  "donts": [
-    "Specific action they should avoid"
-  ]
+  "cholesterol_status": "Normal|Borderline|High",
+  "cholesterol_advice": "Specific advice about cholesterol management",
+  "diet_plan": {
+    "summary": "Brief overview of recommended diet approach",
+    "foods_to_eat": ["Specific food 1", "Specific food 2", "..."],
+    "foods_to_avoid": ["Specific food 1", "Specific food 2", "..."],
+    "meal_suggestions": ["Breakfast idea", "Lunch idea", "Dinner idea"]
+  },
+  "dos": ["Specific action to do"],
+  "donts": ["Specific action to avoid"]
 }
 
-Keep the tone warm, professional, and motivating. Focus on practical, achievable actions.`;
+Keep tone warm, professional, and motivating. Focus on practical, achievable actions tailored to their specific conditions.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -129,21 +165,20 @@ Keep the tone warm, professional, and motivating. Focus on practical, achievable
         throw new Error("Invalid structure");
       }
       
-      // Clean up recommendations array - remove any invalid entries
+      // Clean up recommendations array
       insights.recommendations = insights.recommendations
-        .filter((rec: any) => {
-          // Must be an object with both title and description
-          return rec && 
-                 typeof rec === 'object' && 
-                 rec.title && 
-                 rec.description &&
-                 typeof rec.title === 'string' && 
-                 typeof rec.description === 'string';
-        })
+        .filter((rec: any) => rec && typeof rec === 'object' && rec.title && rec.description)
         .map((rec: any) => ({
           title: rec.title.trim(),
           description: rec.description.trim()
         }));
+
+      // Ensure diet_plan structure exists
+      if (insights.diet_plan && typeof insights.diet_plan === 'object') {
+        insights.diet_plan.foods_to_eat = Array.isArray(insights.diet_plan.foods_to_eat) ? insights.diet_plan.foods_to_eat : [];
+        insights.diet_plan.foods_to_avoid = Array.isArray(insights.diet_plan.foods_to_avoid) ? insights.diet_plan.foods_to_avoid : [];
+        insights.diet_plan.meal_suggestions = Array.isArray(insights.diet_plan.meal_suggestions) ? insights.diet_plan.meal_suggestions : [];
+      }
       
       console.log("Successfully parsed insights with", insights.recommendations.length, "recommendations");
       
@@ -160,13 +195,17 @@ Keep the tone warm, professional, and motivating. Focus on practical, achievable
       };
     }
 
-    // Update assessment with calculated values and insights
+    // Extract diet plan from insights to store separately
+    const dietPlan = insights.diet_plan ? JSON.stringify(insights.diet_plan) : null;
+
+    // Update assessment with calculated values, insights, and diet plan
     const { error: updateError } = await supabase
       .from("heart_health_assessments")
       .update({
         heart_age: heartAge,
         risk_score: riskScore,
-        ai_insights: insights
+        ai_insights: insights,
+        diet_plan: dietPlan
       })
       .eq("id", assessmentId);
 
@@ -224,16 +263,28 @@ function calculateHeartAge(assessment: any): number {
   if (assessment.smoking === "regularly") ageModifier += 10;
   else if (assessment.smoking === "occasionally") ageModifier += 5;
 
-  // Diabetes impact
-  if (assessment.diabetes === "yes") ageModifier += 8;
+  // Diabetes impact - enhanced with sugar levels
+  if (assessment.diabetes === "yes") {
+    ageModifier += 8;
+    if (assessment.fasting_sugar > 125 || assessment.post_meal_sugar > 180) ageModifier += 5;
+  }
+
+  // Lipid impact
+  if (assessment.ldl > 160 || (assessment.hdl && assessment.hdl < 40)) ageModifier += 5;
 
   // Sleep impact
   if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) ageModifier += 3;
 
-  // Diet impact (simplified)
+  // Diet impact
   if (assessment.diet?.includes("high-carb") || assessment.diet?.includes("irregular")) {
     ageModifier += 4;
   }
+
+  // Symptoms impact
+  if (assessment.chest_pain) ageModifier += 3;
+  if (assessment.shortness_of_breath) ageModifier += 3;
+  if (assessment.palpitations) ageModifier += 2;
+  if (assessment.family_history) ageModifier += 5;
 
   return Math.max(actualAge, actualAge + ageModifier);
 }
@@ -261,11 +312,32 @@ function calculateRiskScore(assessment: any): number {
   else if (assessment.smoking === "occasionally") score += 10;
 
   // Diabetes risk (0-15 points)
-  if (assessment.diabetes === "yes") score += 15;
+  if (assessment.diabetes === "yes") {
+    score += 15;
+    // Additional risk for uncontrolled diabetes
+    if (assessment.fasting_sugar > 125 || assessment.post_meal_sugar > 180) score += 5;
+  }
+
+  // Lipid risk (0-15 points)
+  if (assessment.ldl) {
+    if (assessment.ldl > 190) score += 15;
+    else if (assessment.ldl > 160) score += 10;
+    else if (assessment.ldl > 130) score += 5;
+  }
+  if (assessment.hdl && assessment.hdl < 40) score += 5;
 
   // Sleep risk (0-10 points)
   if (assessment.sleep_hours < 5 || assessment.sleep_hours > 10) score += 10;
   else if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) score += 5;
+
+  // Symptoms risk (0-15 points)
+  if (assessment.chest_pain) score += 5;
+  if (assessment.shortness_of_breath) score += 4;
+  if (assessment.palpitations) score += 3;
+  if (assessment.swelling) score += 3;
+  
+  // Family history (0-10 points)
+  if (assessment.family_history) score += 10;
 
   return Math.min(100, score); // Cap at 100
 }

@@ -4,19 +4,24 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Heart, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import VoiceRecorder from "@/components/VoiceRecorder";
 
 const STEPS = [
-  "Profile",
-  "Diet & Activity",
-  "Sleep Patterns & Tobacco Use",
+  "Initial Symptoms",
+  "Patient Details",
+  "Diet & Activity", 
+  "Sleep & Tobacco",
   "Lipid Levels",
-  "Blood Glucose Levels",
-  "Blood Pressure Levels"
+  "Blood Glucose",
+  "Blood Pressure",
+  "Additional Symptoms",
+  "Personal Notes"
 ];
 
 export default function HeartHealthAssessment() {
@@ -28,22 +33,41 @@ export default function HeartHealthAssessment() {
   const [showExistingReport, setShowExistingReport] = useState(false);
   const [heightUnit, setHeightUnit] = useState<"cm" | "inch">("cm");
   const [formData, setFormData] = useState({
+    // Initial symptoms
+    chestPain: false,
+    shortnessOfBreath: false,
+    dizziness: false,
+    fatigue: false,
+    // Patient details
     name: "",
     mobile: "",
     age: "",
     gender: "",
     height: "",
     weight: "",
+    // Lifestyle
     diet: "",
     exercise: "",
     sleepHours: "",
     smoking: "",
     tobacco: [],
+    // Lipid levels
     knowsLipids: "",
-    highCholesterol: "",
+    ldl: "",
+    hdl: "",
+    // Diabetes
     diabetes: "",
+    fastingSugar: "",
+    postMealSugar: "",
+    // Blood pressure
     systolic: "",
     diastolic: "",
+    // Additional symptoms
+    swelling: false,
+    palpitations: false,
+    familyHistory: false,
+    // User notes
+    userNotes: "",
     consent: false
   });
 
@@ -53,32 +77,26 @@ export default function HeartHealthAssessment() {
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0:
-        return formData.name && formData.mobile;
-      case 1:
-        return formData.diet && formData.exercise;
-      case 2:
-        return formData.sleepHours;
-      case 3:
-        return formData.knowsLipids;
-      case 4:
-        return formData.diabetes;
-      case 5:
-        return formData.systolic && formData.diastolic;
-      default:
-        return true;
+      case 0: return true; // Symptoms are optional
+      case 1: return formData.name && formData.mobile;
+      case 2: return formData.diet && formData.exercise;
+      case 3: return formData.sleepHours;
+      case 4: return formData.knowsLipids;
+      case 5: return formData.diabetes;
+      case 6: return formData.systolic && formData.diastolic;
+      case 7: return true; // Additional symptoms optional
+      case 8: return true; // Notes optional
+      default: return true;
     }
   };
 
   useEffect(() => {
-    // Redirect if not logged in
     if (!user) {
       toast.error("Please log in to take the heart health test");
       navigate("/auth");
       return;
     }
 
-    // Load latest assessment data to pre-fill form
     const loadLatestAssessment = async () => {
       try {
         const { data, error } = await supabase
@@ -94,7 +112,12 @@ export default function HeartHealthAssessment() {
         if (data) {
           setLatestAssessment(data);
           setShowExistingReport(true);
-          setFormData({
+          setFormData(prev => ({
+            ...prev,
+            chestPain: data.chest_pain || false,
+            shortnessOfBreath: data.shortness_of_breath || false,
+            dizziness: data.dizziness || false,
+            fatigue: data.fatigue || false,
             name: data.name || "",
             mobile: data.mobile || "",
             age: data.age?.toString() || "",
@@ -107,12 +130,18 @@ export default function HeartHealthAssessment() {
             smoking: data.smoking || "",
             tobacco: data.tobacco_use || [],
             knowsLipids: data.knows_lipids || "",
-            highCholesterol: data.high_cholesterol || "",
+            ldl: data.ldl?.toString() || "",
+            hdl: data.hdl?.toString() || "",
             diabetes: data.diabetes || "",
+            fastingSugar: data.fasting_sugar?.toString() || "",
+            postMealSugar: data.post_meal_sugar?.toString() || "",
             systolic: data.systolic?.toString() || "",
             diastolic: data.diastolic?.toString() || "",
-            consent: false
-          });
+            swelling: data.swelling || false,
+            palpitations: data.palpitations || false,
+            familyHistory: data.family_history || false,
+            userNotes: data.user_notes || ""
+          }));
         }
       } catch (error) {
         console.error("Error loading latest assessment:", error);
@@ -123,9 +152,7 @@ export default function HeartHealthAssessment() {
   }, [user, navigate]);
 
   const calculateBMI = (height: number, weight: number) => {
-    // Convert height to cm if in inches
     const heightInCm = heightUnit === "inch" ? height * 2.54 : height;
-    // Height in cm, convert to meters
     const heightInMeters = heightInCm / 100;
     return weight / (heightInMeters * heightInMeters);
   };
@@ -134,7 +161,6 @@ export default function HeartHealthAssessment() {
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
-      // Submit and navigate to results
       await saveAssessment();
     }
   };
@@ -144,7 +170,6 @@ export default function HeartHealthAssessment() {
     
     setSaving(true);
     try {
-      // Get user profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("user_id")
@@ -157,35 +182,50 @@ export default function HeartHealthAssessment() {
         return;
       }
 
-      // Calculate BMI if height and weight are provided
       const bmi = formData.height && formData.weight 
         ? calculateBMI(Number(formData.height), Number(formData.weight))
         : null;
 
       const assessmentData = {
         user_id: profile.user_id,
+        // Initial symptoms
+        chest_pain: formData.chestPain,
+        shortness_of_breath: formData.shortnessOfBreath,
+        dizziness: formData.dizziness,
+        fatigue: formData.fatigue,
+        // Patient details
         name: formData.name,
         mobile: formData.mobile,
         age: formData.age ? parseInt(formData.age) : null,
         gender: formData.gender,
         height: formData.height ? parseFloat(formData.height) : null,
         weight: formData.weight ? parseFloat(formData.weight) : null,
+        // Lifestyle
         diet: formData.diet,
         exercise: formData.exercise,
         sleep_hours: formData.sleepHours ? parseFloat(formData.sleepHours) : null,
         smoking: formData.smoking,
         tobacco_use: formData.tobacco,
+        // Lipids
         knows_lipids: formData.knowsLipids,
-        high_cholesterol: formData.highCholesterol,
+        ldl: formData.ldl ? parseInt(formData.ldl) : null,
+        hdl: formData.hdl ? parseInt(formData.hdl) : null,
+        // Diabetes
         diabetes: formData.diabetes,
+        fasting_sugar: formData.fastingSugar ? parseInt(formData.fastingSugar) : null,
+        post_meal_sugar: formData.postMealSugar ? parseInt(formData.postMealSugar) : null,
+        // Blood pressure
         systolic: formData.systolic ? parseInt(formData.systolic) : null,
         diastolic: formData.diastolic ? parseInt(formData.diastolic) : null,
+        // Additional symptoms
+        swelling: formData.swelling,
+        palpitations: formData.palpitations,
+        family_history: formData.familyHistory,
+        // User notes
+        user_notes: formData.userNotes,
         bmi: bmi
       };
 
-      let assessmentId: string;
-
-      // Always create a new assessment record
       const { data, error } = await supabase
         .from("heart_health_assessments")
         .insert(assessmentData)
@@ -193,12 +233,10 @@ export default function HeartHealthAssessment() {
         .single();
 
       if (error) throw error;
-      assessmentId = data.id;
       toast.success("New health report created successfully!");
 
-      // Call edge function to generate AI insights
       const { error: insightsError } = await supabase.functions.invoke("generate-health-insights", {
-        body: { assessmentId }
+        body: { assessmentId: data.id }
       });
 
       if (insightsError) {
@@ -206,7 +244,7 @@ export default function HeartHealthAssessment() {
         toast.error("Assessment saved but insights generation failed");
       }
 
-      navigate(`/heart-health-results?id=${assessmentId}`);
+      navigate(`/heart-health-results?id=${data.id}`);
     } catch (error) {
       console.error("Error saving assessment:", error);
       toast.error("Failed to save assessment. Please try again.");
@@ -220,6 +258,54 @@ export default function HeartHealthAssessment() {
       case 0:
         return (
           <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-semibold mb-2">Initial Symptoms</h3>
+              <p className="text-muted-foreground">Are you experiencing any of these symptoms?</p>
+            </div>
+            
+            <div className="space-y-4">
+              <Card className={`p-4 cursor-pointer transition-all ${formData.chestPain ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("chestPain", !formData.chestPain)}>
+                <div className="flex items-center justify-between">
+                  <span>Chest pain or discomfort</span>
+                  <Checkbox checked={formData.chestPain} />
+                </div>
+              </Card>
+
+              <Card className={`p-4 cursor-pointer transition-all ${formData.shortnessOfBreath ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("shortnessOfBreath", !formData.shortnessOfBreath)}>
+                <div className="flex items-center justify-between">
+                  <span>Shortness of breath</span>
+                  <Checkbox checked={formData.shortnessOfBreath} />
+                </div>
+              </Card>
+
+              <Card className={`p-4 cursor-pointer transition-all ${formData.dizziness ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("dizziness", !formData.dizziness)}>
+                <div className="flex items-center justify-between">
+                  <span>Dizziness or fainting</span>
+                  <Checkbox checked={formData.dizziness} />
+                </div>
+              </Card>
+
+              <Card className={`p-4 cursor-pointer transition-all ${formData.fatigue ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("fatigue", !formData.fatigue)}>
+                <div className="flex items-center justify-between">
+                  <span>Tiredness or fatigue</span>
+                  <Checkbox checked={formData.fatigue} />
+                </div>
+              </Card>
+            </div>
+          </div>
+        );
+
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-semibold">Patient Details</h3>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Name*</Label>
@@ -256,7 +342,7 @@ export default function HeartHealthAssessment() {
                 <Label htmlFor="gender">Gender</Label>
                 <select
                   id="gender"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   value={formData.gender}
                   onChange={(e) => updateFormData("gender", e.target.value)}
                 >
@@ -276,14 +362,14 @@ export default function HeartHealthAssessment() {
                     <button
                       type="button"
                       onClick={() => setHeightUnit("cm")}
-                      className={`px-2 py-1 rounded ${heightUnit === "cm" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                      className={`px-2 py-1 rounded ${heightUnit === "cm" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       cm
                     </button>
                     <button
                       type="button"
                       onClick={() => setHeightUnit("inch")}
-                      className={`px-2 py-1 rounded ${heightUnit === "inch" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                      className={`px-2 py-1 rounded ${heightUnit === "inch" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
                     >
                       inch
                     </button>
@@ -317,14 +403,14 @@ export default function HeartHealthAssessment() {
                   onCheckedChange={(checked) => updateFormData("consent", checked)}
                 />
                 <Label htmlFor="consent" className="text-sm leading-relaxed cursor-pointer">
-                  I agree to be contacted by 10000Hearts through call, email, WhatsApp, SMS and to be added to 10000Hearts WhatsApp group
+                  I agree to be contacted by 10000Hearts through call, email, WhatsApp, SMS
                 </Label>
               </div>
             )}
           </div>
         );
 
-      case 1:
+      case 2:
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-center mb-6">
@@ -335,7 +421,7 @@ export default function HeartHealthAssessment() {
             <h3 className="text-xl font-semibold text-center mb-6">How would you define your diet?</h3>
             <div className="space-y-3">
               {[
-                "I mostly choose high-carb foods, ocassional vegetables or fruits",
+                "I mostly choose high-carb foods, occasional vegetables or fruits",
                 "I choose both high and low carb foods equally with moderate consumption of fruits and vegetables",
                 "I limit or restrict high-carb foods most of the time and consume vegetables, sprouts and fruits regularly",
                 "I choose a balanced diet all the time",
@@ -383,7 +469,7 @@ export default function HeartHealthAssessment() {
           </div>
         );
 
-      case 2:
+      case 3:
         return (
           <div className="space-y-6">
             <div className="space-y-2">
@@ -413,7 +499,7 @@ export default function HeartHealthAssessment() {
           </div>
         );
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-center mb-6">Lipid Levels</h3>
@@ -422,6 +508,7 @@ export default function HeartHealthAssessment() {
                 <Label>Do you know your lipid levels?</Label>
                 <div className="flex gap-4">
                   <Button
+                    type="button"
                     variant={formData.knowsLipids === "yes" ? "default" : "outline"}
                     onClick={() => updateFormData("knowsLipids", "yes")}
                     className="flex-1"
@@ -429,6 +516,7 @@ export default function HeartHealthAssessment() {
                     Yes
                   </Button>
                   <Button
+                    type="button"
                     variant={formData.knowsLipids === "no" ? "default" : "outline"}
                     onClick={() => updateFormData("knowsLipids", "no")}
                     className="flex-1"
@@ -437,58 +525,33 @@ export default function HeartHealthAssessment() {
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Have you been told you have high cholesterol?</Label>
-                <div className="flex gap-4">
-                  <Button
-                    variant={formData.highCholesterol === "yes" ? "default" : "outline"}
-                    onClick={() => updateFormData("highCholesterol", "yes")}
-                    className="flex-1"
-                  >
-                    Yes
-                  </Button>
-                  <Button
-                    variant={formData.highCholesterol === "no" ? "default" : "outline"}
-                    onClick={() => updateFormData("highCholesterol", "no")}
-                    className="flex-1"
-                  >
-                    No
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
 
-      case 4:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-center mb-6">Blood Glucose Levels</h3>
-            <div className="space-y-2">
-              <Label>Do you have diabetes?</Label>
-              <div className="flex gap-4">
-                <Button
-                  variant={formData.diabetes === "yes" ? "default" : "outline"}
-                  onClick={() => updateFormData("diabetes", "yes")}
-                  className="flex-1"
-                >
-                  Yes
-                </Button>
-                <Button
-                  variant={formData.diabetes === "no" ? "default" : "outline"}
-                  onClick={() => updateFormData("diabetes", "no")}
-                  className="flex-1"
-                >
-                  No
-                </Button>
-                <Button
-                  variant={formData.diabetes === "never_tested" ? "default" : "outline"}
-                  onClick={() => updateFormData("diabetes", "never_tested")}
-                  className="flex-1"
-                >
-                  Never Tested
-                </Button>
-              </div>
+              {formData.knowsLipids === "yes" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ldl">LDL (Bad Cholesterol) mg/dL</Label>
+                    <Input
+                      id="ldl"
+                      type="number"
+                      placeholder="Enter LDL value"
+                      value={formData.ldl}
+                      onChange={(e) => updateFormData("ldl", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Normal: &lt;100 mg/dL</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hdl">HDL (Good Cholesterol) mg/dL</Label>
+                    <Input
+                      id="hdl"
+                      type="number"
+                      placeholder="Enter HDL value"
+                      value={formData.hdl}
+                      onChange={(e) => updateFormData("hdl", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Normal: &gt;40 mg/dL (men), &gt;50 mg/dL (women)</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -496,27 +559,158 @@ export default function HeartHealthAssessment() {
       case 5:
         return (
           <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-center mb-6">Blood Pressure Levels</h3>
-            <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-center mb-6">Blood Glucose Levels</h3>
+            <div className="space-y-2">
+              <Label>Do you have diabetes?</Label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant={formData.diabetes === "yes" ? "default" : "outline"}
+                  onClick={() => updateFormData("diabetes", "yes")}
+                  className="flex-1"
+                >
+                  Yes
+                </Button>
+                <Button
+                  type="button"
+                  variant={formData.diabetes === "no" ? "default" : "outline"}
+                  onClick={() => updateFormData("diabetes", "no")}
+                  className="flex-1"
+                >
+                  No
+                </Button>
+              </div>
+            </div>
+
+            {formData.diabetes === "yes" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fasting">Fasting Sugar (before food) mg/dL</Label>
+                  <Input
+                    id="fasting"
+                    type="number"
+                    placeholder="Enter fasting sugar"
+                    value={formData.fastingSugar}
+                    onChange={(e) => updateFormData("fastingSugar", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Normal: 70-100 mg/dL</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="postmeal">Post-meal Sugar (after food) mg/dL</Label>
+                  <Input
+                    id="postmeal"
+                    type="number"
+                    placeholder="Enter post-meal sugar"
+                    value={formData.postMealSugar}
+                    onChange={(e) => updateFormData("postMealSugar", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Normal: &lt;140 mg/dL</p>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <h3 className="text-xl font-semibold text-center mb-6">Blood Pressure</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="systolic">Systolic (mmHg)</Label>
+                <Label htmlFor="systolic">Systolic (Upper Number)</Label>
                 <Input
                   id="systolic"
                   type="number"
-                  placeholder="Enter systolic pressure"
+                  placeholder="e.g., 120"
                   value={formData.systolic}
                   onChange={(e) => updateFormData("systolic", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="diastolic">Diastolic (mmHg)</Label>
+                <Label htmlFor="diastolic">Diastolic (Lower Number)</Label>
                 <Input
                   id="diastolic"
                   type="number"
-                  placeholder="Enter diastolic pressure"
+                  placeholder="e.g., 80"
                   value={formData.diastolic}
                   onChange={(e) => updateFormData("diastolic", e.target.value)}
                 />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">Normal: &lt;120/80 mmHg</p>
+          </div>
+        );
+
+      case 7:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-semibold mb-2">Additional Symptoms</h3>
+              <p className="text-muted-foreground">Any other symptoms you're experiencing?</p>
+            </div>
+            
+            <div className="space-y-4">
+              <Card className={`p-4 cursor-pointer transition-all ${formData.swelling ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("swelling", !formData.swelling)}>
+                <div className="flex items-center justify-between">
+                  <span>Swelling in legs or feet</span>
+                  <Checkbox checked={formData.swelling} />
+                </div>
+              </Card>
+
+              <Card className={`p-4 cursor-pointer transition-all ${formData.palpitations ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("palpitations", !formData.palpitations)}>
+                <div className="flex items-center justify-between">
+                  <span>Irregular heartbeat or palpitations</span>
+                  <Checkbox checked={formData.palpitations} />
+                </div>
+              </Card>
+
+              <Card className={`p-4 cursor-pointer transition-all ${formData.familyHistory ? "border-accent bg-accent/5" : ""}`}
+                    onClick={() => updateFormData("familyHistory", !formData.familyHistory)}>
+                <div className="flex items-center justify-between">
+                  <span>Family history of heart disease</span>
+                  <Checkbox checked={formData.familyHistory} />
+                </div>
+              </Card>
+            </div>
+          </div>
+        );
+
+      case 8:
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-semibold mb-2">Share Additional Information</h3>
+              <p className="text-muted-foreground">Tell us anything else about your health</p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="notes">Health Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Share any health concerns, medications, or relevant information..."
+                  value={formData.userNotes}
+                  onChange={(e) => updateFormData("userNotes", e.target.value)}
+                  rows={6}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="border-t pt-4">
+                <Label className="mb-2 block">Or Record a Voice Note</Label>
+                <VoiceRecorder
+                  onTranscriptionComplete={(text) => {
+                    const newNotes = formData.userNotes 
+                      ? `${formData.userNotes}\n\n${text}`
+                      : text;
+                    updateFormData("userNotes", newNotes);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Your voice will be converted to text automatically
+                </p>
               </div>
             </div>
           </div>
@@ -527,140 +721,133 @@ export default function HeartHealthAssessment() {
     }
   };
 
+  if (showExistingReport && latestAssessment) {
+    return (
+      <div className="min-h-screen bg-background py-12">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
+            <Home className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
+
+          <Card className="p-8 text-center">
+            <Heart className="w-16 h-16 text-accent mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">Welcome Back!</h2>
+            <p className="text-muted-foreground mb-6">
+              You have an existing health report from {new Date(latestAssessment.created_at).toLocaleDateString()}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button onClick={() => navigate(`/heart-health-results?id=${latestAssessment.id}`)}>
+                View Latest Report
+              </Button>
+              <Button variant="outline" onClick={() => setShowExistingReport(false)}>
+                Create New Report
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-health-bg">
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-[400px_1fr] gap-8">
-          {/* Left Sidebar */}
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Heart className="w-8 h-8 text-accent fill-accent" />
-                <span className="text-2xl font-bold text-primary">10000Hearts</span>
+    <div className="min-h-screen bg-background">
+      <div className="grid lg:grid-cols-[300px_1fr] min-h-screen">
+        {/* Sidebar */}
+        <aside className="hidden lg:block bg-card border-r">
+          <div className="p-6">
+            <Button variant="ghost" onClick={() => navigate("/")} className="mb-6 w-full justify-start">
+              <Home className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-6">
+                <Heart className="w-8 h-8 text-accent" />
+                <h2 className="text-lg font-semibold">Heart Health Assessment</h2>
               </div>
-              <button
-                onClick={() => window.location.href = "https://10000hearts.com/"}
-                className="p-2 rounded-lg hover:bg-accent/10 transition-colors"
-                aria-label="Go to home"
-              >
-                <Home className="w-6 h-6 text-primary" />
-              </button>
-            </div>
 
-            <div>
-              <h1 className="text-3xl font-bold text-primary mb-2">
-                Discover Your Heart Health : Begin Now!
-              </h1>
-              <p className="text-muted-foreground">
-                {latestAssessment 
-                  ? "Create a new report or view your latest assessment" 
-                  : "Answer a few simple questions to reveal your heart age and cardiovascular risk."}
-              </p>
-            </div>
-
-            {/* Show existing report option */}
-            {showExistingReport && latestAssessment && (
-              <Card className="p-4 bg-accent/10 border-accent/20">
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-semibold text-foreground">You have an existing health report</p>
-                    <p className="text-sm text-muted-foreground">
-                      Last updated: {new Date(latestAssessment.updated_at).toLocaleDateString()}
-                    </p>
+              {STEPS.map((step, index) => (
+                <div
+                  key={index}
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                    index === currentStep
+                      ? "bg-accent/10 border-l-4 border-accent"
+                      : index < currentStep
+                      ? "bg-muted/50"
+                      : ""
+                  }`}
+                >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium
+                    ${index === currentStep ? "bg-accent text-accent-foreground" : 
+                      index < currentStep ? "bg-success text-white" : "bg-muted text-muted-foreground"}`}>
+                    {index < currentStep ? "✓" : index + 1}
                   </div>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={() => navigate(`/heart-health-results?id=${latestAssessment.id}`)}
-                      variant="default"
-                      className="w-full"
-                    >
-                      View Your Report
-                    </Button>
-                    <Button
-                      onClick={() => setShowExistingReport(false)}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Take New Assessment
-                    </Button>
-                  </div>
+                  <span className={`text-sm ${index === currentStep ? "font-semibold" : ""}`}>{step}</span>
                 </div>
-              </Card>
-            )}
+              ))}
 
-            {/* Progress Steps */}
-            {!showExistingReport && (
-              <div className="space-y-4">
-                {STEPS.map((step, index) => (
-                  <div 
-                    key={step} 
-                    className={`flex items-center gap-3 ${
-                      index <= currentStep ? 'cursor-pointer hover:opacity-80 transition-opacity' : 'cursor-not-allowed opacity-60'
-                    }`}
-                    onClick={() => {
-                      if (index <= currentStep) {
-                        setCurrentStep(index);
-                      }
-                    }}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                        index === currentStep
-                          ? "bg-accent text-white"
-                          : index < currentStep
-                          ? "bg-primary text-white"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {index < currentStep ? "✓" : index + 1}
-                    </div>
-                    <span
-                      className={`text-sm ${
-                        index === currentStep ? "text-foreground font-medium" : "text-muted-foreground"
-                      }`}
-                    >
-                      {step}
-                    </span>
-                  </div>
-                ))}
+              <div className="mt-6 pt-6 border-t">
+                <p className="text-xs text-muted-foreground">
+                  Step {currentStep + 1} of {STEPS.length}
+                </p>
+                <div className="w-full bg-muted rounded-full h-2 mt-2">
+                  <div
+                    className="bg-accent h-2 rounded-full transition-all"
+                    style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+                  />
+                </div>
               </div>
-            )}
+            </div>
           </div>
+        </aside>
 
-          {/* Main Content */}
-          {!showExistingReport && (
-            <Card className="p-8 shadow-lg">
-              <div className="max-w-2xl mx-auto">
-                <h2 className="text-2xl font-bold mb-8">
-                  Take the 10000Hearts Health Test
-                </h2>
+        {/* Main Content */}
+        <main className="p-6 lg:p-12">
+          <div className="max-w-3xl mx-auto">
+            <div className="lg:hidden mb-6">
+              <Button variant="ghost" onClick={() => navigate("/")} className="mb-4">
+                <Home className="mr-2 h-4 w-4" />
+                Back
+              </Button>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">{STEPS[currentStep]}</h2>
+                <span className="text-sm text-muted-foreground">
+                  {currentStep + 1}/{STEPS.length}
+                </span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2">
+                <div
+                  className="bg-accent h-2 rounded-full transition-all"
+                  style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
+                />
+              </div>
+            </div>
 
-                {renderStepContent()}
+            <Card className="p-8">
+              {renderStepContent()}
 
-                <div className="mt-8 flex gap-4">
-                  {currentStep > 0 && (
-                    <Button
-                      onClick={() => setCurrentStep(prev => prev - 1)}
-                      variant="outline"
-                      className="flex-1"
-                      size="lg"
-                    >
-                      Previous
-                    </Button>
-                  )}
+              <div className="flex gap-4 mt-8">
+                {currentStep > 0 && (
                   <Button
-                    onClick={handleNext}
-                    disabled={!canProceed() || saving}
-                    className={`${currentStep === 0 ? 'w-full' : 'flex-1'} bg-accent hover:bg-accent/90 text-accent-foreground`}
-                    size="lg"
+                    variant="outline"
+                    onClick={() => setCurrentStep(prev => prev - 1)}
+                    className="flex-1"
                   >
-                    {saving ? "Saving..." : currentStep < STEPS.length - 1 ? "Next" : "Create New Report"}
+                    Previous
                   </Button>
-                </div>
+                )}
+                <Button
+                  onClick={handleNext}
+                  disabled={!canProceed() || saving}
+                  className="flex-1"
+                >
+                  {saving ? "Saving..." : currentStep === STEPS.length - 1 ? "Generate Report" : "Next"}
+                </Button>
               </div>
             </Card>
-          )}
-        </div>
+          </div>
+        </main>
       </div>
     </div>
   );
