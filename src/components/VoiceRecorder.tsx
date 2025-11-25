@@ -16,6 +16,12 @@ export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorder
 
   const startRecording = async () => {
     try {
+      // Check if mediaDevices is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Your browser doesn't support audio recording. Please use a modern browser.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       
@@ -39,9 +45,21 @@ export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorder
       mediaRecorder.start();
       setIsRecording(true);
       toast.success("Recording started");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error starting recording:", error);
-      toast.error("Failed to start recording. Please check microphone permissions.");
+      
+      // Provide specific error messages based on error type
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        toast.error("Microphone access denied. Please enable microphone permissions in your browser settings.");
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        toast.error("No microphone found. Please connect a microphone and try again.");
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        toast.error("Microphone is already in use by another application.");
+      } else if (error.name === 'SecurityError') {
+        toast.error("Microphone access blocked. If using HTTPS, check your browser's security settings.");
+      } else {
+        toast.error("Failed to start recording. Please check your microphone and try again.");
+      }
     }
   };
 
