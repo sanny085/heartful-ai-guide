@@ -73,7 +73,7 @@ const Index = () => {
   const checkProfileComplete = async () => {
     if (!user) return false;
 
-    const { data, error } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+    const { data, error} = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
 
     if (error || !data) return false;
     return true;
@@ -391,15 +391,6 @@ const Index = () => {
               <Heart className="w-5 h-5 mr-2" />
               View/Update Health Report
             </Button>
-            {/* <Button
-              size="lg"
-              variant="outline"
-              onClick={handleChatClick}
-              className="border-primary text-primary hover:bg-primary/5 px-8 py-6 text-lg"
-            >
-              <MessageCircle className="w-5 h-5 mr-2" />
-              Chat with AI Doctor
-            </Button> */}
           </div>
 
           {/* Feature Cards */}
