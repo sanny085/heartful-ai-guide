@@ -43,7 +43,7 @@ const Reviews = () => {
     },
     {
       image: review7,
-      feedback: "I didn’t know my BMI and diet score could be analyzed so accurately. Very user-friendly tool.",
+      feedback: "I didn't know my BMI and diet score could be analyzed so accurately. Very user-friendly tool.",
     },
     {
       image: review8,

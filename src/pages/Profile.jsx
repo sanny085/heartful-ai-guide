@@ -15,7 +15,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     age: "",
@@ -66,7 +66,7 @@ const Profile = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -108,7 +108,7 @@ const Profile = () => {
       toast.success("Profile updated successfully!");
       setIsEditing(false);
       fetchProfile();
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Failed to update profile");
     }
   };
@@ -116,7 +116,7 @@ const Profile = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-    } catch (error: any) {
+    } catch (error) {
       toast.error(error.message || "Failed to sign out");
     }
   };

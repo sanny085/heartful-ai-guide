@@ -32,6 +32,3 @@ export const messageSchema = z.object({
     .min(1, "Message cannot be empty")
     .max(4000, "Message must be less than 4000 characters"),
 });
-
-export type ProfileFormData = z.infer<typeof profileSchema>;
-export type MessageFormData = z.infer<typeof messageSchema>;

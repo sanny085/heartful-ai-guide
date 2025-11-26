@@ -111,8 +111,6 @@ const wellnessSchema = z.object({
     ),
 });
 
-type WellnessFormData = z.infer<typeof wellnessSchema>;
-
 const WellnessCampaign = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,7 +121,7 @@ const WellnessCampaign = () => {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<WellnessFormData>({
+  } = useForm({
     resolver: zodResolver(wellnessSchema),
     defaultValues: {
       countryCode: "+91",
@@ -133,7 +131,7 @@ const WellnessCampaign = () => {
   const gender = watch("gender");
   const state = watch("state");
 
-  const onSubmit = async (data: WellnessFormData) => {
+  const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("wellness_leads").insert({
@@ -285,7 +283,7 @@ const WellnessCampaign = () => {
 
               <div>
                 <Label htmlFor="gender">Gender *</Label>
-                <Select value={gender} onValueChange={(value) => setValue("gender", value as "male" | "female" | "other")}>
+                <Select value={gender} onValueChange={(value) => setValue("gender", value)}>
                   <SelectTrigger className={errors.gender ? "border-destructive" : ""}>
                     <SelectValue placeholder="Select your gender" />
                   </SelectTrigger>
