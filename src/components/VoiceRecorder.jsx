@@ -4,15 +4,11 @@ import { Mic, Square, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-interface VoiceRecorderProps {
-  onTranscriptionComplete: (text: string) => void;
-}
-
-export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorderProps) {
+export default function VoiceRecorder({ onTranscriptionComplete }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
   const startRecording = async () => {
     try {
@@ -45,7 +41,7 @@ export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorder
       mediaRecorder.start();
       setIsRecording(true);
       toast.success("Recording started");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error starting recording:", error);
       
       // Provide specific error messages based on error type
@@ -71,7 +67,7 @@ export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorder
     }
   };
 
-  const transcribeAudio = async (audioBlob: Blob) => {
+  const transcribeAudio = async (audioBlob) => {
     setIsTranscribing(true);
     try {
       // Convert blob to base64
@@ -82,7 +78,7 @@ export default function VoiceRecorder({ onTranscriptionComplete }: VoiceRecorder
         reader.onloadend = resolve;
       });
 
-      const base64Audio = (reader.result as string).split(',')[1];
+      const base64Audio = reader.result.split(',')[1];
 
       // Call edge function to transcribe
       const { data, error } = await supabase.functions.invoke('transcribe-audio', {

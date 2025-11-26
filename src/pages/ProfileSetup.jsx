@@ -60,7 +60,7 @@ const ProfileSetup = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -125,7 +125,7 @@ const ProfileSetup = () => {
 
       toast.success("Profile created successfully!");
       navigate('/');
-    } catch (error: any) {
+    } catch (error) {
       console.error("Profile creation error:", error);
       toast.error(error.message || "Failed to create profile");
     }

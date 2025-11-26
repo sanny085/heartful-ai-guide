@@ -9,28 +9,21 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Send, Menu, ArrowLeft, Paperclip, Mic, MicOff, Loader2, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  created_at: string;
-}
-
 const Chat = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [userLanguage, setUserLanguage] = useState('English');
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -120,8 +113,8 @@ const Chat = () => {
     }
   };
 
-  const addGreetingMessage = async (convId: string) => {
-    const greetings: Record<string, string> = {
+  const addGreetingMessage = async (convId) => {
+    const greetings = {
       English: "Hi! I'm your AI Health Coach. I'm here to support your wellness journey. How can I help you today?",
       Hindi: "नमस्ते! मैं आपका AI स्वास्थ्य कोच हूं। मैं आपकी स्वास्थ्य यात्रा में आपका साथ देने के लिए यहां हूं। मैं आज आपकी कैसे मदद कर सकता हूं?",
       Spanish: "¡Hola! Soy tu entrenador de salud de IA. Estoy aquí para apoyar tu viaje de bienestar. ¿Cómo puedo ayudarte hoy?",
@@ -149,7 +142,7 @@ const Chat = () => {
     }
   };
 
-  const loadMessages = async (convId: string) => {
+  const loadMessages = async (convId) => {
     try {
       const { data, error } = await supabase
         .from('messages')
@@ -158,7 +151,7 @@ const Chat = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages((data || []) as Message[]);
+      setMessages(data || []);
       
       // Add greeting if no messages
       if (!data || data.length === 0) {
@@ -198,7 +191,7 @@ const Chat = () => {
 
       if (insertError) throw insertError;
 
-      const newUserMsg: Message = {
+      const newUserMsg = {
         id: crypto.randomUUID(),
         role: 'user',
         content: validationResult.data.content,
@@ -321,14 +314,14 @@ const Chat = () => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
@@ -434,7 +427,7 @@ const Chat = () => {
     }
   };
 
-  const transcribeAudio = async (audioBlob: Blob) => {
+  const transcribeAudio = async (audioBlob) => {
     setIsTranscribing(true);
     try {
       // Convert blob to base64
@@ -445,7 +438,7 @@ const Chat = () => {
         reader.onloadend = resolve;
       });
 
-      const base64Audio = (reader.result as string).split(',')[1];
+      const base64Audio = reader.result.split(',')[1];
 
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
