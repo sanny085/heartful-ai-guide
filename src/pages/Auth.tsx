@@ -21,7 +21,7 @@ const Auth = () => {
     try {
       setIsSigningIn(true);
       await signInWithGoogle();
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.message || "Failed to sign in with Google");
       setIsSigningIn(false);
     }

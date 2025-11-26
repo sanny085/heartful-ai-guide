@@ -10,7 +10,7 @@ import { format } from "date-fns";
 export default function HealthCheckup() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [latestAssessment, setLatestAssessment] = useState(null);
+  const [latestAssessment, setLatestAssessment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
