@@ -3,6 +3,13 @@ import review1 from "@/assets/review-1.jpeg";
 import review2 from "@/assets/review-2.jpeg";
 import review3 from "@/assets/review-3.jpeg";
 import review4 from "@/assets/review-4.jpeg";
+import review5 from "@/assets/review-5.jpeg";
+import review6 from "@/assets/review-6.jpeg";
+import review7 from "@/assets/review-7.jpeg";
+import review8 from "@/assets/review-8.jpeg";
+import review9 from "@/assets/review-9.jpeg";
+import review10 from "@/assets/review-10.jpeg";
+import review11 from "@/assets/review-11.jpeg";
 
 const Reviews = () => {
   const reviews = [
@@ -15,6 +22,10 @@ const Reviews = () => {
       feedback: "Very accurate and helpful. The heart score and diet suggestions really made sense.",
     },
     {
+      image: review11,
+      feedback: "The weekly progress insights are amazing. It keeps me accountable and motivated to maintain a healthy routine.",
+    },
+    {
       image: review3,
       feedback: "Clean UI and fast results. Loved how simple the whole heart health check felt.",
     },
@@ -22,6 +33,31 @@ const Reviews = () => {
       image: review4,
       feedback: "Amazing experience! Got personalized recommendations that helped improve my lifestyle.",
     },
+    {
+      image: review5,
+      feedback: "The heart age feature really opened my eyes. It motivated me to start walking daily!",
+    },
+    {
+      image: review6,
+      feedback: "Loved how it predicted my risk level in seconds. The guidance felt personalized and practical.",
+    },
+    {
+      image: review7,
+      feedback: "I didn’t know my BMI and diet score could be analyzed so accurately. Very user-friendly tool.",
+    },
+    {
+      image: review8,
+      feedback: "The lifestyle tips were spot on! I made small changes and already feel more energetic.",
+    },
+    {
+      image: review9,
+      feedback: "Super helpful for beginners. Clear explanation of CB score and what I should improve.",
+    },
+    {
+      image: review10,
+      feedback: "This made health tracking so simple. I shared it with my family and they loved it too!",
+    },
+    
   ];
 
   return (
