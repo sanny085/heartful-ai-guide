@@ -14,9 +14,16 @@ export const AuthProvider = ({ children }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth event:', event, 'Session:', session);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Redirect to profile after successful sign in
+        if (event === 'SIGNED_IN' && session) {
+          console.log('User signed in, redirecting to profile');
+          navigate('/profile');
+        }
       }
     );
 
@@ -28,14 +35,17 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const signInWithGoogle = async () => {
-    const redirectUrl = `${window.location.origin}/profile`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectUrl,
+        redirectTo: `${window.location.origin}/profile`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
     
