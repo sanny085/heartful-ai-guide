@@ -12,10 +12,13 @@ const Auth = () => {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      navigate('/profile');
+    // If user is already authenticated and we're on the auth page, redirect to profile
+    // This handles the case where a logged-in user manually navigates to /auth
+    // OAuth callback redirect is handled by the redirectTo parameter in signInWithGoogle
+    if (user && !loading) {
+      navigate('/profile', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
 
   const handleGoogleSignIn = async () => {
     try {

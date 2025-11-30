@@ -134,7 +134,7 @@ const Profile = () => {
       <div className="container mx-auto max-w-4xl py-4 sm:py-8">
         <Button
           variant="outline"
-          onClick={() => window.location.href = "https://10000hearts.com/"}
+          onClick={() => navigate('/')}
           className="mb-4 sm:mb-6 border-primary text-primary hover:bg-primary/5 text-sm sm:text-base"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />

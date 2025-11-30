@@ -19,11 +19,8 @@ export const AuthProvider = ({ children }) => {
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Redirect to profile after successful sign in
-        if (event === 'SIGNED_IN' && session) {
-          console.log('User signed in, redirecting to profile');
-          navigate('/profile');
-        }
+        // OAuth redirect is handled by the redirectTo parameter in signInWithGoogle
+        // No need to manually redirect here as it would cause redirect loops
       }
     );
 
@@ -35,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
