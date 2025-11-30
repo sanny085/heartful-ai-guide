@@ -3,8 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,16 +53,24 @@ serve(async (req) => {
       assessment.fatigue && "fatigue",
       assessment.swelling && "leg/feet swelling",
       assessment.palpitations && "palpitations",
-      assessment.family_history && "family history of heart disease"
-    ].filter(Boolean).join(", ") || "none reported";
+      assessment.family_history && "family history of heart disease",
+    ]
+      .filter(Boolean)
+      .join(", ") || "none reported";
 
-    const lipidInfo = assessment.ldl && assessment.hdl 
-      ? `LDL: ${assessment.ldl} mg/dL, HDL: ${assessment.hdl} mg/dL`
-      : "Lipid levels not provided";
-    
-    const diabetesInfo = assessment.diabetes === "yes" && assessment.fasting_sugar && assessment.post_meal_sugar
-      ? `Fasting: ${assessment.fasting_sugar} mg/dL, Post-meal: ${assessment.post_meal_sugar} mg/dL`
-      : assessment.diabetes === "yes" ? "Has diabetes (levels not specified)" : "No diabetes";
+    const lipidInfo =
+      assessment.ldl && assessment.hdl
+        ? `LDL: ${assessment.ldl} mg/dL, HDL: ${assessment.hdl} mg/dL`
+        : "Lipid levels not provided";
+
+    const diabetesInfo =
+      assessment.diabetes === "yes" &&
+      assessment.fasting_sugar &&
+      assessment.post_meal_sugar
+        ? `Fasting: ${assessment.fasting_sugar} mg/dL, Post-meal: ${assessment.post_meal_sugar} mg/dL`
+        : assessment.diabetes === "yes"
+          ? "Has diabetes (levels not specified)"
+          : "No diabetes";
 
     const prompt = `You are a compassionate health advisor. Based on this comprehensive health assessment, provide personalized insights and a diet plan:
 
@@ -120,24 +128,27 @@ Return ONLY valid JSON (no markdown, no code blocks) with this structure:
 
 Keep tone warm, professional, and motivating. Focus on practical, achievable actions tailored to their specific conditions.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
       },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
-      }),
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -147,56 +158,90 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
 
     const data = await response.json();
     let aiContent = data.choices[0].message.content;
-    
+
     console.log("Raw AI response:", aiContent);
 
     // Remove markdown code blocks only
-    aiContent = aiContent.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    
+    aiContent = aiContent
+      .replace(/```json\s*/g, "")
+      .replace(/```\s*/g, "")
+      .trim();
+
     console.log("After markdown removal:", aiContent);
 
     // Try to parse as JSON
     let insights;
     try {
       insights = JSON.parse(aiContent);
-      
+
       // Validate and clean the structure
-      if (!insights.summary || !insights.recommendations || !Array.isArray(insights.recommendations)) {
+      if (
+        !insights.summary ||
+        !insights.recommendations ||
+        !Array.isArray(insights.recommendations)
+      ) {
         throw new Error("Invalid structure");
       }
-      
+
       // Clean up recommendations array
       insights.recommendations = insights.recommendations
-        .filter((rec: any) => rec && typeof rec === 'object' && rec.title && rec.description)
-        .map((rec: any) => ({
+        .filter(
+          (rec) =>
+            rec &&
+            typeof rec === "object" &&
+            rec.title &&
+            rec.description,
+        )
+        .map((rec) => ({
           title: rec.title.trim(),
-          description: rec.description.trim()
+          description: rec.description.trim(),
         }));
 
       // Ensure diet_plan structure exists
-      if (insights.diet_plan && typeof insights.diet_plan === 'object') {
-        insights.diet_plan.foods_to_eat = Array.isArray(insights.diet_plan.foods_to_eat) ? insights.diet_plan.foods_to_eat : [];
-        insights.diet_plan.foods_to_avoid = Array.isArray(insights.diet_plan.foods_to_avoid) ? insights.diet_plan.foods_to_avoid : [];
-        insights.diet_plan.meal_suggestions = Array.isArray(insights.diet_plan.meal_suggestions) ? insights.diet_plan.meal_suggestions : [];
+      if (insights.diet_plan && typeof insights.diet_plan === "object") {
+        insights.diet_plan.foods_to_eat = Array.isArray(
+          insights.diet_plan.foods_to_eat,
+        )
+          ? insights.diet_plan.foods_to_eat
+          : [];
+        insights.diet_plan.foods_to_avoid = Array.isArray(
+          insights.diet_plan.foods_to_avoid,
+        )
+          ? insights.diet_plan.foods_to_avoid
+          : [];
+        insights.diet_plan.meal_suggestions = Array.isArray(
+          insights.diet_plan.meal_suggestions,
+        )
+          ? insights.diet_plan.meal_suggestions
+          : [];
       }
-      
-      console.log("Successfully parsed insights with", insights.recommendations.length, "recommendations");
-      
+
+      console.log(
+        "Successfully parsed insights with",
+        insights.recommendations.length,
+        "recommendations",
+      );
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       // Create a structured fallback
-      const lines = aiContent.split("\n").filter((line: string) => line.trim().length > 0);
+      const lines = aiContent
+        .split("\n")
+        .filter((line) => line.trim().length > 0);
       insights = {
-        summary: lines[0] || "Based on your assessment, we have generated personalized recommendations for you.",
-        recommendations: lines.slice(1).map((line: string, idx: number) => ({
+        summary:
+          lines[0] ||
+          "Based on your assessment, we have generated personalized recommendations for you.",
+        recommendations: lines.slice(1).map((line, idx) => ({
           title: `Recommendation ${idx + 1}`,
-          description: line.replace(/^[-*]\s*/, "").trim()
-        }))
+          description: line.replace(/^[-*]\s*/, "").trim(),
+        })),
       };
     }
 
     // Extract diet plan from insights to store separately
-    const dietPlan = insights.diet_plan ? JSON.stringify(insights.diet_plan) : null;
+    const dietPlan = insights.diet_plan
+      ? JSON.stringify(insights.diet_plan)
+      : null;
 
     // Update assessment with calculated values, insights, and diet plan
     const { error: updateError } = await supabase
@@ -205,7 +250,7 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
         heart_age: heartAge,
         risk_score: riskScore,
         ai_insights: insights,
-        diet_plan: dietPlan
+        diet_plan: dietPlan,
       })
       .eq("id", assessmentId);
 
@@ -221,28 +266,28 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
         success: true,
         insights,
         heart_age: heartAge,
-        risk_score: riskScore
+        risk_score: riskScore,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Error in generate-health-insights:", error);
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error instanceof Error ? error.message : "Unknown error",
-        details: error instanceof Error ? error.stack : undefined
+        details: error instanceof Error ? error.stack : undefined,
       }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });
 
-function calculateHeartAge(assessment: any): number {
+function calculateHeartAge(assessment) {
   const actualAge = assessment.age || 30;
   let ageModifier = 0;
 
@@ -255,8 +300,10 @@ function calculateHeartAge(assessment: any): number {
 
   // Blood pressure impact
   if (assessment.systolic && assessment.diastolic) {
-    if (assessment.systolic >= 140 || assessment.diastolic >= 90) ageModifier += 10;
-    else if (assessment.systolic >= 130 || assessment.diastolic >= 80) ageModifier += 5;
+    if (assessment.systolic >= 140 || assessment.diastolic >= 90)
+      ageModifier += 10;
+    else if (assessment.systolic >= 130 || assessment.diastolic >= 80)
+      ageModifier += 5;
   }
 
   // Smoking impact
@@ -266,17 +313,29 @@ function calculateHeartAge(assessment: any): number {
   // Diabetes impact - enhanced with sugar levels
   if (assessment.diabetes === "yes") {
     ageModifier += 8;
-    if (assessment.fasting_sugar > 125 || assessment.post_meal_sugar > 180) ageModifier += 5;
+    if (
+      assessment.fasting_sugar > 125 ||
+      assessment.post_meal_sugar > 180
+    ) {
+      ageModifier += 5;
+    }
   }
 
   // Lipid impact
-  if (assessment.ldl > 160 || (assessment.hdl && assessment.hdl < 40)) ageModifier += 5;
+  if (assessment.ldl > 160 || (assessment.hdl && assessment.hdl < 40)) {
+    ageModifier += 5;
+  }
 
   // Sleep impact
-  if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) ageModifier += 3;
+  if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) {
+    ageModifier += 3;
+  }
 
   // Diet impact
-  if (assessment.diet?.includes("high-carb") || assessment.diet?.includes("irregular")) {
+  if (
+    assessment.diet?.includes("high-carb") ||
+    assessment.diet?.includes("irregular")
+  ) {
     ageModifier += 4;
   }
 
@@ -289,7 +348,7 @@ function calculateHeartAge(assessment: any): number {
   return Math.max(actualAge, actualAge + ageModifier);
 }
 
-function calculateRiskScore(assessment: any): number {
+function calculateRiskScore(assessment) {
   let score = 0;
 
   // BMI risk (0-25 points)
@@ -302,9 +361,13 @@ function calculateRiskScore(assessment: any): number {
 
   // Blood pressure risk (0-30 points)
   if (assessment.systolic && assessment.diastolic) {
-    if (assessment.systolic >= 180 || assessment.diastolic >= 120) score += 30;
-    else if (assessment.systolic >= 140 || assessment.diastolic >= 90) score += 20;
-    else if (assessment.systolic >= 130 || assessment.diastolic >= 80) score += 10;
+    if (assessment.systolic >= 180 || assessment.diastolic >= 120) {
+      score += 30;
+    } else if (assessment.systolic >= 140 || assessment.diastolic >= 90) {
+      score += 20;
+    } else if (assessment.systolic >= 130 || assessment.diastolic >= 80) {
+      score += 10;
+    }
   }
 
   // Smoking risk (0-20 points)
@@ -315,7 +378,12 @@ function calculateRiskScore(assessment: any): number {
   if (assessment.diabetes === "yes") {
     score += 15;
     // Additional risk for uncontrolled diabetes
-    if (assessment.fasting_sugar > 125 || assessment.post_meal_sugar > 180) score += 5;
+    if (
+      assessment.fasting_sugar > 125 ||
+      assessment.post_meal_sugar > 180
+    ) {
+      score += 5;
+    }
   }
 
   // Lipid risk (0-15 points)
@@ -327,17 +395,22 @@ function calculateRiskScore(assessment: any): number {
   if (assessment.hdl && assessment.hdl < 40) score += 5;
 
   // Sleep risk (0-10 points)
-  if (assessment.sleep_hours < 5 || assessment.sleep_hours > 10) score += 10;
-  else if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) score += 5;
+  if (assessment.sleep_hours < 5 || assessment.sleep_hours > 10) {
+    score += 10;
+  } else if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) {
+    score += 5;
+  }
 
   // Symptoms risk (0-15 points)
   if (assessment.chest_pain) score += 5;
   if (assessment.shortness_of_breath) score += 4;
   if (assessment.palpitations) score += 3;
   if (assessment.swelling) score += 3;
-  
+
   // Family history (0-10 points)
   if (assessment.family_history) score += 10;
 
   return Math.min(100, score); // Cap at 100
 }
+
+
