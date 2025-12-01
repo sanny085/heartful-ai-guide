@@ -112,7 +112,7 @@ const Volunteer = () => {
       </header>
 
       {/* Main Content */}
-      <section className="container mx-auto px-4 py-12 md:py-20">
+      <section className="container mx-auto px-4 pt-6 pb-12 md:pt-8 md:pb-20">
         <div className="max-w-2xl mx-auto">
           {/* Icon & Title */}
           <div className="text-center mb-8">
