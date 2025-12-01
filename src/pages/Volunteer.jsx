@@ -21,38 +21,38 @@ const Volunteer = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.full_name.trim()) {
       newErrors.full_name = "Full name is required";
     }
-    
+
     if (!formData.mobile.trim()) {
       newErrors.mobile = "Mobile number is required";
     } else if (!/^[6-9]\d{9}$/.test(formData.mobile.trim())) {
       newErrors.mobile = "Please enter a valid 10-digit mobile number";
     }
-    
+
     if (!formData.district.trim()) {
       newErrors.district = "District is required";
     }
-    
+
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = "Please enter a valid email address";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const { error } = await supabase.from("volunteer_support").insert([
         {
@@ -68,14 +68,14 @@ const Volunteer = () => {
       toast.success("Thank you for volunteering to support 10000hearts! Our team will contact you soon.", {
         duration: 5000,
       });
-      
+
       setFormData({
         full_name: "",
         mobile: "",
         district: "",
         email: "",
       });
-      
+
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {
       console.error("Error submitting volunteer form:", error);
@@ -104,11 +104,7 @@ const Volunteer = () => {
             className="h-12 md:h-16 w-auto cursor-pointer"
             onClick={() => navigate("/")}
           />
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-foreground hover:text-primary"
-          >
+          <Button variant="ghost" onClick={() => navigate("/")} className="text-foreground hover:text-primary">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Button>
@@ -127,7 +123,8 @@ const Volunteer = () => {
               Join the <span className="text-accent">10,000 Hearts</span> Mission
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              If you want to support the 10,000 Hearts mission, fill out your details below. Together, we can make a difference in healthcare for everyone.
+              If you want to support the 10,000 Hearts mission, fill out your details below. Together, we can make a
+              difference in healthcare for everyone.
             </p>
           </div>
 
@@ -148,9 +145,7 @@ const Volunteer = () => {
                   onChange={handleChange}
                   className={errors.full_name ? "border-destructive" : ""}
                 />
-                {errors.full_name && (
-                  <p className="text-sm text-destructive">{errors.full_name}</p>
-                )}
+                {errors.full_name && <p className="text-sm text-destructive">{errors.full_name}</p>}
               </div>
 
               {/* Mobile Number */}
@@ -168,15 +163,13 @@ const Volunteer = () => {
                   maxLength={10}
                   className={errors.mobile ? "border-destructive" : ""}
                 />
-                {errors.mobile && (
-                  <p className="text-sm text-destructive">{errors.mobile}</p>
-                )}
+                {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
               </div>
 
               {/* District */}
               <div className="space-y-2">
                 <Label htmlFor="district" className="text-base">
-                  District <span className="text-destructive">*</span>
+                  City <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="district"
@@ -187,9 +180,7 @@ const Volunteer = () => {
                   onChange={handleChange}
                   className={errors.district ? "border-destructive" : ""}
                 />
-                {errors.district && (
-                  <p className="text-sm text-destructive">{errors.district}</p>
-                )}
+                {errors.district && <p className="text-sm text-destructive">{errors.district}</p>}
               </div>
 
               {/* Email (Optional) */}
@@ -206,9 +197,7 @@ const Volunteer = () => {
                   onChange={handleChange}
                   className={errors.email ? "border-destructive" : ""}
                 />
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
               </div>
 
               {/* Submit Button */}
