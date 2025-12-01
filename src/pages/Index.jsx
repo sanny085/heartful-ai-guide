@@ -119,7 +119,7 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border transition-all duration-300">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 md:gap-8">
             <img
               src={logo}
               alt="10000Hearts Logo"
@@ -148,32 +148,34 @@ const Index = () => {
                           <span className="font-medium">Heart Health Checkup</span>
                         </div>
                       </button>
-                      <button
-                        onClick={() => navigate("/reviews")}
-                        className="w-full text-left px-4 py-3 rounded-md hover:bg-accent/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-accent" />
-                          <span className="font-medium">Reviews</span>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => navigate("/volunteer")}
-                        className="w-full text-left px-4 py-3 rounded-md hover:bg-accent/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <HandHeart className="w-4 h-4 text-success" />
-                          <span className="font-medium">Volunteer</span>
-                        </div>
-                      </button>
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+
+            {/* Reviews & Volunteer Links - Always Visible */}
+            <div className="hidden md:flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/reviews")}
+                className="text-foreground hover:text-accent hover:bg-accent/10"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Reviews
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/volunteer")}
+                className="text-foreground hover:text-success hover:bg-success/10"
+              >
+                <HandHeart className="w-4 h-4 mr-2" />
+                Volunteer
+              </Button>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             {/* Mobile Services Menu */}
             <NavigationMenu className="md:hidden">
               <NavigationMenuList>
@@ -195,29 +197,29 @@ const Index = () => {
                           <span className="text-sm font-medium">Heart Health</span>
                         </div>
                       </button>
-                      <button
-                        onClick={() => navigate("/reviews")}
-                        className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-accent" />
-                          <span className="text-sm font-medium">Reviews</span>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => navigate("/volunteer")}
-                        className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <HandHeart className="w-4 h-4 text-success" />
-                          <span className="text-sm font-medium">Volunteer</span>
-                        </div>
-                      </button>
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
               </NavigationMenuList>
             </NavigationMenu>
+
+            {/* Mobile Reviews & Volunteer Links */}
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/reviews")}
+              className="md:hidden text-foreground hover:text-accent hover:bg-accent/10 px-2"
+              size="sm"
+            >
+              <Users className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/volunteer")}
+              className="md:hidden text-foreground hover:text-success hover:bg-success/10 px-2"
+              size="sm"
+            >
+              <HandHeart className="w-4 h-4" />
+            </Button>
             
             {!loading &&
               (user ? (
