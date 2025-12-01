@@ -16,6 +16,7 @@ import {
   Globe,
   Headphones,
   ChevronDown,
+  HandHeart,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -156,6 +157,15 @@ const Index = () => {
                           <span className="font-medium">Reviews</span>
                         </div>
                       </button>
+                      <button
+                        onClick={() => navigate("/volunteer")}
+                        className="w-full text-left px-4 py-3 rounded-md hover:bg-accent/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <HandHeart className="w-4 h-4 text-success" />
+                          <span className="font-medium">Volunteer</span>
+                        </div>
+                      </button>
                     </div>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -192,6 +202,15 @@ const Index = () => {
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-accent" />
                           <span className="text-sm font-medium">Reviews</span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => navigate("/volunteer")}
+                        className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/10 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <HandHeart className="w-4 h-4 text-success" />
+                          <span className="text-sm font-medium">Volunteer</span>
                         </div>
                       </button>
                     </div>
