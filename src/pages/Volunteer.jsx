@@ -116,9 +116,9 @@ const Volunteer = () => {
         <div className="max-w-2xl mx-auto">
           {/* Icon & Title */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mb-6 mx-auto">
+            {/* <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mb-6 mx-auto">
               <Heart className="w-10 h-10 text-accent" />
-            </div>
+            </div> */}
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Join the <span className="text-accent">10,000 Hearts</span> Mission
             </h1>
