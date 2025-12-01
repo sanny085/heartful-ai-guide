@@ -258,6 +258,33 @@ export type Database = {
         }
         Relationships: []
       }
+      volunteer_support: {
+        Row: {
+          created_at: string
+          district: string
+          email: string | null
+          full_name: string
+          id: string
+          mobile: string
+        }
+        Insert: {
+          created_at?: string
+          district: string
+          email?: string | null
+          full_name: string
+          id?: string
+          mobile: string
+        }
+        Update: {
+          created_at?: string
+          district?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          mobile?: string
+        }
+        Relationships: []
+      }
       wellness_leads: {
         Row: {
           age: number
