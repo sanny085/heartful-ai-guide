@@ -124,7 +124,7 @@ const Index = () => {
               src={logo}
               alt="10000Hearts Logo"
               className={`w-auto transition-all duration-300 cursor-pointer ${isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"}`}
-              onClick={() => (window.location.href = "https://10000hearts.com/")}
+              onClick={() => (window.location.href = "/")}
             />
             
             {/* Services Navigation Menu */}

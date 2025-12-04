@@ -178,7 +178,7 @@ const WellnessCampaign = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <button
-            onClick={() => window.location.href = "https://10000hearts.com/"}
+            onClick={() => window.location.href = "/"}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <Heart className="w-10 h-10 text-accent fill-accent" />
