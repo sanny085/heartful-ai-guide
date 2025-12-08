@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
+  HandHeart,
   User,
   Users,
 } from "lucide-react";
@@ -35,7 +36,7 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border transition-all duration-300">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4 md:gap-8">
           <img
             src={logo}
             alt="10000Hearts Logo"
@@ -71,15 +72,6 @@ const Navbar = () => {
                         <span className="font-medium">
                           Heart Health Checkup
                         </span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => navigate("/reviews")}
-                      className="w-full text-left px-4 py-3 rounded-md hover:bg-accent/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-accent" />
-                        <span className="font-medium">Reviews</span>
                       </div>
                     </button>
                   </div>
@@ -118,20 +110,31 @@ const Navbar = () => {
                         </span>
                       </div>
                     </button>
-                    <button
-                      onClick={() => navigate("/reviews")}
-                      className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-accent" />
-                        <span className="text-sm font-medium">Reviews</span>
-                      </div>
-                    </button>
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
+
+          {/* Reviews & Volunteer Links - Always Visible */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/reviews")}
+                className="text-foreground hover:text-accent hover:bg-accent/10"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Reviews
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate("/volunteer")}
+                className="text-foreground hover:text-success hover:bg-success/10"
+              >
+                <HandHeart className="w-4 h-4 mr-2" />
+                Volunteer
+              </Button>
+            </div>
 
           {!loading &&
             (user ? (
