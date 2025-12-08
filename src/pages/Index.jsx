@@ -3,7 +3,6 @@ import {
   Heart,
   Activity,
   MessageCircle,
-  User,
   Users,
   Brain,
   Shield,
@@ -25,34 +24,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-health.jpg";
 import aiDashboard from "@/assets/ai-dashboard.jpg";
-import logo from "@/assets/logo.png";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-
+import Navbar from "@/components/Navbar";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [hasAssessment, setHasAssessment] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     if (user) {
       checkExistingAssessment();
     }
   }, [user]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const checkExistingAssessment = async () => {
     try {
@@ -116,135 +98,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border transition-all duration-300">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-4 md:gap-8">
-            <img
-              src={logo}
-              alt="10000Hearts Logo"
-              className={`w-auto transition-all duration-300 cursor-pointer ${isScrolled ? "h-10 md:h-12" : "h-16 md:h-20"}`}
-              onClick={() => (window.location.href = "https://10000hearts.com/")}
-            />
-            
-            {/* Services Navigation Menu */}
-            <NavigationMenu className="hidden md:block">
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-foreground hover:text-primary">
-                    Services
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-[200px] p-2">
-                      <button
-                        onClick={() => {
-                          const healthSection = document.getElementById("heart-health-section");
-                          healthSection?.scrollIntoView({ behavior: "smooth", block: "start" });
-                        }}
-                        className="w-full text-left px-4 py-3 rounded-md hover:bg-accent/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Heart className="w-4 h-4 text-primary" />
-                          <span className="font-medium">Heart Health Checkup</span>
-                        </div>
-                      </button>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-
-            {/* Reviews & Volunteer Links - Always Visible */}
-            <div className="hidden md:flex items-center gap-4">
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/reviews")}
-                className="text-foreground hover:text-accent hover:bg-accent/10"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                Reviews
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/volunteer")}
-                className="text-foreground hover:text-success hover:bg-success/10"
-              >
-                <HandHeart className="w-4 h-4 mr-2" />
-                Volunteer
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-1 md:gap-2">
-            {/* Mobile Services Menu */}
-            <NavigationMenu className="md:hidden">
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="text-foreground hover:text-primary px-2">
-                    <span className="text-sm">Services</span>
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="w-[180px] p-2">
-                      <button
-                        onClick={() => {
-                          const healthSection = document.getElementById("heart-health-section");
-                          healthSection?.scrollIntoView({ behavior: "smooth", block: "start" });
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-md hover:bg-accent/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Heart className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-medium">Heart Health</span>
-                        </div>
-                      </button>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-
-            {/* Mobile Reviews & Volunteer Links */}
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/reviews")}
-              className="md:hidden text-foreground hover:text-accent hover:bg-accent/10 px-2"
-              size="sm"
-            >
-              <Users className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/volunteer")}
-              className="md:hidden text-foreground hover:text-success hover:bg-success/10 px-2"
-              size="sm"
-            >
-              <HandHeart className="w-4 h-4" />
-            </Button>
-            
-            {!loading &&
-              (user ? (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/profile")}
-                  className="border-primary text-primary hover:bg-primary/5"
-                  size="sm"
-                >
-                  <User className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Profile</span>
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/auth")}
-                  className="border-primary text-primary hover:bg-primary/5"
-                  size="sm"
-                >
-                  Sign In
-                </Button>
-              ))}
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-8 md:py-12">

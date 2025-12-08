@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { profileSchema } from "@/lib/validation";
+import Navbar from "@/components/Navbar";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const Profile = () => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user?.id)
       .maybeSingle();
 
     if (error) {
@@ -131,6 +132,7 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue p-2 sm:p-4">
+      <Navbar />
       <div className="container mx-auto max-w-4xl py-4 sm:py-8">
         <Button
           variant="outline"
