@@ -15,6 +15,7 @@ import {
   Globe,
   Headphones,
   ChevronDown,
+  HandHeart,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
