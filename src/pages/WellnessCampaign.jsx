@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -17,6 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
+import { envConfig } from "@/lib/envApi";
+import { redirectToRoot } from "@/lib/utils";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -134,7 +136,7 @@ const WellnessCampaign = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("wellness_leads").insert({
+      const { error } = await supabase.from(envConfig.wellness_leads).insert({
         full_name: data.fullName,
         country_code: data.countryCode,
         mobile: data.mobile,
@@ -152,7 +154,7 @@ const WellnessCampaign = () => {
       });
       
       // Redirect to home after successful submission
-      setTimeout(() => window.location.href = "https://10000hearts.com/", 2000);
+      setTimeout(() => window.location.href = redirectToRoot, 2000);
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle validation errors
@@ -174,18 +176,7 @@ const WellnessCampaign = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <button
-            onClick={() => window.location.href = "https://10000hearts.com/"}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <Heart className="w-10 h-10 text-accent fill-accent" />
-            <span className="text-3xl font-bold text-primary">10000Hearts</span>
-          </button>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Form Section */}
       <section className="container mx-auto px-4 py-16 max-w-3xl">
