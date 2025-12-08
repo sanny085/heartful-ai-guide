@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Error signing out:', error.message);
       throw error;
     }
-    window.location.href = "https://10000hearts.com/";
+    window.location.href = "/";
   };
 
   return (
