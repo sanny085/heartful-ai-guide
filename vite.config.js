@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
+  base: process.env.VITE_DOMAIN || "/",
+  build: {
+    outDir: mode === "development" ? "dist-dev" : "dist-prod",
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

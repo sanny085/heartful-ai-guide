@@ -30,6 +30,7 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+  const envType = import.meta.env.VITE_PUBLIC_env_type;
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border transition-all duration-300">
@@ -43,7 +44,7 @@ const Navbar = () => {
             }`}
             onClick={redirectToRoot}
           />
-
+        <span>{envType === 'dev' ? envType : ''}</span>
           {/* Services Navigation Menu */}
           <NavigationMenu className="hidden md:block">
             <NavigationMenuList>
