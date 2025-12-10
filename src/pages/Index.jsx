@@ -72,7 +72,7 @@ const Index = () => {
     const hasProfile = await checkProfileComplete();
     if (!hasProfile) {
       toast.error("Please complete your profile first");
-      navigate("/profile-setup");
+      navigate("/profile");
       return;
     }
 
@@ -89,7 +89,7 @@ const Index = () => {
     const hasProfile = await checkProfileComplete();
     if (!hasProfile) {
       toast.error("Please complete your profile first");
-      navigate("/profile-setup");
+      navigate("/profile");
       return;
     }
 
