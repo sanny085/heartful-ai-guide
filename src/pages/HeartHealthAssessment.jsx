@@ -1,14 +1,3 @@
-// import React from "react";
-// import HealthCheckup from "./HealthCheckup";
-
-// // Thin wrapper to keep existing routes working without changing logic elsewhere
-// const HeartHealthAssessment = (props) => {
-//   return <HealthCheckup {...props} />;
-// };
-
-// export default HeartHealthAssessment;
-
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,6 +11,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import VoiceRecorder from "@/components/VoiceRecorder";
+import { envConfig } from "@/lib/envApi";
+
 
 const STEPS = [
   "Initial Symptoms",
@@ -111,7 +102,7 @@ export default function HeartHealthAssessment() {
     const loadLatestAssessment = async () => {
       try {
         const { data, error } = await supabase
-          .from("heart_health_assessments")
+          .from(envConfig.heart_health_assessments)
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
@@ -182,14 +173,14 @@ export default function HeartHealthAssessment() {
     setSaving(true);
     try {
       const { data: profile } = await supabase
-        .from("profiles")
+        .from(envConfig.profiles)
         .select("user_id")
         .eq("user_id", user.id)
         .single();
 
       if (!profile) {
         toast.error("Profile not found. Please complete your profile setup.");
-        navigate("/profile-setup");
+        navigate("/profile");
         return;
       }
 
@@ -238,7 +229,7 @@ export default function HeartHealthAssessment() {
       };
 
       const { data, error } = await supabase
-        .from("heart_health_assessments")
+        .from(envConfig.heart_health_assessments)
         .insert(assessmentData)
         .select()
         .single();
