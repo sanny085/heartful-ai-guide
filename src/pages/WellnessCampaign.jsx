@@ -18,7 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { envConfig } from "@/lib/envApi";
-import { redirectToRoot } from "@/lib/utils";
+import { redirectToRoot, performRedirect } from "@/lib/utils";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -154,7 +154,9 @@ const WellnessCampaign = () => {
       });
       
       // Redirect to home after successful submission
-      setTimeout(() => window.location.href = redirectToRoot, 2000);
+      setTimeout(() => {
+        performRedirect(navigate);
+      }, 2000);
     } catch (error) {
       if (error instanceof z.ZodError) {
         // Handle validation errors

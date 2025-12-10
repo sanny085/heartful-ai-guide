@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { profileSchema } from "@/lib/validation";
 import Navbar from "@/components/Navbar";
+import { envConfig } from "@/lib/envApi";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const Profile = () => {
     if (!user) return;
 
     const { data, error } = await supabase
-      .from('profiles')
+      .from(envConfig.profiles)
       .select('*')
       .eq('user_id', user?.id)
       .maybeSingle();
@@ -63,7 +64,7 @@ const Profile = () => {
       });
     } else {
       // No profile exists, redirect to setup
-      navigate('/profile-setup');
+      navigate('/profile');
     }
   };
 
@@ -99,11 +100,14 @@ const Profile = () => {
         return;
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .update(validationResult.data)
-        .eq('user_id', user.id);
+      const payload = { ...validationResult.data, user_id: user.id };
 
+      const { error, data: resultData } = await supabase
+        .from(envConfig.profiles)
+        // Upsert ensures the row exists for this user_id
+        .upsert(payload, { onConflict: "user_id" })
+        .select()
+        .maybeSingle();
       if (error) throw error;
 
       toast.success("Profile updated successfully!");
@@ -122,7 +126,7 @@ const Profile = () => {
     }
   };
 
-  if (loading || !profile) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
