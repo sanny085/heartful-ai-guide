@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
 import { envConfig } from "@/lib/envApi";
 
 const Volunteer = () => {
@@ -113,17 +112,11 @@ const Volunteer = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
       {/* Header */}
-      <header className="bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <img
-            src={logo}
-            alt="10000Hearts Logo"
-            className="h-12 md:h-16 w-auto cursor-pointer"
-            onClick={() => navigate("/")}
-          />
-          <Button variant="ghost" onClick={() => navigate("/")} className="text-foreground hover:text-primary">
+      <header className="bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-3 flex justify-end items-center">
+          <Button variant="ghost" onClick={() => navigate("/")} className="text-foreground hover:text-primary hover:bg-primary/10 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
+            <span className="font-medium">Back to Home</span>
           </Button>
         </div>
       </header>
