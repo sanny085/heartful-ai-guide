@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import heroImage from "@/assets/hero-health.jpg";
 import aiDashboard from "@/assets/ai-dashboard.jpg";
 import AIHealthCoachWrapper from "@/components/AIHealthCoachWrapper";
+import { envConfig } from "@/lib/envApi";
 import AIHealthFeaturesShowcase from "@/components/AIHealthFeaturesShowcase";
 const Index = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const Index = () => {
   const checkExistingAssessment = async () => {
     try {
       const { data, error } = await supabase
-        .from("heart_health_assessments")
+        .from(envConfig.heart_health_assessments)
         .select("id")
         .eq("user_id", user?.id)
         .limit(1)
@@ -57,8 +58,7 @@ const Index = () => {
   const checkProfileComplete = async () => {
     if (!user) return false;
 
-    const { data, error} = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
-
+    const { data, error} = await supabase.from(envConfig.profiles).select("*").eq("user_id", user.id).maybeSingle();
     if (error || !data) return false;
     return true;
   };
@@ -264,7 +264,7 @@ const Index = () => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
             >
               <Heart className="w-5 h-5 mr-2" />
-              View/Update Health Report
+              Check Health Report
             </Button>
           </div>
 
