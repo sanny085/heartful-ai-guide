@@ -16,7 +16,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
 import { envConfig } from "@/lib/envApi";
 import { redirectToRoot, performRedirect } from "@/lib/utils";
 
@@ -178,8 +177,6 @@ const WellnessCampaign = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
-      <Navbar />
-
       {/* Form Section */}
       <section className="container mx-auto px-4 py-16 max-w-3xl">
         <div className="bg-card/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12 border border-border">
