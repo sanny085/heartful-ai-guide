@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import PrivateRoute from "./components/PrivateRoute";
 import HeartHealthAssessment from "./pages/HeartHealthAssessment";
 import HeartHealthResults from "./pages/HeartHealthResults";
 import HealthCheckup from "./pages/HealthCheckup";
@@ -28,11 +29,39 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
             <Route path="/health-checkup" element={<HealthCheckup />} />
-            <Route path="/heart-health" element={<HeartHealthAssessment />} />
-            <Route path="/heart-health-results" element={<HeartHealthResults />} />
-            <Route path="/chat" element={<Chat />} />
+            <Route
+              path="/heart-health"
+              element={
+                <PrivateRoute>
+                  <HeartHealthAssessment />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/heart-health-results"
+              element={
+                <PrivateRoute>
+                  <HeartHealthResults />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <PrivateRoute>
+                  <Chat />
+                </PrivateRoute>
+              }
+            />
             <Route path="/wellness-campaign" element={<WellnessCampaign />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/volunteer" element={<Volunteer />} />
