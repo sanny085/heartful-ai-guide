@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import PrivateRoute from "./components/PrivateRoute";
 import HeartHealthAssessment from "./pages/HeartHealthAssessment";
 import HeartHealthResults from "./pages/HeartHealthResults";
 import HealthCheckup from "./pages/HealthCheckup";
@@ -14,7 +15,12 @@ import Chat from "./pages/Chat";
 import WellnessCampaign from "./pages/WellnessCampaign";
 import Reviews from "./pages/Reviews";
 import Volunteer from "./pages/Volunteer";
+import Blogs from "./pages/Blogs";
+import BlogDetail from "./pages/BlogDetail";
+import AboutUs from "./pages/AboutUs";
 import NotFound from "./pages/NotFound";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
 
@@ -25,20 +31,55 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
+          <div className="flex flex-col min-h-screen">
+            <Navbar />
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              }
+            />
             <Route path="/health-checkup" element={<HealthCheckup />} />
-            <Route path="/heart-health" element={<HeartHealthAssessment />} />
-            <Route path="/heart-health-results" element={<HeartHealthResults />} />
-            <Route path="/chat" element={<Chat />} />
+            <Route
+              path="/heart-health"
+              element={
+                <PrivateRoute>
+                  <HeartHealthAssessment />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/heart-health-results"
+              element={
+                <PrivateRoute>
+                  <HeartHealthResults />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <PrivateRoute>
+                  <Chat />
+                </PrivateRoute>
+              }
+            />
             <Route path="/wellness-campaign" element={<WellnessCampaign />} />
+            <Route path="/blogs" element={<Blogs />} />
+            <Route path="/blogs/:slug" element={<BlogDetail />} />
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/volunteer" element={<Volunteer />} />
+            <Route path="/about-us" element={<AboutUs />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Footer />
+          </div>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

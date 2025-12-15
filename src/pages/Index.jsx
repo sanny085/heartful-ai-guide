@@ -24,7 +24,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-health.jpg";
 import aiDashboard from "@/assets/ai-dashboard.jpg";
-import Navbar from "@/components/Navbar";
+import AIHealthCoachWrapper from "@/components/AIHealthCoachWrapper";
+import { envConfig } from "@/lib/envApi";
+import AIHealthFeaturesShowcase from "@/components/AIHealthFeaturesShowcase";
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -39,7 +41,7 @@ const Index = () => {
   const checkExistingAssessment = async () => {
     try {
       const { data, error } = await supabase
-        .from("heart_health_assessments")
+        .from(envConfig.heart_health_assessments)
         .select("id")
         .eq("user_id", user?.id)
         .limit(1)
@@ -56,8 +58,7 @@ const Index = () => {
   const checkProfileComplete = async () => {
     if (!user) return false;
 
-    const { data, error} = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
-
+    const { data, error} = await supabase.from(envConfig.profiles).select("*").eq("user_id", user.id).maybeSingle();
     if (error || !data) return false;
     return true;
   };
@@ -98,7 +99,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-8 md:py-12">
@@ -264,7 +264,7 @@ const Index = () => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg"
             >
               <Heart className="w-5 h-5 mr-2" />
-              View/Update Health Report
+              Check Health Report
             </Button>
           </div>
 
@@ -385,6 +385,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* AI Health Features Showcase */}
+      <AIHealthFeaturesShowcase />
 
       {/* About Section */}
       <section className="bg-background/50 py-20">
@@ -522,8 +525,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-gradient-to-br from-accent/5 via-primary/5 to-success/5 py-20">
+      {/* Final CTA - Wrapped with new design */}
+      <AIHealthCoachWrapper>
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-full text-sm font-medium text-accent mb-6">
@@ -581,7 +584,7 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </section>
+      </AIHealthCoachWrapper>
     </div>
   );
 };
