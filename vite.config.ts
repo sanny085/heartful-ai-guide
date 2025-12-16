@@ -4,7 +4,11 @@ import mdx from "@mdx-js/rollup";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import path from "path";
+import { fileURLToPath } from "url";
 import { componentTagger } from "lovable-tagger";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -13,10 +17,11 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     mdx({
+      // Type mismatch between remark plugin versions; safe at runtime.
       remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter as any],
     }),
     react(),
-    mode === 'development' && componentTagger(),
+    mode === "development" && componentTagger(),
   ].filter(Boolean),
   base: process.env.VITE_DOMAIN || "/",
   build: {
