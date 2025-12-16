@@ -1,24 +1,13 @@
-// import React from "react";
-// import HealthCheckup from "./HealthCheckup";
-
-// // Placeholder wrapper so existing imports and routes continue to work
-// // You can replace the inner component later if you design a dedicated results page
-// const HeartHealthResults = (props) => {
-//   return <HealthCheckup {...props} />;
-// };
-
-// export default HeartHealthResults;
-
-
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle } from "lucide-react";
+import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import jsPDF from "jspdf";
 
 // const Assessment = {
 //   id,
@@ -177,6 +166,187 @@ export default function HeartHealthResults() {
     return { level: "High", color: "text-warning" };
   };
 
+  const downloadPDFReport = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 20;
+
+    // Helper function to add text with word wrapping
+    const addWrappedText = (text, x, y, maxWidth, fontSize = 12) => {
+      doc.setFontSize(fontSize);
+      const lines = doc.splitTextToSize(text, maxWidth);
+      doc.text(lines, x, y);
+      return y + (lines.length * 5);
+    };
+
+    // Title
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("Heart Health Assessment Report", pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 20;
+
+    // Patient Information
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Patient Information", 20, yPosition);
+    yPosition += 15;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Name: ${assessment.name}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Age: ${assessment.age}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Gender: ${assessment.gender}`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Report Date: ${new Date(assessment.created_at).toLocaleDateString()}`, 20, yPosition);
+    yPosition += 20;
+
+    // Key Metrics
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Key Health Metrics", 20, yPosition);
+    yPosition += 15;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`BMI: ${assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"} (${getBMICategory()})`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Heart Age: ${assessment.heart_age || assessment.age || "N/A"} years`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Heart Risk Score: ${assessment.risk_score ? assessment.risk_score.toFixed(1) + "%" : "N/A"} (${getRiskCategory().level})`, 20, yPosition);
+    yPosition += 10;
+    doc.text(`Cardiovascular Score: ${calculateCardiovascularScore()} (${getCVRiskLevel().level})`, 20, yPosition);
+    yPosition += 20;
+
+    // Blood Pressure
+    if (assessment.systolic && assessment.diastolic) {
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Blood Pressure", 20, yPosition);
+      yPosition += 15;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${assessment.systolic}/${assessment.diastolic} mmHg (${getBPCategory()})`, 20, yPosition);
+      yPosition += 20;
+    }
+
+    // Risk Analysis
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Risk Analysis", 20, yPosition);
+    yPosition += 15;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    yPosition = addWrappedText(getHeartAgeMessage(), 20, yPosition, pageWidth - 40);
+    yPosition += 10;
+
+    // AI Insights Summary
+    if (assessment.ai_insights?.summary) {
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("AI Health Summary", 20, yPosition);
+      yPosition += 15;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      yPosition = addWrappedText(assessment.ai_insights.summary, 20, yPosition, pageWidth - 40);
+      yPosition += 20;
+    }
+
+    // Recommendations
+    if (assessment.ai_insights?.recommendations && assessment.ai_insights.recommendations.length > 0) {
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Personalized Recommendations", 20, yPosition);
+      yPosition += 15;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+
+      assessment.ai_insights.recommendations.forEach((rec, idx) => {
+        let title = "";
+        let description = "";
+
+        if (typeof rec === "object" && rec !== null) {
+          title = rec.title || "";
+          description = rec.description || "";
+        } else if (typeof rec === "string") {
+          description = rec;
+          title = `Recommendation ${idx + 1}`;
+        }
+
+        title = title.replace(/[{}\[\]"']/g, "").replace(/^(title|recommendations)\s*:\s*/i, "").trim();
+        description = description.replace(/[{}\[\]"']/g, "").replace(/^description\s*:\s*/i, "").trim();
+
+        if (title && description) {
+          doc.setFont("helvetica", "bold");
+          yPosition = addWrappedText(`${idx + 1}. ${title}`, 20, yPosition, pageWidth - 40);
+          doc.setFont("helvetica", "normal");
+          yPosition = addWrappedText(description, 30, yPosition, pageWidth - 50);
+          yPosition += 10;
+        }
+      });
+      yPosition += 10;
+    }
+
+    // Diet Plan
+    if (assessment.ai_insights?.diet_plan) {
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("Diet Plan", 20, yPosition);
+      yPosition += 15;
+
+      if (assessment.ai_insights.diet_plan.summary) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        yPosition = addWrappedText(assessment.ai_insights.diet_plan.summary, 20, yPosition, pageWidth - 40);
+        yPosition += 15;
+      }
+
+      // Foods to Eat
+      if (assessment.ai_insights.diet_plan.foods_to_eat && Array.isArray(assessment.ai_insights.diet_plan.foods_to_eat)) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Foods to Include:", 20, yPosition);
+        yPosition += 10;
+
+        doc.setFont("helvetica", "normal");
+        assessment.ai_insights.diet_plan.foods_to_eat.forEach((food) => {
+          doc.text(`• ${food}`, 30, yPosition);
+          yPosition += 8;
+        });
+        yPosition += 10;
+      }
+
+      // Foods to Avoid
+      if (assessment.ai_insights.diet_plan.foods_to_avoid && Array.isArray(assessment.ai_insights.diet_plan.foods_to_avoid)) {
+        doc.setFont("helvetica", "bold");
+        doc.text("Foods to Limit/Avoid:", 20, yPosition);
+        yPosition += 10;
+
+        doc.setFont("helvetica", "normal");
+        assessment.ai_insights.diet_plan.foods_to_avoid.forEach((food) => {
+          doc.text(`• ${food}`, 30, yPosition);
+          yPosition += 8;
+        });
+      }
+    }
+
+    // Footer
+    const footerY = pageHeight - 20;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.text("Generated by 10000hearts.com - AI-Powered Heart Health Assessment", pageWidth / 2, footerY, { align: "center" });
+
+    // Save the PDF
+    const fileName = `Heart_Health_Report_${assessment.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+    toast.success("PDF report downloaded successfully!");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -301,10 +471,14 @@ export default function HeartHealthResults() {
         )}
 
         {/* Current Report Details */}
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-foreground">
             Report Details - {new Date(assessment.created_at).toLocaleDateString()}
           </h2>
+          <Button onClick={downloadPDFReport} className="bg-accent hover:bg-accent/90">
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF Report
+          </Button>
         </div>
 
         <Tabs defaultValue="health" className="w-full">
