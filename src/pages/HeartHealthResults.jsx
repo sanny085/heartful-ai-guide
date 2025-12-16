@@ -118,16 +118,150 @@ export default function HeartHealthResults() {
     return Math.max(0, Math.round(score));
   };
 
-  const getBPCategory = () => {
-    if (!assessment?.systolic || !assessment?.diastolic) return "Unknown";
-    const sys = assessment.systolic;
-    const dia = assessment.diastolic;
+  const bpChart = [
+    {
+      category: "High Blood Pressure - Stage 4",
+      label: "Hypertensive Crisis",
+      systolic: { min: 210, max: null, condition: "above" },
+      diastolic: { min: 120, max: null, condition: "above" }
+    },
+    {
+      category: "High Blood Pressure - Stage 3",
+      label: "Hypertensive Crisis",
+      systolic: { min: 180, max: 210 },
+      diastolic: { min: 110, max: 120 }
+    },
+    {
+      category: "High Blood Pressure - Stage 2",
+      label: "Hypertension",
+      systolic: { min: 160, max: 179 },
+      diastolic: { min: 100, max: 109 }
+    },
+    {
+      category: "High Blood Pressure - Stage 1",
+      label: "Hypertension",
+      systolic: { min: 140, max: 159 },
+      diastolic: { min: 90, max: 99 }
+    },
+    {
+      category: "Pre-High Blood Pressure",
+      label: "Pre-Hypertension",
+      systolic: { min: 130, max: 139 },
+      diastolic: { min: 85, max: 89 }
+    },
+    {
+      category: "High Normal Blood Pressure",
+      label: "Normal",
+      systolic: { min: 121, max: 129 },
+      diastolic: { min: 81, max: 84 }
+    },
+    {
+      category: "Normal Blood Pressure",
+      label: "Ideal Blood Pressure",
+      systolic: { min: 100, max: 120 },
+      diastolic: { min: 65, max: 80 }
+    },
+    {
+      category: "Low Normal Blood Pressure",
+      label: "Normal",
+      systolic: { min: 90, max: 99 },
+      diastolic: { min: 60, max: 64 }
+    },
+    {
+      category: "Low Blood Pressure",
+      label: "Moderate Hypotension",
+      systolic: { min: 70, max: 89 },
+      diastolic: { min: 40, max: 59 }
+    },
+    {
+      category: "Too Low Blood Pressure",
+      label: "Severe Hypotension",
+      systolic: { min: 50, max: 69 },
+      diastolic: { min: 35, max: 39 }
+    },
+    {
+      category: "Extremely Low Blood Pressure",
+      label: "Extremely Severe Hypotension",
+      systolic: { min: null, max: 50, condition: "below" },
+      diastolic: { min: null, max: 35, condition: "below" }
+    }
+  ];
 
-    if (sys < 120 && dia < 80) return "Normal";
-    if (sys < 130 && dia < 80) return "Elevated";
-    if (sys < 140 || dia < 90) return "High (Stage 1)";
-    return "High (Stage 2)";
+  const matchesRange = (value, range) => {
+    if (value == null) return false;
+    const min = range.min ?? -Infinity;
+    const max = range.max ?? Infinity;
+    if (range.condition === "above") return value >= min;
+    if (range.condition === "below") return value <= max;
+    return value >= min && value <= max;
   };
+
+  const findLevel = (value, type = "systolic") => {
+    for (let i = 0; i < bpChart.length; i++) {
+      if (matchesRange(value, bpChart[i][type])) {
+        return { index: i, ...bpChart[i] };
+      }
+    }
+    return null;
+  };
+
+  const getBPCategory = () => {
+    if (assessment?.systolic == null || assessment?.diastolic == null) {
+      return { category: "Unknown", label: "Not enough data", detail: "Add both systolic and diastolic values." };
+    }
+
+    const sysLevel = findLevel(assessment.systolic, "systolic");
+    const diaLevel = findLevel(assessment.diastolic, "diastolic");
+
+    if (!sysLevel && !diaLevel) {
+      return { category: "Unknown", label: "Out of chart", detail: "Values are outside expected ranges." };
+    }
+
+    // Pick the more severe (smaller index in the ordered chart)
+    const picked = !sysLevel ? diaLevel : !diaLevel ? sysLevel : (sysLevel.index <= diaLevel.index ? sysLevel : diaLevel);
+
+    let detail = "";
+    if (sysLevel && diaLevel) {
+      if (sysLevel.index === diaLevel.index) {
+        detail = `Systolic and diastolic are both in ${picked.label.toLowerCase()} range.`;
+      } else if (sysLevel.index < diaLevel.index) {
+        detail = `Systolic is higher (${sysLevel.label.toLowerCase()}) while diastolic is ${diaLevel.label.toLowerCase()}.`;
+      } else {
+        detail = `Diastolic is higher (${diaLevel.label.toLowerCase()}) while systolic is ${sysLevel.label.toLowerCase()}.`;
+      }
+    } else if (sysLevel) {
+      detail = `Only systolic available: ${sysLevel.label}`;
+    } else if (diaLevel) {
+      detail = `Only diastolic available: ${diaLevel.label}`;
+    }
+
+    return {
+      category: picked.category,
+      label: picked.label,
+      detail,
+      severityIndex: picked.index,
+    };
+  };
+
+  const getWeightRecommendation = () => {
+    if (!assessment?.height || !assessment?.weight) return null;
+    const heightMeters = assessment.height / 100;
+    if (!heightMeters || heightMeters <= 0) return null;
+    const idealMin = 18.5 * heightMeters * heightMeters;
+    const idealMax = 24.9 * heightMeters * heightMeters;
+    if (assessment.weight > idealMax) {
+      const kgToLose = assessment.weight - idealMax;
+      return { action: "lose", kg: kgToLose, range: [idealMin, idealMax] };
+    }
+    if (assessment.weight < idealMin) {
+      const kgToGain = idealMin - assessment.weight;
+      return { action: "gain", kg: kgToGain, range: [idealMin, idealMax] };
+    }
+    return { action: "maintain", kg: 0, range: [idealMin, idealMax] };
+  };
+
+  const bpInfo = getBPCategory();
+  const weightRec = getWeightRecommendation();
 
   const getBMICategory = () => {
     if (!assessment?.bmi) return "Unknown";
@@ -213,6 +347,19 @@ export default function HeartHealthResults() {
     doc.setFont("helvetica", "normal");
     doc.text(`BMI: ${assessment.bmi ? assessment.bmi.toFixed(1) : "N/A"} (${getBMICategory()})`, 20, yPosition);
     yPosition += 10;
+
+    // Weight Recommendation
+    if (weightRec) {
+      if (weightRec.action === "lose") {
+        doc.text(`Weight Recommendation: Lose ${weightRec.kg.toFixed(1)} kg (Ideal range: ${weightRec.range[0].toFixed(1)}-${weightRec.range[1].toFixed(1)} kg)`, 20, yPosition);
+      } else if (weightRec.action === "gain") {
+        doc.text(`Weight Recommendation: Gain ${weightRec.kg.toFixed(1)} kg (Ideal range: ${weightRec.range[0].toFixed(1)}-${weightRec.range[1].toFixed(1)} kg)`, 20, yPosition);
+      } else {
+        doc.text(`Weight Status: Maintain current weight (Ideal range: ${weightRec.range[0].toFixed(1)}-${weightRec.range[1].toFixed(1)} kg)`, 20, yPosition);
+      }
+      yPosition += 10;
+    }
+
     doc.text(`Heart Age: ${assessment.heart_age || assessment.age || "N/A"} years`, 20, yPosition);
     yPosition += 10;
     doc.text(`Heart Risk Score: ${assessment.risk_score ? assessment.risk_score.toFixed(1) + "%" : "N/A"} (${getRiskCategory().level})`, 20, yPosition);
@@ -220,16 +367,40 @@ export default function HeartHealthResults() {
     doc.text(`Cardiovascular Score: ${calculateCardiovascularScore()} (${getCVRiskLevel().level})`, 20, yPosition);
     yPosition += 20;
 
-    // Blood Pressure
+    // Blood Pressure Analysis
     if (assessment.systolic && assessment.diastolic) {
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text("Blood Pressure", 20, yPosition);
+      doc.text("Blood Pressure Analysis", 20, yPosition);
       yPosition += 15;
 
       doc.setFontSize(12);
       doc.setFont("helvetica", "normal");
-      doc.text(`${assessment.systolic}/${assessment.diastolic} mmHg (${getBPCategory()})`, 20, yPosition);
+      doc.text(`Current Reading: ${assessment.systolic}/${assessment.diastolic} mmHg`, 20, yPosition);
+      yPosition += 10;
+      doc.text(`Category: ${bpInfo.category}`, 20, yPosition);
+      yPosition += 10;
+      doc.text(`Severity: ${bpInfo.label}`, 20, yPosition);
+      yPosition += 10;
+      if (bpInfo.detail) {
+        yPosition = addWrappedText(`Details: ${bpInfo.detail}`, 20, yPosition, pageWidth - 40);
+        yPosition += 10;
+      }
+
+      // BP Range Reference
+      doc.setFont("helvetica", "bold");
+      doc.text("Blood Pressure Ranges Reference:", 20, yPosition);
+      yPosition += 10;
+      doc.setFont("helvetica", "normal");
+      doc.text("• Normal: < 120/80 mmHg", 30, yPosition);
+      yPosition += 8;
+      doc.text("• Elevated: 120-129/< 80 mmHg", 30, yPosition);
+      yPosition += 8;
+      doc.text("• High Blood Pressure Stage 1: 130-139/80-89 mmHg", 30, yPosition);
+      yPosition += 8;
+      doc.text("• High Blood Pressure Stage 2: ≥ 140/≥ 90 mmHg", 30, yPosition);
+      yPosition += 8;
+      doc.text("• Hypertensive Crisis: > 180/> 120 mmHg", 30, yPosition);
       yPosition += 20;
     }
 
@@ -334,6 +505,116 @@ export default function HeartHealthResults() {
         });
       }
     }
+
+    // Patient Suggestions & Areas for Improvement
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Patient Suggestions & Areas for Improvement", 20, yPosition);
+    yPosition += 15;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+
+    const suggestions = [];
+
+    // BMI/Weight suggestions
+    if (assessment.bmi) {
+      if (assessment.bmi < 18.5) {
+        suggestions.push(`• Weight Management: Your BMI indicates underweight status. Consider consulting a nutritionist for healthy weight gain strategies.`);
+      } else if (assessment.bmi >= 25 && assessment.bmi < 30) {
+        suggestions.push(`• Weight Management: Your BMI indicates overweight status. Aim to lose ${weightRec ? weightRec.kg.toFixed(1) : 'some'} kg through healthy diet and exercise.`);
+      } else if (assessment.bmi >= 30) {
+        suggestions.push(`• Weight Management: Your BMI indicates obesity. Consult a healthcare provider for a comprehensive weight management plan. Target weight loss of ${weightRec ? weightRec.kg.toFixed(1) : 'significant amount'} kg.`);
+      }
+    }
+
+    // Blood Pressure suggestions
+    if (bpInfo.category !== "Normal Blood Pressure" && bpInfo.category !== "High Normal Blood Pressure") {
+      if (bpInfo.category.includes("High Blood Pressure")) {
+        suggestions.push(`• Blood Pressure Control: Your blood pressure is in the ${bpInfo.category.toLowerCase()} range. Monitor regularly, reduce salt intake, and consult your doctor about medication if needed.`);
+      } else if (bpInfo.category.includes("Low")) {
+        suggestions.push(`• Blood Pressure Monitoring: Your blood pressure is lower than normal. Stay hydrated, avoid sudden position changes, and consult your doctor if you experience dizziness or fatigue.`);
+      }
+    }
+
+    // Risk score suggestions
+    const riskLevel = getRiskCategory().level;
+    if (riskLevel === "High") {
+      suggestions.push(`• Cardiovascular Risk: Your heart risk score is high. Schedule regular check-ups with a cardiologist and follow all recommended lifestyle changes.`);
+    } else if (riskLevel === "Moderate") {
+      suggestions.push(`• Cardiovascular Risk: Your heart risk score is moderate. Focus on preventive measures and regular health monitoring.`);
+    }
+
+    // Lifestyle suggestions
+    if (assessment.smoking && assessment.smoking !== "Never") {
+      suggestions.push(`• Smoking Cessation: Smoking significantly increases heart disease risk. Consider smoking cessation programs and consult your doctor for support.`);
+    }
+
+    if (assessment.exercise === "Sedentary" || assessment.exercise === "Light activity") {
+      suggestions.push(`• Physical Activity: Increase your physical activity level. Aim for at least 150 minutes of moderate exercise per week.`);
+    }
+
+    if (assessment.diet === "Poor" || assessment.diet === "Average") {
+      suggestions.push(`• Dietary Improvements: Focus on a heart-healthy diet rich in fruits, vegetables, whole grains, and lean proteins. Reduce processed foods and saturated fats.`);
+    }
+
+    // Symptom-based suggestions
+    if (assessment.chest_pain) {
+      suggestions.push(`• Chest Pain: Seek immediate medical attention for chest pain symptoms. Do not ignore this warning sign.`);
+    }
+
+    if (assessment.shortness_of_breath) {
+      suggestions.push(`• Breathing Difficulties: Shortness of breath requires medical evaluation. Consult your doctor promptly.`);
+    }
+
+    if (assessment.dizziness) {
+      suggestions.push(`• Dizziness: Frequent dizziness should be evaluated by a healthcare provider to rule out cardiovascular causes.`);
+    }
+
+    if (assessment.fatigue) {
+      suggestions.push(`• Fatigue: Persistent fatigue may indicate underlying health issues. Discuss with your doctor.`);
+    }
+
+    // Lipid profile suggestions
+    if (assessment.knows_lipids === "Yes") {
+      if (assessment.ldl && assessment.ldl > 100) {
+        suggestions.push(`• Cholesterol Management: Your LDL cholesterol is elevated. Follow dietary changes and consult your doctor about cholesterol-lowering medications.`);
+      }
+      if (assessment.hdl && assessment.hdl < 40) {
+        suggestions.push(`• HDL Cholesterol: Your HDL (good) cholesterol is low. Focus on exercise and healthy fats to improve this.`);
+      }
+    }
+
+    // Diabetes suggestions
+    if (assessment.diabetes === "Yes" || (assessment.fasting_sugar && assessment.fasting_sugar > 100)) {
+      suggestions.push(`• Blood Sugar Management: Monitor your blood sugar levels regularly and follow your diabetes management plan.`);
+    }
+
+    // Family history
+    if (assessment.family_history) {
+      suggestions.push(`• Family History: With a family history of heart disease, regular cardiovascular screening and preventive measures are essential.`);
+    }
+
+    // Additional symptoms
+    if (assessment.swelling) {
+      suggestions.push(`• Edema: Leg swelling should be evaluated to rule out heart-related causes.`);
+    }
+
+    if (assessment.palpitations) {
+      suggestions.push(`• Heart Palpitations: Irregular heartbeats require medical evaluation. Keep a symptom diary and consult your cardiologist.`);
+    }
+
+    if (suggestions.length > 0) {
+      suggestions.forEach((suggestion) => {
+        yPosition = addWrappedText(suggestion, 20, yPosition, pageWidth - 40);
+        yPosition += 5;
+      });
+    } else {
+      doc.text("• No major concerns identified. Continue maintaining your current healthy lifestyle.", 20, yPosition);
+      yPosition += 10;
+    }
+
+    yPosition += 15;
 
     // Footer
     const footerY = pageHeight - 20;
@@ -668,7 +949,10 @@ export default function HeartHealthResults() {
                     <p className="text-sm font-medium text-foreground">
                       Your BP: {assessment.systolic}/{assessment.diastolic} mmHg
                     </p>
-                    <p className="text-sm font-medium text-foreground">Category: {getBPCategory()}</p>
+                    <p className="text-sm font-medium text-foreground">
+                      Category: {bpInfo.category} ({bpInfo.label})
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">{bpInfo.detail}</p>
                   </div>
                 </div>
                 <div>
@@ -691,7 +975,7 @@ export default function HeartHealthResults() {
                       <span className="font-medium text-warning">Stage 2 High</span>
                     </div>
                   </div>
-                  {getBPCategory() === "Normal" && assessment.systolic && assessment.systolic < 100 && (
+                  {bpInfo.category.includes("Normal") && assessment.systolic && assessment.systolic < 100 && (
                     <div className="mt-4 p-3 bg-health-lightBlue rounded-lg">
                       <p className="text-xs text-foreground">
                         💡 Low-normal BP is common in athletes and active individuals. If you experience dizziness or
@@ -830,7 +1114,7 @@ export default function HeartHealthResults() {
                   <div className="flex justify-between items-center pb-2 border-b border-border">
                     <span className="text-sm font-medium text-foreground">Blood Pressure</span>
                     <span className="text-sm font-bold text-accent">
-                      {assessment.systolic}/{assessment.diastolic} - {getBPCategory()}
+                          {assessment.systolic}/{assessment.diastolic} - {bpInfo.category}
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-2 border-b border-border">
@@ -1107,6 +1391,23 @@ export default function HeartHealthResults() {
                   </div>
                 )}
 
+                {weightRec && weightRec.action !== "maintain" && (
+                  <div className="p-4 bg-accent/10 border-l-4 border-accent rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-accent mt-0.5" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-foreground mb-1">Weight Adjustment</h4>
+                        <p className="text-sm text-muted-foreground">
+                          You should aim to {weightRec.action} approximately {Math.round(weightRec.kg * 10) / 10} kg to reach a healthy BMI range.
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Target weight range: {weightRec.range[0].toFixed(1)} kg - {weightRec.range[1].toFixed(1)} kg
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {assessment.systolic && assessment.systolic > 120 && (
                   <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
                     <div className="flex items-start gap-3">
@@ -1114,7 +1415,7 @@ export default function HeartHealthResults() {
                       <div className="flex-1">
                         <h4 className="font-semibold text-foreground mb-1">Elevated Blood Pressure</h4>
                         <p className="text-sm text-muted-foreground">
-                          {assessment.systolic}/{assessment.diastolic} mmHg - {getBPCategory()}
+                          {assessment.systolic}/{assessment.diastolic} mmHg - {bpInfo.category}
                         </p>
                         <p className="text-sm text-warning mt-2">
                           ⚠️ High blood pressure strains your heart and arteries
