@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import logo from "@/assets/logo.png";
+import { envConfig } from "@/lib/envApi";
 
 const Volunteer = () => {
   const navigate = useNavigate();
@@ -16,6 +16,10 @@ const Volunteer = () => {
     mobile: "",
     district: "",
     email: "",
+    age: "",
+    gender: "",
+    availability: "",
+    remarks: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -40,6 +44,10 @@ const Volunteer = () => {
       newErrors.email = "Please enter a valid email address";
     }
 
+    if (formData.age && !/^\d{1,3}$/.test(formData.age.trim())) {
+      newErrors.age = "Please enter a valid age";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -54,12 +62,16 @@ const Volunteer = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("volunteer_support").insert([
+      const { error, data:resultData } = await supabase.from(envConfig.volunteer_support).insert([
         {
           full_name: formData.full_name.trim(),
           mobile: formData.mobile.trim(),
           district: formData.district.trim(),
           email: formData.email.trim() || null,
+          age: formData.age ? parseInt(formData.age.trim(), 10) : null,
+          gender: formData.gender.trim() || null,
+          availability: formData.availability.trim() || null,
+          remarks: formData.remarks.trim() || null,
         },
       ]);
 
@@ -74,6 +86,10 @@ const Volunteer = () => {
         mobile: "",
         district: "",
         email: "",
+        age: "",
+        gender: "",
+        availability: "",
+        remarks: "",
       });
 
       setTimeout(() => navigate("/"), 2000);
@@ -96,17 +112,11 @@ const Volunteer = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue">
       {/* Header */}
-      <header className="bg-background/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <img
-            src={logo}
-            alt="10000Hearts Logo"
-            className="h-12 md:h-16 w-auto cursor-pointer"
-            onClick={() => navigate("/")}
-          />
-          <Button variant="ghost" onClick={() => navigate("/")} className="text-foreground hover:text-primary">
+      <header className="bg-background/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-3 flex justify-end items-center">
+          <Button variant="ghost" onClick={() => navigate("/")} className="text-foreground hover:text-primary hover:bg-primary/10 transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
+            <span className="font-medium">Back to Home</span>
           </Button>
         </div>
       </header>
@@ -186,7 +196,7 @@ const Volunteer = () => {
               {/* Email (Optional) */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-base">
-                  Email <span className="text-muted-foreground text-sm">(Optional)</span>
+                  Email
                 </Label>
                 <Input
                   id="email"
@@ -198,6 +208,70 @@ const Volunteer = () => {
                   className={errors.email ? "border-destructive" : ""}
                 />
                 {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+              </div>
+
+              {/* Age (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="age" className="text-base">
+                  Age
+                </Label>
+                <Input
+                  id="age"
+                  name="age"
+                  type="number"
+                  min={1}
+                  max={120}
+                  placeholder="Enter your age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className={errors.age ? "border-destructive" : ""}
+                />
+                {errors.age && <p className="text-sm text-destructive">{errors.age}</p>}
+              </div>
+
+              {/* Gender (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="gender" className="text-base">
+                  Gender
+                </Label>
+                <Input
+                  id="gender"
+                  name="gender"
+                  type="text"
+                  placeholder="e.g., Male, Female, Non-binary"
+                  value={formData.gender}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Availability (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="availability" className="text-base">
+                  Availability
+                </Label>
+                <Input
+                  id="availability"
+                  name="availability"
+                  type="text"
+                  placeholder="e.g., Morning, Evening, Full Day, Weekends"
+                  value={formData.availability}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Remarks (Optional) */}
+              <div className="space-y-2">
+                <Label htmlFor="remarks" className="text-base">
+                  Remarks
+                </Label>
+                <Input
+                  id="remarks"
+                  name="remarks"
+                  type="text"
+                  placeholder="Add any additional details"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                />
               </div>
 
               {/* Submit Button */}

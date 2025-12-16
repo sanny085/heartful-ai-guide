@@ -79,7 +79,7 @@ const Reviews = () => {
           {reviews.map((review, index) => (
             <Card
               key={index}
-              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-border animate-fade-in"
+              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border-border opacity-0 animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* Image */}
