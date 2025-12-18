@@ -9,6 +9,8 @@ import {
   BookOpen,
   Info,
   Menu,
+  Handshake,
+  Video,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -83,24 +85,35 @@ const Navbar = () => {
             }`}
             onClick={() => navigate("/")}
           />
-        <span className="text-xs sm:text-sm md:text-base">{envType === 'dev' ? envType : ''}</span>
+        <span className="text-xs sm:text-xs md:text-sm lg:text-sm xl:text-base 2xl:text-base">{envType === 'dev' ? envType : ''}</span>
           {/* Services Navigation Menu */}
           <NavigationMenu className="hidden md:block">
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-foreground hover:text-primary text-sm md:text-base lg:text-base">
+                <NavigationMenuTrigger className="text-foreground hover:text-primary text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg px-2 md:px-3 lg:px-4 h-8 md:h-9 lg:h-10">
                   Services
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
-                  <div className="w-[200px] md:w-[220px] lg:w-[240px] xl:w-[260px] 2xl:w-[280px] p-2">
+                  <div className="w-[200px] md:w-[220px] lg:w-[240px] xl:w-[260px] 2xl:w-[280px] p-2 space-y-1">
                     <button
                       onClick={handleHeartHealthCheckup}
-                      className="w-full text-left px-4 py-3 rounded-md hover:bg-accent/10 transition-colors"
+                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        <Heart className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-                        <span className="font-medium text-sm md:text-base lg:text-base">
+                        <Heart className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
+                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
                           Heart Health Checkup
+                        </span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => navigate("/videoconsult")}
+                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
+                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
+                          Video Consult
                         </span>
                       </div>
                     </button>
@@ -112,61 +125,67 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-2.5 xl:gap-3">
-          {/* Desktop/Tablet Navigation - Hidden on Mobile */}
-          <div className="hidden md:flex items-center gap-2 md:gap-3 lg:gap-4 xl:gap-4 2xl:gap-5">
+          {/* Desktop Navigation - Hidden on Mobile and MD, shown on LG+ */}
+          <div className="hidden lg:flex items-center gap-2 lg:gap-2.5 xl:gap-3 2xl:gap-3.5">
             <Button
               variant="ghost"
               onClick={() => navigate("/blogs")}
-              className="text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-xs md:text-sm lg:text-base"
+              className="text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
             >
-              <BookOpen className="w-3 h-3 md:w-4 md:h-4 lg:w-4 lg:h-4 mr-1.5 md:mr-2" />
+              <BookOpen className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
               Blogs
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/reviews")}
-              className="text-foreground hover:text-accent hover:bg-accent/10 text-xs md:text-sm lg:text-base"
+              className="text-foreground hover:text-accent hover:bg-accent/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
             >
-              <Users className="w-3 h-3 md:w-4 md:h-4 lg:w-4 lg:h-4 mr-1.5 md:mr-2" />
+              <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
               Reviews
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/volunteer")}
-              className="text-foreground hover:text-success hover:bg-success/10 text-xs md:text-sm lg:text-base"
+              className="text-foreground hover:text-success hover:bg-success/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
             >
-              <HandHeart className="w-3 h-3 md:w-4 md:h-4 lg:w-4 lg:h-4 mr-1.5 md:mr-2" />
+              <HandHeart className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
               Volunteer
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/about-us")}
-              className="text-foreground hover:text-warning hover:bg-warning/10 text-xs md:text-sm lg:text-base"
+              className="text-foreground hover:text-warning hover:bg-warning/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
             >
-              <Info className="w-3 h-3 md:w-4 md:h-4 lg:w-4 lg:h-4 mr-1.5 md:mr-2" />
+              <Info className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
               About Us
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/partner-with-us")}
+              className="text-foreground hover:text-primary hover:bg-primary/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
+            >
+              <Handshake className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+              Partner With Us
             </Button>
           </div>
 
-          {/* Desktop/Tablet Auth Button */}
+          {/* Desktop/Tablet Auth Button - Hidden on Mobile and MD, shown on LG+ */}
           {!loading && (
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               {user ? (
                 <Button
                   variant="outline"
                   onClick={() => navigate("/profile")}
-                  className="border-primary text-primary hover:bg-primary/5 text-xs md:text-sm lg:text-base"
-                  size="sm"
+                  className="border-primary text-primary hover:bg-primary/5 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2.5 lg:px-3 xl:px-4 2xl:px-4"
                 >
-                  <User className="w-3 h-3 md:w-4 md:h-4 lg:w-4 lg:h-4 mr-1.5 md:mr-2" />
+                  <User className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
                   Profile
                 </Button>
               ) : (
                 <Button
                   variant="outline"
                   onClick={() => navigate("/auth")}
-                  className="border-primary text-primary hover:bg-primary/5 text-xs md:text-sm lg:text-base"
-                  size="sm"
+                  className="border-primary text-primary hover:bg-primary/5 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-3 lg:px-3.5 xl:px-4 2xl:px-5"
                 >
                   Sign In
                 </Button>
@@ -174,32 +193,57 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Mobile Menu Button */}
+          {/* Menu Button - Shown on Mobile and MD screens */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8 sm:h-9 sm:w-9"
+            className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 md:h-9 md:w-9"
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Open menu"
           >
-            <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+            <Menu className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
           </Button>
 
-          {/* Mobile Menu Sheet */}
+          {/* Mobile/MD Menu Sheet */}
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px] md:w-[360px]">
-              <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:gap-4">
+            <SheetContent side="right" className="w-[280px] sm:w-[300px] md:w-[320px]">
+              <div className="mt-4 sm:mt-6 md:mt-8 flex flex-col gap-2.5 sm:gap-3 md:gap-4">
+                {/* Services Menu Item */}
+                <div className="space-y-1 sm:space-y-1.5 md:space-y-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      handleHeartHealthCheckup();
+                    }}
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                  >
+                    <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    Heart Health Checkup
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/videoconsult");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                  >
+                    <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    Video Consult
+                  </Button>
+                </div>
+
                 {/* Navigation Links */}
-                <div className="space-y-1.5 sm:space-y-2">
+                <div className="space-y-1 sm:space-y-1.5 md:space-y-2">
                   <Button
                     variant="ghost"
                     onClick={() => {
                       navigate("/blogs");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-sm sm:text-base h-10 sm:h-11"
+                    className="w-full justify-start text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                   >
-                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                    <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
                     Blogs
                   </Button>
                   <Button
@@ -208,9 +252,9 @@ const Navbar = () => {
                       navigate("/reviews");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-accent hover:bg-accent/10 text-sm sm:text-base h-10 sm:h-11"
+                    className="w-full justify-start text-foreground hover:text-accent hover:bg-accent/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                   >
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
                     Reviews
                   </Button>
                   <Button
@@ -219,9 +263,9 @@ const Navbar = () => {
                       navigate("/volunteer");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-success hover:bg-success/10 text-sm sm:text-base h-10 sm:h-11"
+                    className="w-full justify-start text-foreground hover:text-success hover:bg-success/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                   >
-                    <HandHeart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                    <HandHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
                     Volunteer
                   </Button>
                   <Button
@@ -230,16 +274,27 @@ const Navbar = () => {
                       navigate("/about-us");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-warning hover:bg-warning/10 text-sm sm:text-base h-10 sm:h-11"
+                    className="w-full justify-start text-foreground hover:text-warning hover:bg-warning/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                   >
-                    <Info className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
                     About Us
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/partner-with-us");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                  >
+                    <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    Partner With Us
                   </Button>
                 </div>
 
                 {/* Auth Section */}
                 {!loading && (
-                  <div className="pt-3 sm:pt-4 border-t border-border">
+                  <div className="pt-2 sm:pt-3 md:pt-4 border-t border-border">
                     {user ? (
                       <Button
                         variant="outline"
@@ -247,9 +302,9 @@ const Navbar = () => {
                           navigate("/profile");
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full border-primary text-primary hover:bg-primary/5 text-sm sm:text-base h-10 sm:h-11"
+                        className="w-full border-primary text-primary hover:bg-primary/5 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                       >
-                        <User className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
                         Profile
                       </Button>
                     ) : (
@@ -259,7 +314,7 @@ const Navbar = () => {
                           navigate("/auth");
                           setIsMobileMenuOpen(false);
                         }}
-                        className="w-full border-primary text-primary hover:bg-primary/5 text-sm sm:text-base h-10 sm:h-11"
+                        className="w-full border-primary text-primary hover:bg-primary/5 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                       >
                         Sign In
                       </Button>
