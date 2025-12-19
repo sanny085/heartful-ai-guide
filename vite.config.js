@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     mdx({
       // Type mismatch between remark plugin versions; safe at runtime.
-      remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter as any],
+      remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
     }),
     react(),
     mode === "development" && componentTagger(),
@@ -33,3 +33,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+
+
+
