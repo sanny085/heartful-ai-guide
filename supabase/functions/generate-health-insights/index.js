@@ -22,7 +22,6 @@ serve(async (req) => {
     if (!assessmentId) {
       throw new Error("assessmentId is required");
     }
-
     // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -65,24 +64,31 @@ serve(async (req) => {
 
     const diabetesInfo =
       assessment.diabetes === "yes" &&
-      assessment.fasting_sugar &&
-      assessment.post_meal_sugar
+        assessment.fasting_sugar &&
+        assessment.post_meal_sugar
         ? `Fasting: ${assessment.fasting_sugar} mg/dL, Post-meal: ${assessment.post_meal_sugar} mg/dL`
         : assessment.diabetes === "yes"
           ? "Has diabetes (levels not specified)"
           : "No diabetes";
+
+    const tobaccoInfo = assessment.tobacco_use && Array.isArray(assessment.tobacco_use) && assessment.tobacco_use.length > 0
+      ? `Additional tobacco use: ${assessment.tobacco_use.join(", ")}`
+      : "No additional tobacco use reported";
 
     const prompt = `You are a compassionate health advisor. Based on this comprehensive health assessment, provide personalized insights and a diet plan:
 
 PATIENT PROFILE:
 Age: ${assessment.age || "Not specified"}
 Gender: ${assessment.gender || "Not specified"}
+Height: ${assessment.height ? `${assessment.height} cm` : "Not specified"}
+Weight: ${assessment.weight ? `${assessment.weight} kg` : "Not specified"}
 BMI: ${assessment.bmi?.toFixed(1) || "N/A"}
 
 SYMPTOMS: ${symptomsText}
 
 VITALS & LAB VALUES:
 Blood Pressure: ${assessment.systolic}/${assessment.diastolic} mmHg
+Heart Rate: ${assessment.pulse ? `${assessment.pulse} bpm` : "Not specified"}
 ${lipidInfo}
 ${diabetesInfo}
 
@@ -91,12 +97,13 @@ Diet: ${assessment.diet || "Not specified"}
 Exercise: ${assessment.exercise || "Not specified"}
 Sleep: ${assessment.sleep_hours} hours per night
 Smoking: ${assessment.smoking || "Not specified"}
+${tobaccoInfo}
 
 USER NOTES: ${assessment.user_notes || "None provided"}
 
 CALCULATED METRICS:
 Heart Age: ${heartAge} years (Actual: ${assessment.age})
-Risk Score: ${riskScore}%
+Risk Score: ${riskScore}% (10-year CVD Risk Probability)
 
 Provide a comprehensive assessment with:
 1. A brief summary (3-4 sentences) describing overall health status in an encouraging tone
@@ -145,7 +152,7 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
             },
           ],
           temperature: 0.7,
-          max_tokens: 1000,
+          max_tokens: 600,
         }),
       },
     );
@@ -287,130 +294,159 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
   }
 });
 
+const FRAMINGHAM_COEFFICIENTS = {
+  men: {
+    lnAge: 3.06117,
+    lnBMI: 0.905964,
+    lnSBP: 1.93303, // Untreated
+    smoking: 0.65451,
+    diabetes: 0.57367,
+    meanBetaX: 23.9802,
+    baselineSurvival: 0.88936,
+  },
+  women: {
+    lnAge: 2.32888,
+    lnBMI: 0.857314,
+    lnSBP: 2.76157, // Untreated
+    smoking: 0.52873,
+    diabetes: 0.69154,
+    meanBetaX: 26.1931,
+    baselineSurvival: 0.95012,
+  },
+};
+
+function calculateFraminghamRisk(assessment) {
+  // Extract and normalize inputs
+  const gender = (assessment.gender || "male").toLowerCase();
+  const age = assessment.age || 30;
+  const systolic = assessment.systolic || 120; // Default to normal if missing
+  const bmi = assessment.bmi || 24; // Default to normal if missing
+  const isSmoker = assessment.smoking === "regularly" ||
+    assessment.smoking === "occasionally";
+  const hasDiabetes = assessment.diabetes === "yes";
+
+  // Select coefficients
+  const coeffs = gender === "female" || gender === "other"
+    ? FRAMINGHAM_COEFFICIENTS.women
+    : FRAMINGHAM_COEFFICIENTS.men;
+
+  // Calculate Beta * X
+  let betaX = (coeffs.lnAge * Math.log(age)) +
+    (coeffs.lnBMI * Math.log(bmi)) +
+    (coeffs.lnSBP * Math.log(systolic)) +
+    (isSmoker ? coeffs.smoking : 0) +
+    (hasDiabetes ? coeffs.diabetes : 0);
+
+  // Calculate Risk %
+  const risk = 1 -
+    Math.pow(
+      coeffs.baselineSurvival,
+      Math.exp(betaX - coeffs.meanBetaX),
+    );
+
+  return risk * 100; // Return as percentage
+}
+
 function calculateHeartAge(assessment) {
   const actualAge = assessment.age || 30;
-  let ageModifier = 0;
+  const gender = (assessment.gender || "male").toLowerCase();
 
-  // BMI impact
-  if (assessment.bmi) {
-    if (assessment.bmi > 30) ageModifier += 8;
-    else if (assessment.bmi > 25) ageModifier += 4;
-    else if (assessment.bmi < 18.5) ageModifier += 3;
-  }
+  // 1. Calculate the user's Framingham Risk
+  const userRisk = calculateFraminghamRisk(assessment);
 
-  // Blood pressure impact
-  if (assessment.systolic && assessment.diastolic) {
-    if (assessment.systolic >= 140 || assessment.diastolic >= 90)
-      ageModifier += 10;
-    else if (assessment.systolic >= 130 || assessment.diastolic >= 80)
-      ageModifier += 5;
-  }
+  // 2. Find "Reference Heart Age"
+  // We look for the age where a "healthy" person (ideal risk factors) would have the same risk as the user.
+  // Ideal factors: BMI 22.5, SBP 115, No Smoking, No Diabetes
+  let heartAge = actualAge;
 
-  // Smoking impact
-  if (assessment.smoking === "regularly") ageModifier += 10;
-  else if (assessment.smoking === "occasionally") ageModifier += 5;
+  // Create a synthetic "Ideal Person" based on the user's gender
+  const idealPerson = {
+    gender: assessment.gender,
+    bmi: 22.5,
+    systolic: 115,
+    smoking: "never",
+    diabetes: "no",
+  };
 
-  // Diabetes impact - enhanced with sugar levels
-  if (assessment.diabetes === "yes") {
-    ageModifier += 8;
-    if (
-      assessment.fasting_sugar > 125 ||
-      assessment.post_meal_sugar > 180
-    ) {
-      ageModifier += 5;
+  // Search range: 20 to 90 years
+  let minDiff = Number.MAX_VALUE;
+  let calculatedHeartAge = actualAge;
+
+  // Optimization: Start search from a reasonable bound based on risk
+  for (let age = 20; age <= 90; age++) {
+    idealPerson.age = age;
+    const idealRisk = calculateFraminghamRisk(idealPerson);
+
+    const diff = Math.abs(idealRisk - userRisk);
+    if (diff < minDiff) {
+      minDiff = diff;
+      calculatedHeartAge = age;
     }
   }
 
-  // Lipid impact
-  if (assessment.ldl > 160 || (assessment.hdl && assessment.hdl < 40)) {
-    ageModifier += 5;
+  // NOTE: If user risk is extremely low, heart age might calculate as 20.
+  // If user risk is extremely high, it might cap at 90.
+
+  // 3. Apply "Hybrid" Lifestyle Modifiers
+  // These adjust the clinical Heart Age based on wellness factors not in Framingham.
+  let modifier = 0;
+
+  // Sleep (+/-)
+  if (assessment.sleep_hours) {
+    if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) modifier += 1;
+    else modifier -= 1; // Good sleep bonus
   }
 
-  // Sleep impact
-  if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) {
-    ageModifier += 3;
+  // Diet (+/-)
+  if (assessment.diet) {
+    if (assessment.diet.includes("high-carb") || assessment.diet.includes("irregular")) modifier += 2;
+    else if (assessment.diet.includes("balanced") || assessment.diet.includes("restrict")) modifier -= 2;
   }
 
-  // Diet impact
-  if (
-    assessment.diet?.includes("high-carb") ||
-    assessment.diet?.includes("irregular")
-  ) {
-    ageModifier += 4;
+  // Exercise (+/-)
+  if (assessment.exercise) {
+    if (assessment.exercise.includes("Sedentary")) modifier += 2;
+    else if (assessment.exercise.includes("Active") || assessment.exercise.includes("workouts")) modifier -= 2;
   }
 
-  // Symptoms impact
-  if (assessment.chest_pain) ageModifier += 3;
-  if (assessment.shortness_of_breath) ageModifier += 3;
-  if (assessment.palpitations) ageModifier += 2;
-  if (assessment.family_history) ageModifier += 5;
+  // Symptoms & Family History (+)
+  if (assessment.chest_pain) modifier += 2;
+  if (assessment.shortness_of_breath) modifier += 1;
+  if (assessment.family_history) modifier += 2;
 
-  return Math.max(actualAge, actualAge + ageModifier);
+  // 4. Calculate Final Heart Age
+  const finalHeartAge = calculatedHeartAge + modifier;
+
+  // Sanity check bounds (keep it somewhat realistic, though "younger" is now allowed!)
+  return Math.max(18, Math.min(100, finalHeartAge));
 }
 
 function calculateRiskScore(assessment) {
-  let score = 0;
+  // Use the Framingham 10-year CVD risk percentage as the base
+  let riskPercent = calculateFraminghamRisk(assessment);
 
-  // BMI risk (0-25 points)
-  if (assessment.bmi) {
-    if (assessment.bmi > 35) score += 25;
-    else if (assessment.bmi > 30) score += 20;
-    else if (assessment.bmi > 25) score += 10;
-    else if (assessment.bmi < 18.5) score += 8;
-  }
+  // Apply multipliers for factors Framingham misses (Lipids if known, specific symptoms)
+  // Note: Framingham BMI model doesn't use Lipids. If we have them, we should adjust.
 
-  // Blood pressure risk (0-30 points)
-  if (assessment.systolic && assessment.diastolic) {
-    if (assessment.systolic >= 180 || assessment.diastolic >= 120) {
-      score += 30;
-    } else if (assessment.systolic >= 140 || assessment.diastolic >= 90) {
-      score += 20;
-    } else if (assessment.systolic >= 130 || assessment.diastolic >= 80) {
-      score += 10;
-    }
-  }
+  if (assessment.ldl && assessment.ldl > 160) riskPercent *= 1.3;
+  if (assessment.hdl && assessment.hdl < 40) riskPercent *= 1.2;
 
-  // Smoking risk (0-20 points)
-  if (assessment.smoking === "regularly") score += 20;
-  else if (assessment.smoking === "occasionally") score += 10;
+  if (assessment.family_history) riskPercent *= 1.2;
+  if (assessment.chest_pain) riskPercent *= 1.3; // Symptomatic adds immediate risk
 
-  // Diabetes risk (0-15 points)
-  if (assessment.diabetes === "yes") {
-    score += 15;
-    // Additional risk for uncontrolled diabetes
-    if (
-      assessment.fasting_sugar > 125 ||
-      assessment.post_meal_sugar > 180
-    ) {
-      score += 5;
-    }
-  }
+  // Cap at 100% (though strict Framingham rarely exceeds 30-40%)
+  // We want to return a "Risk Score" that feels intuitive to the user.
+  // In many medical contexts:
+  // < 10% is Low Risk
+  // 10-20% is Intermediate
+  // > 20% is High Risk
 
-  // Lipid risk (0-15 points)
-  if (assessment.ldl) {
-    if (assessment.ldl > 190) score += 15;
-    else if (assessment.ldl > 160) score += 10;
-    else if (assessment.ldl > 130) score += 5;
-  }
-  if (assessment.hdl && assessment.hdl < 40) score += 5;
+  // If we simply return riskPercent, a user getting "5%" might think it's very low (out of 100), 
+  // but medically 5% is significant-ish depending on age.
+  // However, the prompt asks for "heart year risk of cardiovascular", which implies the % chance.
+  // Let's stick to the raw percentage but ensure we explain it in the frontend or insights.
 
-  // Sleep risk (0-10 points)
-  if (assessment.sleep_hours < 5 || assessment.sleep_hours > 10) {
-    score += 10;
-  } else if (assessment.sleep_hours < 6 || assessment.sleep_hours > 9) {
-    score += 5;
-  }
-
-  // Symptoms risk (0-15 points)
-  if (assessment.chest_pain) score += 5;
-  if (assessment.shortness_of_breath) score += 4;
-  if (assessment.palpitations) score += 3;
-  if (assessment.swelling) score += 3;
-
-  // Family history (0-10 points)
-  if (assessment.family_history) score += 10;
-
-  return Math.min(100, score); // Cap at 100
+  return parseFloat(Math.min(99.9, riskPercent).toFixed(1));
 }
 
 

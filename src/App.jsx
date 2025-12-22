@@ -18,6 +18,9 @@ import Volunteer from "./pages/Volunteer";
 import Blogs from "./pages/Blogs";
 import BlogDetail from "./pages/BlogDetail";
 import AboutUs from "./pages/AboutUs";
+import PartnerWithUs from "./pages/PartnerWithUs";
+import VideoConsult from "./pages/VideoConsult";
+import Clinics from "./pages/Clinics";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -75,6 +78,9 @@ const App = () => (
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/volunteer" element={<Volunteer />} />
             <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/partner-with-us" element={<PartnerWithUs />} />
+            <Route path="/videoconsult" element={<VideoConsult />} />
+            <Route path="/clinics" element={<Clinics />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
