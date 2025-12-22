@@ -13,15 +13,14 @@ import { toast } from "sonner";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import { envConfig } from "@/lib/envApi";
 
-
 const STEPS = [
   "Initial Symptoms",
   "Patient Details",
-  "Diet & Activity", 
+  "Diet & Activity",
   "Sleep & Tobacco",
-  "Lipid Levels",
-  "Blood Glucose",
   "Blood Pressure",
+  "Blood Glucose",
+  "Lipid Levels",
   "Additional Symptoms",
   "Personal Notes"
 ];
@@ -64,6 +63,7 @@ export default function HeartHealthAssessment() {
     // Blood pressure
     systolic: "",
     diastolic: "",
+    pulse: "",
     // Additional symptoms
     swelling: false,
     palpitations: false,
@@ -77,20 +77,142 @@ export default function HeartHealthAssessment() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const resetFormData = () => {
+    localStorage.removeItem("heartHealthAssessmentDraft");
+    setFormData({
+      // Initial symptoms
+      chestPain: false,
+      shortnessOfBreath: false,
+      dizziness: false,
+      fatigue: false,
+      // Patient details
+      name: "",
+      mobile: "",
+      age: "",
+      gender: "",
+      height: "",
+      weight: "",
+      // Lifestyle
+      diet: "",
+      exercise: "",
+      sleepHours: "",
+      smoking: "",
+      tobacco: [],
+      // Lipid levels
+      knowsLipids: "",
+      ldl: "",
+      hdl: "",
+      // Diabetes
+      diabetes: "",
+      fastingSugar: "",
+      postMealSugar: "",
+      // Blood pressure
+      systolic: "",
+      diastolic: "",
+      pulse: "",
+      // Additional symptoms
+      swelling: false,
+      palpitations: false,
+      familyHistory: false,
+      // User notes
+      userNotes: "",
+      consent: false
+    });
+    setCurrentStep(0);
+    setHeightUnit("cm");
+  };
+
+  const loadPreviousAssessment = () => {
+    if (!latestAssessment) return;
+
+    setFormData({
+      // Initial symptoms
+      chestPain: latestAssessment.chest_pain || false,
+      shortnessOfBreath: latestAssessment.shortness_of_breath || false,
+      dizziness: latestAssessment.dizziness || false,
+      fatigue: latestAssessment.fatigue || false,
+      // Patient details
+      name: latestAssessment.name || "",
+      mobile: latestAssessment.mobile || "",
+      age: latestAssessment.age?.toString() || "",
+      gender: latestAssessment.gender || "",
+      height: latestAssessment.height?.toString() || "",
+      weight: latestAssessment.weight?.toString() || "",
+      // Lifestyle
+      diet: latestAssessment.diet || "",
+      exercise: latestAssessment.exercise || "",
+      sleepHours: latestAssessment.sleep_hours?.toString() || "",
+      smoking: latestAssessment.smoking || "",
+      tobacco: latestAssessment.tobacco_use || [],
+      // Lipid levels
+      knowsLipids: latestAssessment.knows_lipids || "",
+      ldl: latestAssessment.ldl?.toString() || "",
+      hdl: latestAssessment.hdl?.toString() || "",
+      // Diabetes
+      diabetes: latestAssessment.diabetes || "",
+      fastingSugar: latestAssessment.fasting_sugar?.toString() || "",
+      postMealSugar: latestAssessment.post_meal_sugar?.toString() || "",
+      // Blood pressure
+      systolic: latestAssessment.systolic?.toString() || "",
+      diastolic: latestAssessment.diastolic?.toString() || "",
+      pulse: latestAssessment.pulse?.toString() || "",
+      // Additional symptoms
+      swelling: latestAssessment.swelling || false,
+      palpitations: latestAssessment.palpitations || false,
+      familyHistory: latestAssessment.family_history || false,
+      // User notes
+      userNotes: latestAssessment.user_notes || "",
+      consent: false
+    });
+    setShowExistingReport(false);
+    toast.success("Previous assessment data loaded. You can now update and submit.");
+  };
+
   const canProceed = () => {
     switch (currentStep) {
       case 0: return true; // Symptoms are optional
       case 1: return formData.name && formData.mobile;
       case 2: return formData.diet && formData.exercise;
       case 3: return formData.sleepHours;
-      case 4: return formData.knowsLipids;
-      case 5: return formData.diabetes;
-      case 6: return formData.systolic && formData.diastolic;
+      case 4: return formData.systolic && formData.diastolic; // Blood Pressure
+      case 5: return formData.diabetes; // Blood Glucose
+      case 6: return formData.knowsLipids; // Lipid Levels
       case 7: return true; // Additional symptoms optional
       case 8: return true; // Notes optional
       default: return true;
     }
   };
+
+  // Load draft from local storage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem("heartHealthAssessmentDraft");
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        // Only load if we have valid data
+        if (parsed.formData && Object.keys(parsed.formData).length > 0) {
+          setFormData(parsed.formData);
+          if (typeof parsed.currentStep === 'number') setCurrentStep(parsed.currentStep);
+          if (parsed.heightUnit) setHeightUnit(parsed.heightUnit);
+          toast.info("Resumed from your saved draft");
+        }
+      } catch (e) {
+        console.error("Failed to load draft", e);
+        localStorage.removeItem("heartHealthAssessmentDraft");
+      }
+    }
+  }, []); // Only run once on mount
+
+  // Save to local storage whenever state changes
+  useEffect(() => {
+    // Debounce or just save directly (localstorage is fast enough for this amount of data)
+    const draft = {
+      formData,
+      currentStep,
+      heightUnit
+    };
+    localStorage.setItem("heartHealthAssessmentDraft", JSON.stringify(draft));
+  }, [formData, currentStep, heightUnit]);
 
   useEffect(() => {
     if (!user) {
@@ -114,36 +236,7 @@ export default function HeartHealthAssessment() {
         if (data) {
           setLatestAssessment(data);
           setShowExistingReport(true);
-          setFormData(prev => ({
-            ...prev,
-            chestPain: data.chest_pain || false,
-            shortnessOfBreath: data.shortness_of_breath || false,
-            dizziness: data.dizziness || false,
-            fatigue: data.fatigue || false,
-            name: data.name || "",
-            mobile: data.mobile || "",
-            age: data.age?.toString() || "",
-            gender: data.gender || "",
-            height: data.height?.toString() || "",
-            weight: data.weight?.toString() || "",
-            diet: data.diet || "",
-            exercise: data.exercise || "",
-            sleepHours: data.sleep_hours?.toString() || "",
-            smoking: data.smoking || "",
-            tobacco: data.tobacco_use || [],
-            knowsLipids: data.knows_lipids || "",
-            ldl: data.ldl?.toString() || "",
-            hdl: data.hdl?.toString() || "",
-            diabetes: data.diabetes || "",
-            fastingSugar: data.fasting_sugar?.toString() || "",
-            postMealSugar: data.post_meal_sugar?.toString() || "",
-            systolic: data.systolic?.toString() || "",
-            diastolic: data.diastolic?.toString() || "",
-            swelling: data.swelling || false,
-            palpitations: data.palpitations || false,
-            familyHistory: data.family_history || false,
-            userNotes: data.user_notes || ""
-          }));
+          // Removed form pre-filling to ensure clean form for new assessments
         }
       } catch (error) {
         console.error("Error loading latest assessment:", error);
@@ -169,7 +262,7 @@ export default function HeartHealthAssessment() {
 
   const saveAssessment = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
       const { data: profile } = await supabase
@@ -184,7 +277,7 @@ export default function HeartHealthAssessment() {
         return;
       }
 
-      const bmi = formData.height && formData.weight 
+      const bmi = formData.height && formData.weight
         ? calculateBMI(Number(formData.height), Number(formData.weight))
         : null;
 
@@ -219,6 +312,7 @@ export default function HeartHealthAssessment() {
         // Blood pressure
         systolic: formData.systolic ? parseInt(formData.systolic) : null,
         diastolic: formData.diastolic ? parseInt(formData.diastolic) : null,
+        pulse: formData.pulse ? parseInt(formData.pulse) : null,
         // Additional symptoms
         swelling: formData.swelling,
         palpitations: formData.palpitations,
@@ -244,7 +338,12 @@ export default function HeartHealthAssessment() {
       if (insightsError) {
         console.error("Error generating insights:", insightsError);
         toast.error("Assessment saved but insights generation failed");
+      } else {
+        toast.success("Health insights generated successfully!");
       }
+
+      // Reset form data after successful submission
+      resetFormData();
 
       navigate(`/heart-health-results?id=${data.id}`);
     } catch (error) {
@@ -264,10 +363,10 @@ export default function HeartHealthAssessment() {
               <h3 className="text-2xl font-semibold mb-2">Initial Symptoms</h3>
               <p className="text-muted-foreground">Are you experiencing any of these symptoms?</p>
             </div>
-            
+
             <div className="space-y-4">
               <Card className={`p-4 cursor-pointer transition-all ${formData.chestPain ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("chestPain", !formData.chestPain)}>
+                onClick={() => updateFormData("chestPain", !formData.chestPain)}>
                 <div className="flex items-center justify-between">
                   <span>Chest pain or discomfort</span>
                   <Checkbox checked={formData.chestPain} />
@@ -275,7 +374,7 @@ export default function HeartHealthAssessment() {
               </Card>
 
               <Card className={`p-4 cursor-pointer transition-all ${formData.shortnessOfBreath ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("shortnessOfBreath", !formData.shortnessOfBreath)}>
+                onClick={() => updateFormData("shortnessOfBreath", !formData.shortnessOfBreath)}>
                 <div className="flex items-center justify-between">
                   <span>Shortness of breath</span>
                   <Checkbox checked={formData.shortnessOfBreath} />
@@ -283,7 +382,7 @@ export default function HeartHealthAssessment() {
               </Card>
 
               <Card className={`p-4 cursor-pointer transition-all ${formData.dizziness ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("dizziness", !formData.dizziness)}>
+                onClick={() => updateFormData("dizziness", !formData.dizziness)}>
                 <div className="flex items-center justify-between">
                   <span>Dizziness or fainting</span>
                   <Checkbox checked={formData.dizziness} />
@@ -291,7 +390,7 @@ export default function HeartHealthAssessment() {
               </Card>
 
               <Card className={`p-4 cursor-pointer transition-all ${formData.fatigue ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("fatigue", !formData.fatigue)}>
+                onClick={() => updateFormData("fatigue", !formData.fatigue)}>
                 <div className="flex items-center justify-between">
                   <span>Tiredness or fatigue</span>
                   <Checkbox checked={formData.fatigue} />
@@ -328,7 +427,7 @@ export default function HeartHealthAssessment() {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="age">Age</Label>
@@ -431,9 +530,8 @@ export default function HeartHealthAssessment() {
               ].map((option) => (
                 <Card
                   key={option}
-                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                    formData.diet === option ? "border-accent bg-accent/5" : "border-border"
-                  }`}
+                  className={`p-4 cursor-pointer transition-all hover:shadow-md ${formData.diet === option ? "border-accent bg-accent/5" : "border-border"
+                    }`}
                   onClick={() => updateFormData("diet", option)}
                 >
                   <p className="text-sm">{option}</p>
@@ -458,9 +556,8 @@ export default function HeartHealthAssessment() {
                 ].map((option) => (
                   <Card
                     key={option}
-                    className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-                      formData.exercise === option ? "border-accent bg-accent/5" : "border-border"
-                    }`}
+                    className={`p-4 cursor-pointer transition-all hover:shadow-md ${formData.exercise === option ? "border-accent bg-accent/5" : "border-border"
+                      }`}
                     onClick={() => updateFormData("exercise", option)}
                   >
                     <p className="text-sm">{option}</p>
@@ -504,57 +601,41 @@ export default function HeartHealthAssessment() {
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-center mb-6">Lipid Levels</h3>
-            <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-center mb-6">Blood Pressure</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Do you know your lipid levels?</Label>
-                <div className="flex gap-4">
-                  <Button
-                    type="button"
-                    variant={formData.knowsLipids === "yes" ? "default" : "outline"}
-                    onClick={() => updateFormData("knowsLipids", "yes")}
-                    className="flex-1"
-                  >
-                    Yes
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={formData.knowsLipids === "no" ? "default" : "outline"}
-                    onClick={() => updateFormData("knowsLipids", "no")}
-                    className="flex-1"
-                  >
-                    No
-                  </Button>
-                </div>
+                <Label htmlFor="systolic">Systolic (Upper Number)</Label>
+                <Input
+                  id="systolic"
+                  type="number"
+                  placeholder="e.g., 120"
+                  value={formData.systolic}
+                  onChange={(e) => updateFormData("systolic", e.target.value)}
+                />
               </div>
-
-              {formData.knowsLipids === "yes" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ldl">LDL (Bad Cholesterol) mg/dL</Label>
-                    <Input
-                      id="ldl"
-                      type="number"
-                      placeholder="Enter LDL value"
-                      value={formData.ldl}
-                      onChange={(e) => updateFormData("ldl", e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">Normal: &lt;100 mg/dL</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hdl">HDL (Good Cholesterol) mg/dL</Label>
-                    <Input
-                      id="hdl"
-                      type="number"
-                      placeholder="Enter HDL value"
-                      value={formData.hdl}
-                      onChange={(e) => updateFormData("hdl", e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">Normal: &gt;40 mg/dL (men), &gt;50 mg/dL (women)</p>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="diastolic">Diastolic (Lower Number)</Label>
+                <Input
+                  id="diastolic"
+                  type="number"
+                  placeholder="e.g., 80"
+                  value={formData.diastolic}
+                  onChange={(e) => updateFormData("diastolic", e.target.value)}
+                />
+              </div>
             </div>
+            <div className="space-y-2 pt-4">
+              <Label htmlFor="pulse">Pulse Rate (bpm)</Label>
+              <Input
+                id="pulse"
+                type="number"
+                placeholder="e.g., 72"
+                value={formData.pulse}
+                onChange={(e) => updateFormData("pulse", e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Normal resting pulse: 60-100 bpm</p>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">Normal BP: &lt;120/80 mmHg</p>
           </div>
         );
 
@@ -616,30 +697,57 @@ export default function HeartHealthAssessment() {
       case 6:
         return (
           <div className="space-y-6">
-            <h3 className="text-xl font-semibold text-center mb-6">Blood Pressure</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h3 className="text-xl font-semibold text-center mb-6">Lipid Levels</h3>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="systolic">Systolic (Upper Number)</Label>
-                <Input
-                  id="systolic"
-                  type="number"
-                  placeholder="e.g., 120"
-                  value={formData.systolic}
-                  onChange={(e) => updateFormData("systolic", e.target.value)}
-                />
+                <Label>Do you know your lipid levels?</Label>
+                <div className="flex gap-4">
+                  <Button
+                    type="button"
+                    variant={formData.knowsLipids === "yes" ? "default" : "outline"}
+                    onClick={() => updateFormData("knowsLipids", "yes")}
+                    className="flex-1"
+                  >
+                    Yes
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.knowsLipids === "no" ? "default" : "outline"}
+                    onClick={() => updateFormData("knowsLipids", "no")}
+                    className="flex-1"
+                  >
+                    No
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="diastolic">Diastolic (Lower Number)</Label>
-                <Input
-                  id="diastolic"
-                  type="number"
-                  placeholder="e.g., 80"
-                  value={formData.diastolic}
-                  onChange={(e) => updateFormData("diastolic", e.target.value)}
-                />
-              </div>
+
+              {formData.knowsLipids === "yes" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="ldl">LDL (Bad Cholesterol) mg/dL</Label>
+                    <Input
+                      id="ldl"
+                      type="number"
+                      placeholder="Enter LDL value"
+                      value={formData.ldl}
+                      onChange={(e) => updateFormData("ldl", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Normal: &lt;100 mg/dL</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hdl">HDL (Good Cholesterol) mg/dL</Label>
+                    <Input
+                      id="hdl"
+                      type="number"
+                      placeholder="Enter HDL value"
+                      value={formData.hdl}
+                      onChange={(e) => updateFormData("hdl", e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Normal: &gt;40 mg/dL (men), &gt;50 mg/dL (women)</p>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground text-center">Normal: &lt;120/80 mmHg</p>
           </div>
         );
 
@@ -650,10 +758,10 @@ export default function HeartHealthAssessment() {
               <h3 className="text-2xl font-semibold mb-2">Additional Symptoms</h3>
               <p className="text-muted-foreground">Any other symptoms you're experiencing?</p>
             </div>
-            
+
             <div className="space-y-4">
               <Card className={`p-4 cursor-pointer transition-all ${formData.swelling ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("swelling", !formData.swelling)}>
+                onClick={() => updateFormData("swelling", !formData.swelling)}>
                 <div className="flex items-center justify-between">
                   <span>Swelling in legs or feet</span>
                   <Checkbox checked={formData.swelling} />
@@ -661,7 +769,7 @@ export default function HeartHealthAssessment() {
               </Card>
 
               <Card className={`p-4 cursor-pointer transition-all ${formData.palpitations ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("palpitations", !formData.palpitations)}>
+                onClick={() => updateFormData("palpitations", !formData.palpitations)}>
                 <div className="flex items-center justify-between">
                   <span>Irregular heartbeat or palpitations</span>
                   <Checkbox checked={formData.palpitations} />
@@ -669,7 +777,7 @@ export default function HeartHealthAssessment() {
               </Card>
 
               <Card className={`p-4 cursor-pointer transition-all ${formData.familyHistory ? "border-accent bg-accent/5" : ""}`}
-                    onClick={() => updateFormData("familyHistory", !formData.familyHistory)}>
+                onClick={() => updateFormData("familyHistory", !formData.familyHistory)}>
                 <div className="flex items-center justify-between">
                   <span>Family history of heart disease</span>
                   <Checkbox checked={formData.familyHistory} />
@@ -686,7 +794,7 @@ export default function HeartHealthAssessment() {
               <h3 className="text-2xl font-semibold mb-2">Share Additional Information</h3>
               <p className="text-muted-foreground">Tell us anything else about your health</p>
             </div>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="notes">Health Notes (Optional)</Label>
@@ -704,7 +812,7 @@ export default function HeartHealthAssessment() {
                 <Label className="mb-2 block">Or Record a Voice Note</Label>
                 <VoiceRecorder
                   onTranscriptionComplete={(text) => {
-                    const newNotes = formData.userNotes 
+                    const newNotes = formData.userNotes
                       ? `${formData.userNotes}\n\n${text}`
                       : text;
                     updateFormData("userNotes", newNotes);
@@ -742,8 +850,11 @@ export default function HeartHealthAssessment() {
               <Button onClick={() => navigate(`/heart-health-results?id=${latestAssessment.id}`)}>
                 View Latest Report
               </Button>
+              <Button variant="outline" onClick={loadPreviousAssessment}>
+                Continue from Previous Assessment
+              </Button>
               <Button variant="outline" onClick={() => setShowExistingReport(false)}>
-                Create New Report
+                Start Fresh Assessment
               </Button>
             </div>
           </Card>
@@ -772,16 +883,15 @@ export default function HeartHealthAssessment() {
               {STEPS.map((step, index) => (
                 <div
                   key={index}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                    index === currentStep
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${index === currentStep
                       ? "bg-accent/10 border-l-4 border-accent"
                       : index < currentStep
-                      ? "bg-muted/50"
-                      : ""
-                  }`}
+                        ? "bg-muted/50"
+                        : ""
+                    }`}
                 >
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium
-                    ${index === currentStep ? "bg-accent text-accent-foreground" : 
+                    ${index === currentStep ? "bg-accent text-accent-foreground" :
                       index < currentStep ? "bg-success text-white" : "bg-muted text-muted-foreground"}`}>
                     {index < currentStep ? "✓" : index + 1}
                   </div>
@@ -829,7 +939,26 @@ export default function HeartHealthAssessment() {
             <Card className="p-8">
               {renderStepContent()}
 
-              <div className="flex gap-4 mt-8">
+              <div className="flex justify-between items-center mt-8 mb-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to reset the form? All entered data will be cleared.")) {
+                      resetFormData();
+                      toast.success("Form has been reset");
+                    }
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Reset Form
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Clear all data and start over
+                </span>
+              </div>
+
+              <div className="flex gap-4">
                 {currentStep > 0 && (
                   <Button
                     variant="outline"
