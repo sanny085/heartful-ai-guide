@@ -58,6 +58,10 @@ export default function HeartHealthResults() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
     if (!assessmentId) {
       toast.error("No assessment found");
       navigate("/heart-health");
