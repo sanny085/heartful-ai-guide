@@ -94,6 +94,7 @@ const Index = () => {
       return;
     }
 
+    window.scrollTo(0, 0);
     navigate("/heart-health");
   };
 
