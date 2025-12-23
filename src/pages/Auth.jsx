@@ -38,6 +38,7 @@ const Auth = () => {
     );
   }
 
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-health-bg via-background to-health-lightBlue flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8 space-y-6">
