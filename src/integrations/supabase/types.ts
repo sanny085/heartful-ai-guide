@@ -54,6 +54,7 @@ export type Database = {
           family_history: boolean | null
           fasting_sugar: number | null
           fatigue: boolean | null
+          framingham_risk: number | null
           gender: string | null
           hdl: number | null
           heart_age: number | null
@@ -64,8 +65,10 @@ export type Database = {
           ldl: number | null
           mobile: string
           name: string
+          on_bp_medication: boolean | null
           palpitations: boolean | null
           post_meal_sugar: number | null
+          pulse: number | null
           risk_score: number | null
           shortness_of_breath: boolean | null
           sleep_hours: number | null
@@ -73,6 +76,7 @@ export type Database = {
           swelling: boolean | null
           systolic: number | null
           tobacco_use: string[] | null
+          total_cholesterol: number | null
           updated_at: string
           user_id: string
           user_notes: string | null
@@ -93,6 +97,7 @@ export type Database = {
           family_history?: boolean | null
           fasting_sugar?: number | null
           fatigue?: boolean | null
+          framingham_risk?: number | null
           gender?: string | null
           hdl?: number | null
           heart_age?: number | null
@@ -103,8 +108,10 @@ export type Database = {
           ldl?: number | null
           mobile: string
           name: string
+          on_bp_medication?: boolean | null
           palpitations?: boolean | null
           post_meal_sugar?: number | null
+          pulse?: number | null
           risk_score?: number | null
           shortness_of_breath?: boolean | null
           sleep_hours?: number | null
@@ -112,6 +119,7 @@ export type Database = {
           swelling?: boolean | null
           systolic?: number | null
           tobacco_use?: string[] | null
+          total_cholesterol?: number | null
           updated_at?: string
           user_id: string
           user_notes?: string | null
@@ -132,6 +140,7 @@ export type Database = {
           family_history?: boolean | null
           fasting_sugar?: number | null
           fatigue?: boolean | null
+          framingham_risk?: number | null
           gender?: string | null
           hdl?: number | null
           heart_age?: number | null
@@ -142,8 +151,10 @@ export type Database = {
           ldl?: number | null
           mobile?: string
           name?: string
+          on_bp_medication?: boolean | null
           palpitations?: boolean | null
           post_meal_sugar?: number | null
+          pulse?: number | null
           risk_score?: number | null
           shortness_of_breath?: boolean | null
           sleep_hours?: number | null
@@ -151,6 +162,7 @@ export type Database = {
           swelling?: boolean | null
           systolic?: number | null
           tobacco_use?: string[] | null
+          total_cholesterol?: number | null
           updated_at?: string
           user_id?: string
           user_notes?: string | null

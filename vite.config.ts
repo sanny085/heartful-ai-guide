@@ -18,7 +18,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     mdx({
       // Type mismatch between remark plugin versions; safe at runtime.
-      remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter] as any,
     }),
     react(),
     mode === "development" && componentTagger(),
