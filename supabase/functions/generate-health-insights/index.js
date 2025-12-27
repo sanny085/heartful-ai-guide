@@ -2,7 +2,8 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+// const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const OPENAI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -27,7 +28,7 @@ serve(async (req) => {
 
     // Load assessment from database
     const { data: assessment, error: fetchError } = await supabase
-      .from("heart_health_assessments")
+      .from("heart_health_assessments_dev")
       .select("*")
       .eq("id", assessmentId)
       .single();
@@ -136,15 +137,19 @@ Return ONLY valid JSON (no markdown, no code blocks) with this structure:
 Keep tone warm, professional, and motivating. Focus on practical, achievable actions tailored to their specific conditions.`;
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      // "https://ai.gateway.lovable.dev/v1/chat/completions",
+      // "https://api.openai.com/v1/chat/completions",
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          // Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${GEMINI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
+          // model: "gpt-4o-mini",
           messages: [
             {
               role: "user",
@@ -156,6 +161,10 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
         }),
       },
     );
+
+    
+
+        // Skip Lovable API - use default insights
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -252,7 +261,7 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
 
     // Update assessment with calculated values, insights, and diet plan
     const { error: updateError } = await supabase
-      .from("heart_health_assessments")
+      .from("heart_health_assessments_dev")
       .update({
         heart_age: heartAge,
         risk_score: riskScore,
