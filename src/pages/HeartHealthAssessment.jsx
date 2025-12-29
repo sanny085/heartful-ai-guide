@@ -224,7 +224,7 @@ export default function HeartHealthAssessment() {
     const loadLatestAssessment = async () => {
       try {
         const { data, error } = await supabase
-          .from(envConfig.heart_health_assessments_dev)
+          .from(envConfig.heart_health_assessments)
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
