@@ -28,7 +28,7 @@ serve(async (req) => {
 
     // Load assessment from database
     const { data: assessment, error: fetchError } = await supabase
-      .from("heart_health_assessments ")
+      .from("heart_health_assessments")
       .select("*")
       .eq("id", assessmentId)
       .single();
