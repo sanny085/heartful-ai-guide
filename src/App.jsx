@@ -21,6 +21,8 @@ import AboutUs from "./pages/AboutUs";
 import PartnerWithUs from "./pages/PartnerWithUs";
 import VideoConsult from "./pages/VideoConsult";
 import Clinics from "./pages/Clinics";
+import TwelveWeekProgram from "./pages/TwelveWeekProgram";
+import TwelveWeekProgramApplication from "./pages/TwelveWeekProgramApplication";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -81,6 +83,22 @@ const App = () => (
             <Route path="/partner-with-us" element={<PartnerWithUs />} />
             <Route path="/videoconsult" element={<VideoConsult />} />
             <Route path="/clinics" element={<Clinics />} />
+            <Route
+              path="/12-weeks-program"
+              element={
+                <PrivateRoute>
+                  <TwelveWeekProgram />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/12-weeks-program/apply"
+              element={
+                <PrivateRoute>
+                  <TwelveWeekProgramApplication />
+                </PrivateRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

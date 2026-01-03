@@ -164,8 +164,8 @@ const Footer = () => {
         {/* Lower Section - Company Info */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 md:gap-12">
           {/* Company Information */}
-          <div className="space-y-4 flex-1">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="space-y-3 flex-1">
+            <div className="flex items-center gap-3 mb-1">
               <Link to="/">
                 <img
                   src={logo}
@@ -174,9 +174,6 @@ const Footer = () => {
                 />
               </Link>
             </div>
-            <p className="text-sm text-white/60 font-medium">
-              10000hearts Technologies Private Limited
-            </p>
             <p className="text-sm text-white/70 leading-relaxed max-w-2xl">
               10000hearts was founded with a mission to use artificial intelligence to make healthcare more accessible and affordable. We're dedicated to saving hearts and building health across India through preventive care and AI-powered wellness guidance.
             </p>
