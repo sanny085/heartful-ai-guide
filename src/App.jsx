@@ -26,6 +26,8 @@ import Consultant from "./pages/Consultant";
 import ConsultationConfirmation from "./pages/ConsultationConfirmation";
 import MyAppointments from "./pages/MyAppointments";
 import Diagnostics from "./pages/Diagnostics";
+import TwelveWeekProgram from "./pages/TwelveWeekProgram";
+import TwelveWeekProgramApplication from "./pages/TwelveWeekProgramApplication";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -124,6 +126,22 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Diagnostics />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/12-weeks-program"
+              element={
+                <PrivateRoute>
+                  <TwelveWeekProgram />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/12-weeks-program/apply"
+              element={
+                <PrivateRoute>
+                  <TwelveWeekProgramApplication />
                 </PrivateRoute>
               }
             />
