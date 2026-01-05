@@ -10,7 +10,6 @@ import { useState , useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-health.jpg";
-import logo from "@/assets/logo.png";
 import LocationMapDialog from "@/components/LocationMapDialog";
 
 // Reusable Doctor Fields Component
@@ -174,13 +173,13 @@ const formFieldsConfig = [
     label: "Availability Slots",
     type: "textarea",
     placeholder: "e.g., Monday-Friday: 9:00 AM - 6:00 PM, Saturday: 9:00 AM - 2:00 PM",
-    required: false,
+    required: true,
     gridCol: "md:col-span-2",
     rows: 4,
     validation: (value) => {
-      // Optional field - only validate if value is provided
+      // Required field - validate if empty
       if (!value || !value.trim()) {
-        return null; // Not required, so no error if empty
+        return "Availability slots is required";
       }
       if (value.trim().length < 5) {
         return "Availability slots must be at least 5 characters";
@@ -232,6 +231,7 @@ const formFieldsConfig = [
       { value: "", label: "Select specialization" },
       { value: "Cardiology", label: "Cardiology" },
       { value: "Dermatology", label: "Dermatology" },
+      { value: "Diabetologist", label: "Diabetologist" },
       { value: "Endocrinology", label: "Endocrinology" },
       { value: "Gastroenterology", label: "Gastroenterology" },
       { value: "General Medicine", label: "General Medicine" },
@@ -340,10 +340,11 @@ const formFieldsConfig = [
       if (!allowedTypes.includes(value.type)) {
         return "Please upload a valid image file (JPG, PNG, GIF, or WEBP)";
       }
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      // Validate file size (max 1MB)
+      const maxSize = 1 * 1024 * 1024; // 1MB in bytes
       if (value.size > maxSize) {
-        return "File size must be less than 5MB";
+        const fileSizeMB = (value.size / (1024 * 1024)).toFixed(2);
+        return `File size is ${fileSizeMB}MB. File should be less than 5MB. Please compress or resize the image before uploading.`;
       }
       return null;
     },
@@ -366,10 +367,11 @@ const formFieldsConfig = [
       if (!allowedTypes.includes(value.type)) {
         return "Please upload a valid image file (JPG, PNG, GIF, or WEBP)";
       }
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      // Validate file size (max 1MB)
+      const maxSize = 1 * 1024 * 1024; // 1MB in bytes
       if (value.size > maxSize) {
-        return "File size must be less than 5MB";
+        const fileSizeMB = (value.size / (1024 * 1024)).toFixed(2);
+        return `File size is ${fileSizeMB}MB. File should be less than 5MB. Please compress or resize the image before uploading.`;
       }
       return null;
     },
@@ -392,10 +394,11 @@ const formFieldsConfig = [
       if (!allowedTypes.includes(value.type)) {
         return "Please upload a valid PDF or image file (JPG, PNG, GIF, or WEBP) for document";
       }
-      // Validate file size (max 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Validate file size (max 1MB)
+      const maxSize = 1 * 1024 * 1024; // 1MB in bytes
       if (value.size > maxSize) {
-        return "document file size must be less than 10MB";
+        const fileSizeMB = (value.size / (1024 * 1024)).toFixed(2);
+        return `File size is ${fileSizeMB}MB. File should be less than 5MB. Please compress or reduce the file size before uploading.`;
       }
       return null;
     },
@@ -491,12 +494,11 @@ const PartnerWithUs = () => {
               .getPublicUrl(fileName);
         let fileUrl = urlData?.publicUrl ?? null;
         
-        // If getPublicUrl fails, construct URL manually as fallback (for certificate)
-        if (!fileUrl && filePrefix === "certificate") {
+        // If getPublicUrl fails, construct URL manually as fallback (for all file types)
+        if (!fileUrl) {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
           const filePath = uploadData?.path || fileName;
           fileUrl = `${supabaseUrl}/storage/v1/object/public/${bucketName}/${filePath}`;
-          console.log("Certificate URL constructed manually:", fileUrl);
         }
         
         if (!fileUrl) {
@@ -587,9 +589,9 @@ const PartnerWithUs = () => {
       let logoUrl = null;
       let doctorProfilePicUrl = null;
       let certificateUrl = null;
-      const logoBucketName = "partnership_logo_images"; // Bucket for hospital/clinic logo
-      const profilePicBucketName = "logo"; // Bucket for doctor profile pic
-      const certificateBucketName = "certificate"; // Bucket for certificate (as per Supabase storage)
+      const logoBucketName = "hospital_logo"; // Bucket for hospital/clinic logo
+      const profilePicBucketName = "doctor_profile_logo"; // Bucket for doctor profile pic
+      const certificateBucketName = "doctor_certificate"; // Bucket for certificate
 
       // Upload files to Supabase storage using reusable function
       const logoResult = await uploadFileToSupabase(formData.logo, logoBucketName, "logo");
@@ -604,16 +606,16 @@ const PartnerWithUs = () => {
       // Prepare data for insertion - using exact column names from Supabase table
       const submissionData = {};
       
-      // Map form fields to Supabase column names (exact match)
+      // Map form fields to Supabase column names (exact match - lowercase/snake_case)
       if (formData.contact_name?.trim()) {
-        submissionData["Name"] = formData.contact_name.trim();
+        submissionData["name"] = formData.contact_name.trim();
       }
       if (formData.email?.trim()) {
-        submissionData["Email"] = formData.email.trim();
+        submissionData["email"] = formData.email.trim();
       }
       if (formData.mobile?.trim()) {
         // Submit only the mobile number (numeric) without country code
-        submissionData["Mobile Number"] = formData.mobile.trim();
+        submissionData["mobile_number"] = formData.mobile.trim();
       }
       if (formData.alternative_mobile?.trim()) {
         // Submit only the alternative mobile number (numeric) without country code
@@ -623,20 +625,20 @@ const PartnerWithUs = () => {
         submissionData["timing_sloats"] = formData.timing_slots.trim();
       }
       if (formData.partnership_type) {
-        submissionData["Partnership Type"] = formData.partnership_type;
+        submissionData["partner_type"] = formData.partnership_type;
       }
       if (formData.organization_type?.trim()) {
-        submissionData["Organization/Clinic Name"] = formData.organization_type.trim();
+        submissionData["clinic_name"] = formData.organization_type.trim();
       }
       if (formData.location?.trim()) {
-        submissionData["clinic/location"] = formData.location.trim();
+        submissionData["location"] = formData.location.trim();
       }
       if (formData.city?.trim()) {
         submissionData["city"] = formData.city.trim();
       }
       // Save specialization if Hospital or Clinic/Doctor is selected
       if ((formData.partnership_type === "Hospital" || formData.partnership_type === "Clinic/Doctor") && formData.specialization?.trim()) {
-        submissionData["specilization"] = formData.specialization.trim();
+        submissionData["specilization"] = formData.specialization === "Other" ? customSpecialization.trim() : formData.specialization.trim();
       }
       
       // Save qualification and years of experience (always saved, visible by default)
@@ -650,18 +652,22 @@ const PartnerWithUs = () => {
         submissionData["consultant_fee"] = formData.consultant_fee.trim();
       }
       if (formData.message?.trim()) {
-        submissionData["Message"] = formData.message.trim();
+        submissionData["message"] = formData.message.trim();
       }
       
       // Add file URLs to correct columns
-      // Hospital/Clinic Logo -> partnership_logo_images_url
-      if (logoUrl) {
-        submissionData["partnership_logo_images_url"] = logoUrl;
-      }
+      // Hospital/Clinic Logo -> hospital_logo_url
+      // Always add the URL field, even if null (so database knows the field exists)
+      submissionData["hospital_logo_url"] = logoUrl || null;
       
-      // Upload Profile Pic -> logo_url
-      if (doctorProfilePicUrl) {
-        submissionData["logo_url"] = doctorProfilePicUrl;
+      // Upload Profile Pic -> doctor_profile_url
+      // Always add the URL field, even if null (so database knows the field exists)
+      submissionData["doctor_profile_url"] = doctorProfilePicUrl || null;
+      
+      // Certificate URL -> certificate_url (if column exists in database)
+      if (certificateUrl) {
+        submissionData["certificate_url"] = certificateUrl;
+        console.log("Adding certificate_url to submission:", certificateUrl);
       }
       const tableName = "partner-with-us";
       
@@ -693,29 +699,37 @@ const PartnerWithUs = () => {
         
         // Handle "Could not find" errors
         if (error.message.includes("Could not find")) {
-            // Check for specilization column error
+          // Check for specilization column error
           if (error.message.includes("specilization") || error.message.includes("specialization")) {
             delete submissionDataRetry["specilization"];
             retryNeeded = true;
           }
 
-          // Check for logo_url column error
-          if (error.message.includes("logo_url")) {
-            delete submissionDataRetry["logo_url"];
+          // Check for doctor_profile_url column error - only remove if column doesn't exist
+          if (error.message.includes("Could not find") && error.message.includes("doctor_profile_url")) {
+            console.warn("doctor_profile_url column not found, retrying without doctor_profile_url field");
+            delete submissionDataRetry["doctor_profile_url"];
             retryNeeded = true;
           }
 
-          // Check for partnership_logo_images_url column error
-          if (error.message.includes("partnership_logo_images_url")) {
-            console.warn("partnership_logo_images_url column not found, retrying without partnership_logo_images_url field");
-            delete submissionDataRetry["partnership_logo_images_url"];
+          // Check for hospital_logo_url column error - only remove if column doesn't exist
+          if (error.message.includes("Could not find") && error.message.includes("hospital_logo_url")) {
+            console.warn("hospital_logo_url column not found, retrying without hospital_logo_url field");
+            delete submissionDataRetry["hospital_logo_url"];
             retryNeeded = true;
           }
 
           // Check for alternat_mobile_number column error
-          if (error.message.includes("alternat_mobile_number") || error.message.includes("Alternative Mobile Number")) {
+          if (error.message.includes("alternat_mobile_number")) {
             console.warn("alternat_mobile_number column not found, retrying without alternat_mobile_number field");
             delete submissionDataRetry["alternat_mobile_number"];
+            retryNeeded = true;
+          }
+
+          // Check for clinic_name column error
+          if (error.message.includes("clinic_name")) {
+            console.warn("clinic_name column not found, retrying without clinic_name field");
+            delete submissionDataRetry["clinic_name"];
             retryNeeded = true;
           }
 
@@ -765,9 +779,9 @@ const PartnerWithUs = () => {
       });
       
       if (error.message) {
-        toast.error(`Failed to submit: ${error.message}`);
+        toast.error(`Failed to submit: ${error.message}`, { duration: 5000 });
       } else {
-        toast.error("Failed to submit. Please try again.");
+        toast.error("Failed to submit. Please try again.", { duration: 5000 });
       }
     } finally {
       setLoading(false);
@@ -831,22 +845,55 @@ const PartnerWithUs = () => {
     }
   }, []);
 
+  const handleFileInputClick = useCallback((fieldId) => {
+    // Clear errors from other file fields when clicking on a file input
+    const fileFieldIds = ['logo', 'doctor_profile_pic', 'certificate'];
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      fileFieldIds.forEach((id) => {
+        if (id !== fieldId && newErrors[id]) {
+          delete newErrors[id];
+        }
+      });
+      return newErrors;
+    });
+  }, []);
+
   const handleFileChange = useCallback((fieldId, file) => {
     if (file) {
+      // Validate file immediately when selected
+      const fieldConfig = formFieldsConfig.find(f => f.id === fieldId);
+      if (fieldConfig && fieldConfig.validation) {
+        const validationError = fieldConfig.validation(file);
+        if (validationError) {
+          setErrors((prev) => ({ ...prev, [fieldId]: validationError }));
+          // Don't set the file if validation fails
+          return;
+        }
+      }
       setFormData((prev) => ({ ...prev, [fieldId]: file }));
       createFilePreview(file, fieldId);
+      // Clear error if validation passes
+      setErrors((prev) => {
+        if (prev[fieldId]) {
+          const newErrors = { ...prev };
+          delete newErrors[fieldId];
+          return newErrors;
+        }
+        return prev;
+      });
     } else {
       setFormData((prev) => ({ ...prev, [fieldId]: null }));
       clearFilePreview(fieldId);
+      setErrors((prev) => {
+        if (prev[fieldId]) {
+          const newErrors = { ...prev };
+          delete newErrors[fieldId];
+          return newErrors;
+        }
+        return prev;
+      });
     }
-    setErrors((prev) => {
-      if (prev[fieldId]) {
-        const newErrors = { ...prev };
-        delete newErrors[fieldId];
-        return newErrors;
-      }
-      return prev;
-    });
   }, [createFilePreview, clearFilePreview]);
 
   const renderField = (field) => {
@@ -865,6 +912,7 @@ const PartnerWithUs = () => {
             <div className="relative">
               <label
                 htmlFor={id}
+                onClick={() => handleFileInputClick(id)}
                 className="flex items-center justify-center w-full h-[144px] rounded-lg border-2 border-dashed border-border hover:border-accent cursor-pointer transition-colors bg-muted/30 hover:bg-muted/50"
               >
                 {id === "certificate" && (certificateFileName || value) ? (
@@ -911,6 +959,7 @@ const PartnerWithUs = () => {
                 id={id}
                 type="file"
                 accept={accept || "image/*"}
+                onClick={() => handleFileInputClick(id)}
                 onChange={(e) => handleFileChange(id, e.target.files?.[0] || null)}
                 className="hidden"
               />
@@ -930,7 +979,7 @@ const PartnerWithUs = () => {
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {placeholder || (id === "logo" ? "Upload your hospital/clinic logo (JPG, PNG, max 5MB)" : id === "doctor_profile_pic" ? "Upload doctor profile picture (JPG, PNG, max 5MB)" : "Upload document (PDF or Image, max 10MB)")}
+              {placeholder || (id === "logo" ? "Upload your hospital/clinic logo (JPG, PNG, max 1MB)" : id === "doctor_profile_pic" ? "Upload doctor profile picture (JPG, PNG, max 1MB)" : "Upload document (PDF or Image, max 1MB)")}
             </p>
           </div>
         ) : type === "select" ? (
@@ -1280,8 +1329,14 @@ const PartnerWithUs = () => {
               disabled={loading}
               className="w-full md:w-auto bg-accent hover:bg-accent/90 text-accent-foreground"
               size="lg"
+              onClick={(e) => { 
+                if (loading) {
+                  e.preventDefault();
+                  return;
+                }
+              }}
             >
-              {loading ? "Submitting..." : "Submit Partnership Inquiry"}
+              {loading ? "Submitting..." : "Submit"}
             </Button>
           </form>
         </Card>

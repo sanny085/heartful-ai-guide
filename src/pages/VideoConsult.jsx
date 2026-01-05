@@ -8,8 +8,9 @@ import {
   Building2,
   Stethoscope,
   Microscope,
-  CheckCircle2,
   ArrowRight,
+  ArrowLeft,
+  Home,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-health.jpg";
@@ -67,6 +68,19 @@ const VideoConsult = () => {
       >
         {/* Overlay for better readability */}
         <div className="absolute inset-0 bg-gradient-to-br from-health-bg/95 via-background/90 to-health-lightBlue/95"></div>
+
+        {/* Back to Home Button */}
+        <div className="relative z-20 container mx-auto px-4 pt-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="text-foreground hover:text-accent hover:bg-background/50 backdrop-blur-sm transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            <Home className="w-4 h-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
 
         <div className="relative z-10 container mx-auto px-4 py-16 md:py-24">
           <div className="max-w-4xl mx-auto text-center">
