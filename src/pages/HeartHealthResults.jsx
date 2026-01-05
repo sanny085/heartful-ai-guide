@@ -185,6 +185,18 @@ export default function HeartHealthResults() {
         .single();
 
       if (error) throw error;
+      
+      // Parse ai_insights if it's a string
+      if (data && data.ai_insights) {
+        if (typeof data.ai_insights === 'string') {
+          try {
+            data.ai_insights = JSON.parse(data.ai_insights);
+          } catch (e) {
+            console.warn("Failed to parse ai_insights:", e);
+          }
+        }
+      }
+      
       setAssessment(data);
       setEditingData(data || {});
     } catch (error) {
@@ -213,6 +225,29 @@ export default function HeartHealthResults() {
     if (!height || !weight) return null;
     const heightInMeters = height / 100;
     return weight / (heightInMeters * heightInMeters);
+  };
+
+  const handleRegenerateInsights = async () => {
+    if (!assessmentId) return;
+    
+    toast.info("Regenerating insights...");
+    
+    try {
+      const { error } = await supabase.functions.invoke("generate-health-insights", {
+        body: { assessmentId: assessmentId }
+      });
+      
+      if (error) {
+        console.error("Error generating insights:", error);
+        toast.error("Failed to regenerate insights");
+      } else {
+        toast.success("Insights regenerated!");
+        await loadAssessment();
+      }
+    } catch (error) {
+      console.error("Error regenerating insights:", error);
+      toast.error("Failed to regenerate insights");
+    }
   };
 
   const handleSave = async () => {
@@ -665,7 +700,7 @@ export default function HeartHealthResults() {
     };
 
     // Helper function to check page break - MUST be defined before other functions that use it
-    const checkPageBreak = (requiredSpace) => {
+    const checkPageBreak = (requiredSpace, isLastContent = false) => {
       // Calculate header area (header height + separator line)
       const headerHeight = 25; // Header band height
       const headerSeparatorHeight = 1; // Line separator below header
@@ -692,7 +727,8 @@ export default function HeartHealthResults() {
       
       // Break only when content would overlap the safe area (footer)
       // This ensures content doesn't overlap with footer while maximizing page usage
-      if (yPosition + requiredSpace > safeBottom) {
+      // If it's the last content, don't add a new page even if it overflows
+      if (yPosition + requiredSpace > safeBottom && !isLastContent) {
           doc.addPage();
         
         // White background for new page
@@ -1335,6 +1371,7 @@ export default function HeartHealthResults() {
     }
     
     if (hasClinicalImpression) {
+      checkPageBreak(10); // Check before divider and header - allow new page for header if needed
       yPosition = addSectionDivider(yPosition);
       yPosition = addSectionHeader("Overall Clinical Impression", yPosition, PDF_STYLES.fontSize.sectionHeader);
       
@@ -1361,7 +1398,7 @@ export default function HeartHealthResults() {
       }
     
       const impressionBoxHeight = estimatedHeight + PDF_STYLES.spacing.afterSubsection;
-      checkPageBreak(impressionBoxHeight + 10); // Check before adding box if it would overflow
+      checkPageBreak(impressionBoxHeight + 10, true); // Check before adding box if it would overflow - don't add new page for last content
       
       // No background box - plain content area
       
@@ -2082,13 +2119,24 @@ export default function HeartHealthResults() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="edit-notes">User Notes</Label>
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="edit-notes">User Notes</Label>
+                          {editingData.user_notes && editingData.user_notes !== assessment?.user_notes && (
+                            <span className="text-xs text-muted-foreground">
+                              Insights will be regenerated when you save
+                            </span>
+                          )}
+                        </div>
                         <Textarea
                           id="edit-notes"
                           value={editingData.user_notes || ""}
                           onChange={(e) => handleFieldChange("user_notes", e.target.value)}
                           rows={4}
+                          placeholder="Enter your health notes, concerns, medications, or any relevant information..."
                         />
+                        <p className="text-xs text-muted-foreground">
+                          Your notes will be analyzed to provide personalized insights and diet recommendations.
+                        </p>
                       </div>
                     </>
                   ) : (
@@ -2442,19 +2490,42 @@ export default function HeartHealthResults() {
               </Card>
             </div>
 
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-2xl font-bold text-foreground">AI-Powered Insights</h3>
+              {assessment?.user_notes && (
+                <Button 
+                  onClick={handleRegenerateInsights} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={saving}
+                >
+                  <Activity className="mr-2 h-4 w-4" />
+                  Regenerate Insights
+                </Button>
+              )}
+            </div>
+
             {assessment.ai_insights ? (
               <div className="space-y-6">
                 {/* Summary Section - Only show if summary exists and has content */}
                 {(() => {
                   const summaryText = assessment?.ai_insights?.summary;
-                  if (!summaryText || typeof summaryText !== 'string' || summaryText.trim().length === 0) {
+                  if (!summaryText) {
                     return null;
                   }
-                  // Remove curly braces and clean the text
-                  let cleanedSummary = summaryText.replace(/\{|\}/g, '').trim();
-                  if (cleanedSummary.length === 0) {
+                  
+                  // Handle different data types
+                  let cleanedSummary = '';
+                  if (typeof summaryText === 'string') {
+                    cleanedSummary = summaryText.replace(/\{|\}|\[|\]|"/g, '').trim();
+                  } else if (typeof summaryText === 'object') {
+                    cleanedSummary = JSON.stringify(summaryText).replace(/\{|\}|\[|\]|"/g, '').trim();
+                  }
+                  
+                  if (!cleanedSummary || cleanedSummary.length < 5) {
                     return null;
                   }
+                  
                   return (
                     <Card className="p-8 bg-card border-accent/20">
                       <div className="flex items-center gap-3 mb-4">
@@ -2508,8 +2579,12 @@ export default function HeartHealthResults() {
                   </div>
                 )}
 
-                {/* Diet Plan Card - Separate */}
-                {assessment?.ai_insights?.diet_plan && (
+                {/* Diet Plan Card - Show if diet_plan exists or if any diet plan data exists */}
+                {(assessment?.ai_insights?.diet_plan || 
+                  assessment?.ai_insights?.diet_plan?.summary || 
+                  assessment?.ai_insights?.diet_plan?.foods_to_eat || 
+                  assessment?.ai_insights?.diet_plan?.foods_to_avoid || 
+                  assessment?.ai_insights?.diet_plan?.meal_suggestions) && (
                   <Card className="p-8 bg-gradient-to-br from-health-lightBlue/20 to-accent/5">
                     <div className="flex items-center gap-3 mb-6">
                       <span className="text-4xl">🥗</span>
@@ -2524,47 +2599,50 @@ export default function HeartHealthResults() {
                       </div>
                     )}
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      {/* Foods to Eat */}
-                      {assessment?.ai_insights?.diet_plan?.foods_to_eat &&
-                        Array.isArray(assessment?.ai_insights?.diet_plan?.foods_to_eat) &&
-                        assessment?.ai_insights?.diet_plan?.foods_to_eat?.length > 0 && (
-                          <Card className="p-6 bg-success/5 border-l-4 border-success">
-                            <div className="flex items-center gap-2 mb-4">
-                              <CheckCircle className="w-5 h-5 text-success" />
-                              <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
-                            </div>
-                            <ul className="space-y-2">
-                              {assessment?.ai_insights?.diet_plan?.foods_to_eat?.map((food, idx) => (
-                                <li key={idx} className="flex gap-2 text-sm text-foreground">
-                                  <span className="text-success mt-0.5">✓</span>
-                                  <span>{food}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </Card>
-                        )}
+                    {(assessment?.ai_insights?.diet_plan?.foods_to_eat ||
+                      assessment?.ai_insights?.diet_plan?.foods_to_avoid) && (
+                      <div className="grid md:grid-cols-2 gap-6">
+                        {/* Foods to Eat */}
+                        {assessment?.ai_insights?.diet_plan?.foods_to_eat &&
+                          Array.isArray(assessment?.ai_insights?.diet_plan?.foods_to_eat) &&
+                          assessment?.ai_insights?.diet_plan?.foods_to_eat?.length > 0 && (
+                            <Card className="p-6 bg-success/5 border-l-4 border-success">
+                              <div className="flex items-center gap-2 mb-4">
+                                <CheckCircle className="w-5 h-5 text-success" />
+                                <h4 className="text-lg font-semibold text-success">Foods to Include</h4>
+                              </div>
+                              <ul className="space-y-2">
+                                {assessment?.ai_insights?.diet_plan?.foods_to_eat?.map((food, idx) => (
+                                  <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                    <span className="text-success mt-0.5">✓</span>
+                                    <span>{typeof food === 'string' ? food : JSON.stringify(food)}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </Card>
+                          )}
 
-                      {/* Foods to Avoid */}
-                      {assessment?.ai_insights?.diet_plan?.foods_to_avoid &&
-                        Array.isArray(assessment?.ai_insights?.diet_plan?.foods_to_avoid) &&
-                        assessment?.ai_insights?.diet_plan?.foods_to_avoid?.length > 0 && (
-                          <Card className="p-6 bg-warning/5 border-l-4 border-warning">
-                            <div className="flex items-center gap-2 mb-4">
-                              <AlertCircle className="w-5 h-5 text-warning" />
-                              <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
-                            </div>
-                            <ul className="space-y-2">
-                              {assessment?.ai_insights?.diet_plan?.foods_to_avoid?.map((food, idx) => (
-                                <li key={idx} className="flex gap-2 text-sm text-foreground">
-                                  <span className="text-warning mt-0.5">✗</span>
-                                  <span>{food}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </Card>
-                        )}
-                    </div>
+                        {/* Foods to Avoid */}
+                        {assessment?.ai_insights?.diet_plan?.foods_to_avoid &&
+                          Array.isArray(assessment?.ai_insights?.diet_plan?.foods_to_avoid) &&
+                          assessment?.ai_insights?.diet_plan?.foods_to_avoid?.length > 0 && (
+                            <Card className="p-6 bg-warning/5 border-l-4 border-warning">
+                              <div className="flex items-center gap-2 mb-4">
+                                <AlertCircle className="w-5 h-5 text-warning" />
+                                <h4 className="text-lg font-semibold text-warning">Foods to Limit/Avoid</h4>
+                              </div>
+                              <ul className="space-y-2">
+                                {assessment?.ai_insights?.diet_plan?.foods_to_avoid?.map((food, idx) => (
+                                  <li key={idx} className="flex gap-2 text-sm text-foreground">
+                                    <span className="text-warning mt-0.5">✗</span>
+                                    <span>{typeof food === 'string' ? food : JSON.stringify(food)}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </Card>
+                          )}
+                      </div>
+                    )}
 
                     {assessment?.risk_score && assessment?.risk_score > 20 && (
                       <div className="mt-6 p-4 bg-warning/10 border-l-4 border-warning rounded">
@@ -2590,7 +2668,10 @@ export default function HeartHealthResults() {
                     <Card className="p-8 bg-gradient-to-br from-accent/10 to-background">
                       <div className="flex items-center gap-3 mb-6">
                         <span className="text-4xl">🍽️</span>
-                        <h3 className="text-2xl font-semibold text-foreground">Sample Meal Suggestions</h3>
+                        <div>
+                          <h3 className="text-2xl font-semibold text-foreground">South Indian Meal Suggestions</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Traditional healthy South Indian meals for heart health</p>
+                        </div>
                       </div>
                       <div className="grid md:grid-cols-3 gap-4">
                         {assessment?.ai_insights?.diet_plan?.meal_suggestions?.map((meal, idx) => (
