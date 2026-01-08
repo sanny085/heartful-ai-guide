@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download, Edit, Save, X } from "lucide-react";
+import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download, Edit, Save, X, ArrowLeft } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -85,7 +85,7 @@ const HDL_LEVELS = [
 
 const LOW_ACTIVITY_LEVELS = ["Sedentary", "Light", "None"];
 
-const NON_SMOKING_VALUES = ["No", "Never"];
+const NON_SMOKING_VALUES = ["No", "Never"]; 
 
 // const Assessment = {
 //   id,
@@ -117,6 +117,8 @@ const NON_SMOKING_VALUES = ["No", "Never"];
 //   diet_plan,
 // }
 
+const ADMIN_EMAIL = ["subahan.official@gmail.com" , "10000heartsteam@gmail.com" , "bhavanidevi0101@gmail.com","sannykumar085@gmail.com","sannyert848@gmail.com","sriradha2dart@gmail.com","abdul9676511756@gmail.com"];
+
 export default function HeartHealthResults() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -130,6 +132,8 @@ export default function HeartHealthResults() {
   const [editingData, setEditingData] = useState({});
   const [saving, setSaving] = useState(false);
 
+  const [accessDenied, setAccessDenied] = useState(false);
+
   useEffect(() => {
     if (!authLoading && !user) {
       toast.error("Please sign in to view your results");
@@ -142,30 +146,31 @@ export default function HeartHealthResults() {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
-    if (!assessmentId) {
-      toast.error("No assessment found");
-      navigate("/heart-health");
-      return;
-    }
-
-    if (user) {
-      loadAssessment();
-      loadUserAndAssessments();
-    }
-  }, [assessmentId, user]);
-
-  const loadUserAndAssessments = useCallback(async () => {
+  const loadUserAndAssessments = useCallback(async (targetUserId) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       
       setCurrentUser(user);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from(envConfig.heart_health_assessments)
         .select("*")
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+
+      // Admin sees ALL reports. Regular users see ONLY their own.
+      // If targetUserId is specifically passed (e.g. Admin filtering by user), we use it.
+      const currentEmail = user.email?.toLowerCase().trim();
+      const isAdmin = currentEmail && ADMIN_EMAIL.some(email => email.toLowerCase().trim() === currentEmail);
+      
+      if (!isAdmin) {
+        query = query.eq("email", currentEmail);
+      } else if (targetUserId) {
+         // If Admin wants to see specific user history - this might need careful adjustment if we rely on email
+        query = query.eq("user_id", targetUserId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setAllAssessments(data || []);
@@ -185,15 +190,50 @@ export default function HeartHealthResults() {
         .single();
 
       if (error) throw error;
+
+      // Access Control Check
+      const currentEmail = user.email?.toLowerCase().trim();
+      const isAdmin = currentEmail && ADMIN_EMAIL.some(email => email.toLowerCase().trim() === currentEmail);
+      const isRecordEmailMatch = data.email?.toLowerCase().trim() === currentEmail;
+
+      if (!isAdmin && !isRecordEmailMatch) {
+        setAccessDenied(true);
+        setLoading(false);
+        return;
+      }
+
       setAssessment(data);
       setEditingData(data || {});
+      
+      // If admin, load ALL assessments (don't filter by user).
+      // If regular user, load their own.
+      if (isAdmin) {
+        loadUserAndAssessments(); // No ID = Fetch All
+      } else {
+        loadUserAndAssessments(); // No ID + !Admin = Fetch Own
+      }
+
     } catch (error) {
       console.error("Error loading assessment:", error);
       toast.error(error.message || "Failed to load assessment results");
+      navigate("/heart-health");
     } finally {
       setLoading(false);
     }
-  }, [assessmentId]);
+  }, [assessmentId, user, navigate, loadUserAndAssessments]);
+
+  useEffect(() => {
+    // If we have a user
+    if (user) {
+      if (assessmentId) {
+        // Detail View: Load specific assessment (handles its own loading state)
+        loadAssessment();
+      } else {
+        // Dashboard View: Load list and manually stop loading
+        loadUserAndAssessments().finally(() => setLoading(false));
+      }
+    }
+  }, [assessmentId, user, loadAssessment, loadUserAndAssessments]);
 
   const handleEdit = () => {
     setEditingData(assessment ? { ...assessment } : {});
@@ -447,7 +487,7 @@ export default function HeartHealthResults() {
       female: "female"
     };
     
-    const normalizedGender = gender?.toLowerCase();
+    const normalizedGender = gender?.toString().toLowerCase();
     const genderText = genderMap[normalizedGender] || normalizedGender || "N/A";
     return `${age}-year-old ${genderText}`;
   };
@@ -568,10 +608,10 @@ export default function HeartHealthResults() {
         titleTop: 30, // Position after header (25mm) + spacing (7mm) to prevent overlap - consistent on all pages
         titleExtraSpace: 1,
         pageMargin: 20,
-        contentIndent: 25,
+        contentIndent: 10,
         boxPadding: 2,
         headerHeight: 8,
-        subsectionHeaderHeight: 8,
+        subsectionHeaderHeight: 5,
         headerTextOffset: 1,
         headerBoxOffset: 5,
         subsectionBoxOffset: 4,
@@ -614,34 +654,52 @@ export default function HeartHealthResults() {
       return boxBottom + PDF_STYLES.spacing.afterSubsectionHeader; // Proper spacing after subsection header
     };
     
-    // Helper function to check if value is abnormal and highlight it (labels are bold)
-    const addValueWithHighlight = (label, value, isAbnormal, x, y) => {
-      // Make label bold
+    // Helper function to check if value is abnormal and highlight it (labels are bold) - returns new Y
+    const addValueWithHighlight = (label, value, isAbnormal, x, y, maxWidth = 170) => {
+      // First, check if we need a page break for the label
+      yPosition = y;
+      checkPageBreak(5);
+      const currentY = yPosition;
+      
       doc.setFont("helvetica", "bold");
       const labelWidth = doc.getTextWidth(label);
-      doc.text(label, x, y);
+      doc.text(label, x, currentY);
       doc.setFont("helvetica", "normal");
       
+      const valueX = x + labelWidth + 2;
+      const valueWidth = maxWidth - (labelWidth + 2);
+      
       if (isAbnormal) {
-        // Abnormal values - red text, no background highlight
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(200, 0, 0); // Red color for abnormal
-        doc.text(value, x + labelWidth + 4, y);
+        doc.setTextColor(200, 0, 0);
+      }
+      
+      const newY = addWrappedText(value.toString(), valueX, currentY, valueWidth);
+      
+      if (isAbnormal) {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
-      } else {
-        // Normal values - no highlight
-        doc.text(value, x + labelWidth + 4, y);
       }
+      
+      return newY;
     };
     
-    // Helper function to add label and value with bold label
-    const addLabelValue = (label, value, x, y) => {
+    // Helper function to add label and value with bold label - returns new Y
+    const addLabelValue = (label, value, x, y, maxWidth = 170) => {
+      // First, check if we need a page break for the label
+      yPosition = y;
+      checkPageBreak(5);
+      const currentY = yPosition;
+      
       doc.setFont("helvetica", "bold");
       const labelWidth = doc.getTextWidth(label);
-      doc.text(label, x, y);
+      doc.text(label, x, currentY);
       doc.setFont("helvetica", "normal");
-      doc.text(value, x + labelWidth + 4, y);
+      
+      const valueX = x + labelWidth + 2;
+      const valueWidth = maxWidth - (labelWidth + 2);
+      
+      return addWrappedText(value.toString(), valueX, currentY, valueWidth);
     };
 
     // Helper function to set standard body text style
@@ -651,17 +709,27 @@ export default function HeartHealthResults() {
       doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
     };
 
-    // Helper function to add text with word wrapping (consistent spacing throughout PDF)
+    // Helper function to add text with word wrapping and page break support
     const addWrappedText = (text, x, y, maxWidth, fontSize = 10, lineHeight = null) => {
       doc.setFontSize(fontSize);
       const lines = doc.splitTextToSize(text, maxWidth);
-      // Always use consistent spacing from PDF_STYLES for uniform text spacing
       const spacing = lineHeight || PDF_STYLES.spacing.betweenItems;
-      // Add lines with consistent spacing between each line
-      lines.forEach((line, index) => {
-        doc.text(line, x, y + (index * spacing));
+      let currentY = y;
+      
+      lines.forEach((line) => {
+        // Update global yPosition so checkPageBreak can see it
+        yPosition = currentY;
+        checkPageBreak(spacing);
+        // If checkPageBreak moved us to a new page, currentY will be updated
+        currentY = yPosition;
+        
+        doc.text(line, x, currentY);
+        currentY += spacing;
       });
-      return y + (lines.length * spacing);
+      
+      // Update global yPosition for the rest of the PDF generation
+      yPosition = currentY;
+      return currentY;
     };
 
     // Helper function to check page break - MUST be defined before other functions that use it
@@ -704,32 +772,34 @@ export default function HeartHealthResults() {
         addWatermark(logoWatermarkUrl);
         addFooter();
         
-        // Main title on new page (below header) - equal spacing matching first page
-        // Title removed - start content directly
-        doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
-        
-        // Start content with spacing after header
-        yPosition = PDF_STYLES.spacing.titleTop + PDF_STYLES.spacing.afterHeader;
+        // Start content directly below header area (consistent on all pages)
+        yPosition = safeTop;
       }
     };
 
     // Helper function to add section divider
     const addSectionDivider = (y) => {
+      yPosition = y;
       checkPageBreak(5); // Check before adding divider
+      const currentY = yPosition;
+      
       doc.setDrawColor(PDF_STYLES.color.separatorGray[0], PDF_STYLES.color.separatorGray[1], PDF_STYLES.color.separatorGray[2]);
       doc.setLineWidth(PDF_STYLES.lineWidth.separator);
-      doc.line(PDF_STYLES.spacing.pageMargin, y, pageWidth - PDF_STYLES.spacing.pageMargin, y);
-      return y + PDF_STYLES.spacing.afterHeader; // Consistent spacing after divider
+      doc.line(PDF_STYLES.spacing.pageMargin, currentY, pageWidth - PDF_STYLES.spacing.pageMargin, currentY);
+      return currentY + PDF_STYLES.spacing.afterHeader; // Consistent spacing after divider
     };
 
     // Helper function to add section header with background (matching image style)
     const addSectionHeader = (text, y, fontSize = PDF_STYLES.fontSize.sectionHeader) => {
+      yPosition = y;
       checkPageBreak(15); // Check with adequate space for header + spacing
+      const currentY = yPosition;
+      
       const headerHeight = PDF_STYLES.spacing.headerHeight;
       
       // Background box - light teal banner - using dynamic color
       doc.setFillColor(PDF_STYLES.color.teal[0], PDF_STYLES.color.teal[1], PDF_STYLES.color.teal[2]);
-      doc.rect(PDF_STYLES.spacing.pageMargin, y - PDF_STYLES.spacing.headerBoxOffset, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), headerHeight, "F");
+      doc.rect(PDF_STYLES.spacing.pageMargin, currentY - PDF_STYLES.spacing.headerBoxOffset, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), headerHeight, "F");
       
       // Text - centered, bold, dark font - using dynamic color
       doc.setTextColor(PDF_STYLES.color.darkGray[0], PDF_STYLES.color.darkGray[1], PDF_STYLES.color.darkGray[2]);
@@ -737,11 +807,11 @@ export default function HeartHealthResults() {
       doc.setFont("helvetica", "bold");
       const textWidth = doc.getTextWidth(text);
       const textX = (pageWidth - textWidth) / 2; // Center the text
-      doc.text(text, textX, y + PDF_STYLES.spacing.headerTextOffset);
+      doc.text(text, textX, currentY + PDF_STYLES.spacing.headerTextOffset);
       
       // Reset
       doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
-      return y + headerHeight + PDF_STYLES.spacing.afterSectionHeader; // More space after section header
+      return currentY + headerHeight + PDF_STYLES.spacing.afterSectionHeader; // More space after section header
     };
     
     // Helper function to get text width for current font settings
@@ -909,8 +979,12 @@ export default function HeartHealthResults() {
     // Title removed - start content directly
       doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
     
-    // Start content with spacing after header
-    let yPosition = PDF_STYLES.spacing.titleTop + PDF_STYLES.spacing.afterHeader;
+    // Start content directly below header area (consistent on all pages)
+    const headerHeight = 25;
+    const headerSeparatorHeight = 1;
+    const marginFromHeader = 5;
+    const safeTop = headerHeight + headerSeparatorHeight + marginFromHeader;
+    let yPosition = safeTop;
 
     // Patient Summary Section - Following form sequence order
     checkPageBreak(80); // Check before Patient Summary
@@ -943,6 +1017,8 @@ export default function HeartHealthResults() {
     // Diet & Activity
     if (assessment?.diet) itemCount++;
     if (assessment?.exercise) itemCount++;
+    if (assessment?.water_intake) itemCount++;
+    if (assessment?.profession) itemCount++;
     // Sleep & Tobacco
     if (assessment?.sleep_hours) itemCount++;
     if (assessment?.smoking) itemCount++;
@@ -962,26 +1038,31 @@ export default function HeartHealthResults() {
     const leftCol = 25;
     
     // 1. Patient Details (Step 1) - all labels bold
-    addLabelValue("Name: ", assessment?.name || "N/A", leftCol, summaryY);
+    summaryY = addLabelValue("Name: ", assessment?.name || "N/A", leftCol, summaryY);
     summaryY += PDF_STYLES.spacing.betweenItems;
     
-    addLabelValue("Age/Sex: ", formatAgeSex(), leftCol, summaryY);
+    summaryY = addLabelValue("Age/Sex: ", formatAgeSex(), leftCol, summaryY);
     summaryY += PDF_STYLES.spacing.betweenItems;
     
     if (assessment?.height) {
-      addLabelValue("Height: ", `${assessment?.height} cm`, leftCol, summaryY);
+      summaryY = addLabelValue("Height: ", `${assessment?.height} cm`, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     if (assessment?.weight) {
-      addLabelValue("Weight: ", `${assessment?.weight} kg`, leftCol, summaryY);
+      summaryY = addLabelValue("Weight: ", `${assessment?.weight} kg`, leftCol, summaryY);
+      summaryY += PDF_STYLES.spacing.betweenItems;
+    }
+ 
+    if (assessment?.profession) {
+      summaryY = addLabelValue("Profession: ", assessment?.profession, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     if (assessment?.bmi) {
       const isBMIAbnormal = (assessment?.bmi ?? 0) >= 25; // Overweight or obese
       const bmiValue = `${assessment?.bmi?.toFixed(1)} kg/m² (${getBMICategory()})`;
-      addValueWithHighlight("BMI: ", bmiValue, isBMIAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("BMI: ", bmiValue, isBMIAbnormal, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -992,7 +1073,7 @@ export default function HeartHealthResults() {
     if (assessment?.dizziness) initialSymptoms.push("Dizziness");
     if (assessment?.fatigue) initialSymptoms.push("Fatigue");
     if (initialSymptoms.length > 0) {
-      addLabelValue("Initial Symptoms: ", initialSymptoms.join(", "), leftCol, summaryY);
+      summaryY = addLabelValue("Initial Symptoms: ", initialSymptoms.join(", "), leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1000,14 +1081,14 @@ export default function HeartHealthResults() {
     if (assessment?.systolic && assessment?.diastolic) {
       const isBPAbnormal = (assessment?.systolic ?? 0) >= 130 || (assessment?.diastolic ?? 0) >= 90;
       const bpValue = `${assessment?.systolic}/${assessment?.diastolic} mmHg`;
-      addValueWithHighlight("Blood Pressure: ", bpValue, isBPAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("Blood Pressure: ", bpValue, isBPAbnormal, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     if (assessment?.pulse) {
       const isPulseAbnormal = (assessment?.pulse ?? 0) < 60 || (assessment?.pulse ?? 0) > 100;
       const pulseValue = `${assessment?.pulse}/min`;
-      addValueWithHighlight("Pulse: ", pulseValue, isPulseAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("Pulse: ", pulseValue, isPulseAbnormal, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1016,7 +1097,7 @@ export default function HeartHealthResults() {
       const sugarType = sugarInfo?.type === "2-hour Post-prandial" ? "2-hour Post-meal" : "Fasting";
       const isSugarAbnormal = sugarInfo?.status?.includes("PRE-DIABETIC") || sugarInfo?.status === "DIABETIC";
       const sugarValue = `${sugarInfo?.value} mg/dL`;
-      addValueWithHighlight(`${sugarType} Blood Sugar: `, sugarValue, isSugarAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight(`${sugarType} Blood Sugar: `, sugarValue, isSugarAbnormal, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1035,29 +1116,34 @@ export default function HeartHealthResults() {
         lipidParts.push(`HDL: ${assessment?.hdl} mg/dL`);
       }
       const lipidValue = lipidParts.join(", ");
-      addValueWithHighlight("Lipid Levels: ", lipidValue, isLipidAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("Lipid Levels: ", lipidValue, isLipidAbnormal, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     // 6. Diet & Activity (Step 2) - labels bold
     if (assessment?.diet) {
-      addLabelValue("Diet: ", assessment?.diet, leftCol, summaryY);
+      summaryY = addLabelValue("Diet: ", assessment?.diet, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     if (assessment?.exercise) {
-      addLabelValue("Exercise: ", assessment?.exercise, leftCol, summaryY);
+      summaryY = addLabelValue("Exercise: ", assessment?.exercise, leftCol, summaryY);
+      summaryY += PDF_STYLES.spacing.betweenItems;
+    }
+ 
+    if (assessment?.water_intake) {
+      summaryY = addLabelValue("Water Intake: ", `${assessment?.water_intake} L/day`, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     // 7. Sleep & Tobacco (Step 3) - labels bold
     if (assessment?.sleep_hours) {
-      addLabelValue("Sleep: ", `${assessment?.sleep_hours} hours/day`, leftCol, summaryY);
+      summaryY = addLabelValue("Sleep: ", `${assessment?.sleep_hours} hours/day`, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     if (assessment?.smoking) {
-      addLabelValue("Smoking: ", assessment?.smoking, leftCol, summaryY);
+      summaryY = addLabelValue("Smoking: ", assessment?.smoking, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1067,25 +1153,29 @@ export default function HeartHealthResults() {
     if (assessment?.palpitations) additionalSymptoms.push("Palpitations");
     if (assessment?.family_history) additionalSymptoms.push("Family history");
     if (additionalSymptoms.length > 0) {
-      addLabelValue("Additional Symptoms: ", additionalSymptoms.join(", "), leftCol, summaryY);
+      summaryY = addLabelValue("Additional Symptoms: ", additionalSymptoms.join(", "), leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
-    // 9. Personal Notes (Step 8) - label bold
+    // 9. Personal Notes (Step 8) - label bold with text wrapping
     if (assessment?.user_notes) {
-      addLabelValue("Personal Notes: ", assessment?.user_notes, leftCol, summaryY);
-      summaryY += PDF_STYLES.spacing.betweenItems;
+      summaryY = addLabelValue("Personal Notes: ", assessment.user_notes, leftCol, summaryY);
+      summaryY += PDF_STYLES.spacing.afterSubsection;
     }
     
     yPosition = summaryY + PDF_STYLES.spacing.afterHeader; // Auto spacing after summary box
+    setBodyText(); // Reset text style for following sections
 
     // Interpretation of Results Section - Only show if there's content to interpret
     const hasInterpretationContent = assessment?.bmi || (assessment?.systolic && assessment?.diastolic) || sugarInfo || assessment?.pulse || assessment?.ldl || assessment?.hdl;
     
     if (hasInterpretationContent) {
-      checkPageBreak(10); // Check before divider and header (optimized for equal spacing)
+      checkPageBreak(25);
     yPosition = addSectionDivider(yPosition);
     yPosition = addSectionHeader("Interpretation of Results", yPosition, PDF_STYLES.fontSize.sectionHeader);
+      
+      const interpStart = yPosition;
+      let interpY = interpStart;
 
       // Weight & BMI subsection - Only show if data exists
     if (assessment?.bmi) {
@@ -1430,11 +1520,126 @@ export default function HeartHealthResults() {
     );
   }
 
-  if (!assessment) {
+  // Access Denied View
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-6 max-w-md mx-auto border border-destructive/20 bg-destructive/10 rounded-lg">
+          <h2 className="text-xl font-bold text-destructive mb-2">Access Restricted</h2>
+          <p className="text-destructive font-medium mb-4">You are not authorized to check this report</p>
+          <Button variant="outline" onClick={() => navigate("/heart-health")}>
+            Back to Heart Health Assessments
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Dashboard View - access without ID
+  if (!assessmentId && !loading) {
+
+    return (
+      <div className="min-h-screen bg-background py-12">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <Button variant="ghost" onClick={() => navigate("/heart-health")} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Assessment
+          </Button>
+
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Heart className="w-12 h-12 text-accent fill-accent" />
+              <div>
+                <h2 className="text-2xl font-bold">Heart Health Reports</h2>
+                <p className="text-muted-foreground">
+                  {user?.email?.toLowerCase().trim() === ADMIN_EMAIL ? "Managing all patient reports" : "View your past assessment history"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-foreground">
+                {user?.email?.toLowerCase().trim() === ADMIN_EMAIL ? "All Member Reports" : "Your Reports"}
+              </h3>
+              <Button onClick={() => navigate("/heart-health")} size="sm" className="bg-accent hover:bg-accent/90">
+                + Start New Assessment
+              </Button>
+            </div>
+
+            {allAssessments.length === 0 ? (
+              <div className="text-center py-12 bg-muted/20 rounded-lg">
+                <p className="text-muted-foreground mb-4">No reports found.</p>
+                <Button onClick={() => navigate("/heart-health")} variant="outline">
+                  Create your first report
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allAssessments.map((item) => (
+                  <Card
+                    key={item.id}
+                    className="p-4 cursor-pointer transition-all hover:shadow-lg border-border hover:border-accent/50 group"
+                    onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
+                  >
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-foreground text-lg group-hover:text-accent transition-colors">
+                            {item.name || "Anonymous"}
+                          </h3>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                           Mobile: {item.mobile || "N/A"}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-dashed">
+                        <div className="flex justify-between items-center text-sm mb-1">
+                          <span className="text-muted-foreground">Date</span>
+                          <span className="font-medium">
+                            {new Date(item.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mb-1">
+                          <span className="text-muted-foreground">Risk Score</span>
+                          <span className={`font-bold ${
+                             (item.risk_score || 0) < 10 ? "text-success" : 
+                             (item.risk_score || 0) < 20 ? "text-warning" : "text-destructive"
+                          }`}>
+                            {(item.risk_score || 0).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full mt-2 bg-muted/50 group-hover:bg-accent group-hover:text-white transition-colors"
+                      >
+                        View Full Report
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Not Found View
+  if (assessmentId && !assessment) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">No assessment found</p>
+          <p className="text-muted-foreground">Report not found or access denied.</p>
+          <Button variant="link" onClick={() => navigate("/heart-health-results")}>
+            View All Reports
+          </Button>
         </div>
       </div>
     );
@@ -2102,14 +2307,36 @@ export default function HeartHealthResults() {
                     <p className="text-base"><strong>Blood Pressure:</strong> {assessment?.systolic} / {assessment?.diastolic} mmHg</p>
                   )}
                   <p className="text-base"><strong>Pulse:</strong> {assessment?.pulse || 70}/min {assessment?.pulse && assessment?.pulse >= 60 && assessment?.pulse <= 100 ? "(normal)" : ""}</p>
-                  {(() => {
-                    const sugarInfo = getBloodSugarClassification();
-                    if (sugarInfo) {
-                      const sugarType = sugarInfo?.type === "2-hour Post-prandial" ? "2-hour Post-prandial" : "Fasting";
-                      return <p className="text-base"><strong>{sugarType} Blood Sugar:</strong> {sugarInfo?.value} mg/dL</p>;
-                    }
-                    return null;
-                  })()}
+                   {assessment?.post_meal_sugar && <p className="text-base"><strong>Post-meal Sugar:</strong> {assessment?.post_meal_sugar} mg/dL</p>}
+                   {assessment?.fasting_sugar && <p className="text-base"><strong>Fasting Sugar:</strong> {assessment?.fasting_sugar} mg/dL</p>}
+                   {assessment?.diabetes && <p className="text-base"><strong>Diabetes Status:</strong> {assessment?.diabetes}</p>}
+                   
+                   <div className="mt-4 pt-4 border-t border-accent/10">
+                     <h4 className="text-sm font-bold text-accent uppercase tracking-wider mb-2">Lipid Profile</h4>
+                     <p className="text-base"><strong>LDL (Bad):</strong> {assessment?.ldl || "-"} mg/dL</p>
+                     <p className="text-base"><strong>HDL (Good):</strong> {assessment?.hdl || "-"} mg/dL</p>
+                   </div>
+
+                   <div className="mt-4 pt-4 border-t border-accent/10">
+                     <h4 className="text-sm font-bold text-accent uppercase tracking-wider mb-2">Symptoms Reported</h4>
+                     <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                       <p className="text-sm"><strong>Chest Pain:</strong> {assessment?.chest_pain ? "Yes" : "No"}</p>
+                       <p className="text-sm"><strong>SOB:</strong> {assessment?.shortness_of_breath ? "Yes" : "No"}</p>
+                       <p className="text-sm"><strong>Dizziness:</strong> {assessment?.dizziness ? "Yes" : "No"}</p>
+                       <p className="text-sm"><strong>Fatigue:</strong> {assessment?.fatigue ? "Yes" : "No"}</p>
+                       <p className="text-sm"><strong>Swelling:</strong> {assessment?.swelling ? "Yes" : "No"}</p>
+                       <p className="text-sm"><strong>Palpitations:</strong> {assessment?.palpitations ? "Yes" : "No"}</p>
+                     </div>
+                   </div>
+
+                   <div className="mt-4 pt-4 border-t border-accent/10">
+                     <h4 className="text-sm font-bold text-accent uppercase tracking-wider mb-2">Lifestyle & History</h4>
+                     <p className="text-sm"><strong>Exercise:</strong> {assessment?.exercise || "-"}</p>
+                     <p className="text-sm"><strong>Smoking:</strong> {assessment?.smoking || "-"}</p>
+                     <p className="text-sm"><strong>Tobacco Use:</strong> {Array.isArray(assessment?.tobacco_use) ? assessment.tobacco_use.join(", ") : (assessment?.tobacco_use || "-")}</p>
+                     <p className="text-sm"><strong>Family History:</strong> {assessment?.family_history ? "Yes" : "No"}</p>
+                     <p className="text-sm"><strong>User Notes:</strong> {assessment?.user_notes || "-"}</p>
+                   </div>
                     </>
                   )}
                 </div>
