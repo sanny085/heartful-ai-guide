@@ -62,6 +62,7 @@ export type Database = {
           height: number | null
           high_cholesterol: string | null
           id: string
+          is_report_send: boolean
           knows_lipids: string | null
           ldl: number | null
           mobile: string
@@ -108,6 +109,7 @@ export type Database = {
           height?: number | null
           high_cholesterol?: string | null
           id?: string
+          is_report_send?: boolean
           knows_lipids?: string | null
           ldl?: number | null
           mobile: string
@@ -154,6 +156,7 @@ export type Database = {
           height?: number | null
           high_cholesterol?: string | null
           id?: string
+          is_report_send?: boolean
           knows_lipids?: string | null
           ldl?: number | null
           mobile?: string
