@@ -17,11 +17,11 @@ const PlansSection = memo(() => {
       features: [
         "12-week structured BP control program",
         "Doctor-led lifestyle change guidance",
-        "Personalized diet plan with rice, sambar, and curries",
+        "Personalized diet plan",
         "Weekly progress check-up (phone/video call)",
-        "Stress and sleep management (family & work stress)",
-        "Reduce medicine dependency (natural methods)",
-        "Long-term health maintenance (with family support)",
+        "Stress and sleep management",
+        "Reduce medicine dependency",
+        "Long-term health maintenance",
       ],
       highlighted: false,
       color: "green",
@@ -30,10 +30,9 @@ const PlansSection = memo(() => {
       title: "Diabetes Reversal",
       badge: "Best Value",
       features: [
-        "Complete diabetes reversal program (12 weeks)",
+        "Diabetes reversal program (12 weeks)",
         "Intensive lifestyle intervention (food, exercise, fasting)",
-        "Medicine reduction plan (with doctor's advice)",
-        "HbA1c improvement tracking (below 6.5%)",
+        "HbA1c improvement tracking",
         "Comprehensive health monitoring (BP, sugar, cholesterol)",
         "Long-term maintenance strategy (for lifetime)",
         "Doctor-supervised progress (weekly check)",
@@ -48,7 +47,7 @@ const PlansSection = memo(() => {
         "Hormone balance program (12 weeks)",
         "Special diet for PCOS/PCOD (with regular meals)",
         "Thyroid management support (TSH, T3, T4 tracking)",
-        "Weight management strategies (natural methods)",
+        "Weight management strategies",
         "Hormone level tracking (monthly check)",
         "Lifestyle optimization (food, exercise, sleep)",
         "Expert medical supervision (women's health)",
@@ -61,7 +60,7 @@ const PlansSection = memo(() => {
       badge: "Premium",
       features: [
         "12-week structured weight loss program",
-        "Personalized diet plan with Indian foods (rice, roti, curries)",
+        "Personalized diet plan with Indian foods",
         "Exercise and activity guidance (home-based)",
         "Weekly weight and body measurements tracking",
         "Metabolism boost strategies (natural methods)",
@@ -71,6 +70,21 @@ const PlansSection = memo(() => {
       highlighted: false,
       color: "lime",
     },
+    {
+      title : "Mental Stress",
+      badge : "Preventive Care",
+      features : [
+        "12-week structured mental stress reduction program",
+        "Stress-related heart attack prevention approach",
+        "Guidence stress-control challenges",
+        "Blood pressure & heart stress monitoring",
+        "Doctor-led lifestyle & stress management guidance",
+        "Sleep, anxiety & emotional balance support",
+        "Work, family & lifestyle stress handling strategies"
+      ],
+      highlighted: false,
+      color:"green"
+    }
   ], []);
 
   const handleButtonClick = useCallback((programTitle) => {
@@ -87,7 +101,7 @@ const PlansSection = memo(() => {
             description="Select the right program for your health concern. Designed for Indian lifestyle with our traditional foods."
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan, index) => {
               const { title, badge, features, highlighted, color } = plan ?? {};
               const { badge: badgeClass = "", border = "", checkmark = "", button = "", buttonHover = "" } = getColorClasses(color) ?? {};
