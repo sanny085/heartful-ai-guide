@@ -947,11 +947,11 @@ export default function HeartHealthAssessment() {
             <h3 className="text-xl font-semibold text-center mb-6">How would you define your diet?</h3>
             <div className="space-y-3">
               {[
-                "I mostly choose high-carb foods, occasional vegetables or fruits",
-                "I choose both high and low carb foods equally with moderate consumption of fruits and vegetables",
-                "I limit or restrict high-carb foods most of the time and consume vegetables, sprouts and fruits regularly",
-                "I choose a balanced diet all the time",
-                "I have irregular dietary patterns"
+                "Mostly high-carb foods, occasional vegetables or fruits",
+                "Both high and low carb foods equally with moderate consumption of fruits and vegetables",
+                "Limit or restrict high-carb foods most of the time and consume vegetables, sprouts and fruits regularly",
+                "Balanced diet all the time",
+                "Have irregular dietary patterns"
               ].map((option) => (
                 <Card
                   key={option}

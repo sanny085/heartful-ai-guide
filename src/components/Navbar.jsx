@@ -11,6 +11,8 @@ import {
   Menu,
   Handshake,
   Video,
+  Calendar,
+  CalendarCheck,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -103,6 +105,28 @@ const Navbar = () => {
                         <Video className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
                         <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
                           Video Consult
+                        </span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => navigate("/my-appointments")}
+                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
+                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
+                          My Appointments
+                        </span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => navigate("/12-weeks-program")}
+                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarCheck className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
+                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
+                          12-Weeks Program
                         </span>
                       </div>
                     </button>
@@ -219,6 +243,28 @@ const Navbar = () => {
                   >
                     <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
                     Video Consult
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/my-appointments");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                  >
+                    <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    My Appointments
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      navigate("/12-weeks-program");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                  >
+                    <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    12-Week Program
                   </Button>
                 </div>
 

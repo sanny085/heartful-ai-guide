@@ -21,11 +21,19 @@ import AboutUs from "./pages/AboutUs";
 import PartnerWithUs from "./pages/PartnerWithUs";
 import VideoConsult from "./pages/VideoConsult";
 import Clinics from "./pages/Clinics";
+import Hospitals from "./pages/Hospitals";
+import Consultant from "./pages/Consultant";
+import ConsultationConfirmation from "./pages/ConsultationConfirmation";
+import MyAppointments from "./pages/MyAppointments";
+import Diagnostics from "./pages/Diagnostics";
+import TwelveWeekProgram from "./pages/TwelveWeekProgram";
+import TwelveWeekProgramApplication from "./pages/TwelveWeekProgramApplication";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
 const queryClient = new QueryClient();
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -78,9 +86,65 @@ const App = () => (
             <Route path="/reviews" element={<Reviews />} />
             <Route path="/volunteer" element={<Volunteer />} />
             <Route path="/about-us" element={<AboutUs />} />
-            <Route path="/partner-with-us" element={<PartnerWithUs />} />
+            <Route
+              path="/partner-with-us"
+              element={
+                <PrivateRoute>
+                  <PartnerWithUs />
+                </PrivateRoute>
+              }
+            />
             <Route path="/videoconsult" element={<VideoConsult />} />
-            <Route path="/clinics" element={<Clinics />} />
+            <Route
+              path="/clinics"
+              element={
+                <PrivateRoute>
+                  <Clinics />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/hospitals"
+              element={
+                <PrivateRoute>
+                  <Hospitals />
+                </PrivateRoute>
+              }
+            />
+            <Route path="/consultant" element={<Consultant />} />
+            <Route path="/consultation-confirmation" element={<ConsultationConfirmation />} />
+            <Route
+              path="/my-appointments"
+              element={
+                <PrivateRoute>
+                  <MyAppointments />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/diagnostics"
+              element={
+                <PrivateRoute>
+                  <Diagnostics />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/12-weeks-program"
+              element={
+                <PrivateRoute>
+                  <TwelveWeekProgram />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/12-weeks-program/apply"
+              element={
+                <PrivateRoute>
+                  <TwelveWeekProgramApplication />
+                </PrivateRoute>
+              }
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
