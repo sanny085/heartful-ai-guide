@@ -99,21 +99,51 @@ const Profile = () => {
         return;
       }
 
-      const payload = { ...validationResult.data, user_id: user.id };
+      const payload = { 
+        ...validationResult.data, 
+        user_id: user.id,
+        email: user.email // Include email in case it's required for new records
+      };
 
-      const { error, data: resultData } = await supabase
+      // Check if profile exists first to avoid ON CONFLICT error if user_id lacks unique constraint
+      const { data: existingProfile, error: fetchError } = await supabase
         .from(envConfig.profiles)
-        // Upsert ensures the row exists for this user_id
-        .upsert(payload, { onConflict: "user_id" })
-        .select()
+        .select('id')
+        .eq('user_id', user.id)
         .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      let error, resultData;
+
+      if (existingProfile) {
+        // Update existing profile using its PK (id)
+        const { error: updateError, data: updated } = await supabase
+          .from(envConfig.profiles)
+          .update(payload)
+          .eq('id', existingProfile.id)
+          .select()
+          .maybeSingle();
+        error = updateError;
+        resultData = updated;
+      } else {
+        // Insert new profile
+        const { error: insertError, data: inserted } = await supabase
+          .from(envConfig.profiles)
+          .insert(payload)
+          .select()
+          .maybeSingle();
+        error = insertError;
+        resultData = inserted;
+      }
       if (error) throw error;
 
       toast.success("Profile updated successfully!");
       setIsEditing(false);
       fetchProfile();
     } catch (error) {
-      toast.error("Failed to update profile");
+      console.error("Profile update error:", error);
+      toast.error(error.message || "Failed to update profile");
     }
   };
 

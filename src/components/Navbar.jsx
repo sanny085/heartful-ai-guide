@@ -98,17 +98,6 @@ const Navbar = () => {
                 <NavigationMenuContent>
                   <div className="w-[200px] md:w-[220px] lg:w-[240px] xl:w-[260px] 2xl:w-[280px] p-2 space-y-1">
                     <button
-                      onClick={handleHeartHealthCheckup}
-                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Heart className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
-                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
-                          Heart Health Checkup
-                        </span>
-                      </div>
-                    </button>
-                    <button
                       onClick={() => navigate("/videoconsult")}
                       className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
                     >

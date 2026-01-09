@@ -37,13 +37,9 @@ serve(async (req) => {
       throw new Error("Assessment not found");
     }
 
-    console.log("Loaded assessment:", assessment.id);
-
     // Calculate heart age and risk score
     const heartAge = calculateHeartAge(assessment);
     const riskScore = calculateRiskScore(assessment);
-
-    console.log("Calculated heart age:", heartAge, "risk score:", riskScore);
 
     // Generate comprehensive AI insights including diet plan
     const symptomsText = [
@@ -140,6 +136,7 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       // "https://api.openai.com/v1/chat/completions",
       // `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      // `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -148,15 +145,15 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // model: "google/gemini-2.5-flash",
-          model: "gpt-4o-mini",
+          model: "google/gemini-2.5-flash",
+          // model: "gpt-4o-mini",
           messages: [
             {
               role: "user",
               content: prompt,
             },
           ],
-          temperature: 0.7,
+            temperature: 0.7,
           max_tokens: 600,
         }),
       },
@@ -175,15 +172,11 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
     const data = await response.json();
     let aiContent = data.choices[0].message.content;
 
-    console.log("Raw AI response:", aiContent);
-
     // Remove markdown code blocks only
     aiContent = aiContent
       .replace(/```json\s*/g, "")
       .replace(/```\s*/g, "")
       .trim();
-
-    console.log("After markdown removal:", aiContent);
 
     // Try to parse as JSON
     let insights;
@@ -231,12 +224,6 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
           ? insights.diet_plan.meal_suggestions
           : [];
       }
-
-      console.log(
-        "Successfully parsed insights with",
-        insights.recommendations.length,
-        "recommendations",
-      );
     } catch (parseError) {
       console.error("Failed to parse AI response:", parseError);
       // Create a structured fallback
@@ -274,8 +261,6 @@ Keep tone warm, professional, and motivating. Focus on practical, achievable act
       console.error("Error updating assessment:", updateError);
       throw updateError;
     }
-
-    console.log("Successfully updated assessment with insights");
 
     return new Response(
       JSON.stringify({
