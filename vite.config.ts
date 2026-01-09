@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
   ].filter(Boolean),
   base: process.env.VITE_DOMAIN || "/",
   build: {
-    outDir: mode === "development" ? "dist-dev" : "dist-prod",
+    outDir: "dist",
   },
   resolve: {
     alias: {
