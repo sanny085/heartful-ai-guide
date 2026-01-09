@@ -255,6 +255,48 @@ export type Database = {
         }
         Relationships: []
       }
+      twelve_week_program: {
+        Row: {
+          age: number | null
+          bp_range: string | null
+          city: string | null
+          created_at: string
+          gender: string | null
+          id: string
+          language: string | null
+          medicines: string | null
+          name: string | null
+          selected_program: string | null
+          sugar_status: string | null
+        }
+        Insert: {
+          age?: number | null
+          bp_range?: string | null
+          city?: string | null
+          created_at?: string
+          gender?: string | null
+          id?: string
+          language?: string | null
+          medicines?: string | null
+          name?: string | null
+          selected_program?: string | null
+          sugar_status?: string | null
+        }
+        Update: {
+          age?: number | null
+          bp_range?: string | null
+          city?: string | null
+          created_at?: string
+          gender?: string | null
+          id?: string
+          language?: string | null
+          medicines?: string | null
+          name?: string | null
+          selected_program?: string | null
+          sugar_status?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
