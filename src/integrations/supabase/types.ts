@@ -50,6 +50,7 @@ export type Database = {
           diet: string | null
           diet_plan: string | null
           dizziness: boolean | null
+          email: string | null
           exercise: string | null
           family_history: boolean | null
           fasting_sugar: number | null
@@ -93,6 +94,7 @@ export type Database = {
           diet?: string | null
           diet_plan?: string | null
           dizziness?: boolean | null
+          email?: string | null
           exercise?: string | null
           family_history?: boolean | null
           fasting_sugar?: number | null
@@ -136,6 +138,7 @@ export type Database = {
           diet?: string | null
           diet_plan?: string | null
           dizziness?: boolean | null
+          email?: string | null
           exercise?: string | null
           family_history?: boolean | null
           fasting_sugar?: number | null
