@@ -258,7 +258,7 @@ const Index = () => {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap justify-center gap-4 mb-16">
+          {/* <div className="flex flex-wrap justify-center gap-4 mb-16">
             <Button
               size="lg"
               onClick={handleHealthReportClick}
@@ -267,7 +267,7 @@ const Index = () => {
               <Heart className="w-5 h-5 mr-2" />
               Check Health Report
             </Button>
-          </div>
+          </div> */}
 
           {/* Feature Cards */}
           <div className="grid md:grid-cols-3 gap-6 mb-12">
