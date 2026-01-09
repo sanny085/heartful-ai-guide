@@ -69,6 +69,7 @@ export type Database = {
           on_bp_medication: boolean | null
           palpitations: boolean | null
           post_meal_sugar: number | null
+          profession: string | null
           pulse: number | null
           risk_score: number | null
           shortness_of_breath: boolean | null
@@ -81,6 +82,7 @@ export type Database = {
           updated_at: string
           user_id: string
           user_notes: string | null
+          water_intake: string | null
           weight: number | null
         }
         Insert: {
@@ -113,6 +115,7 @@ export type Database = {
           on_bp_medication?: boolean | null
           palpitations?: boolean | null
           post_meal_sugar?: number | null
+          profession?: string | null
           pulse?: number | null
           risk_score?: number | null
           shortness_of_breath?: boolean | null
@@ -125,6 +128,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           user_notes?: string | null
+          water_intake?: string | null
           weight?: number | null
         }
         Update: {
@@ -157,6 +161,7 @@ export type Database = {
           on_bp_medication?: boolean | null
           palpitations?: boolean | null
           post_meal_sugar?: number | null
+          profession?: string | null
           pulse?: number | null
           risk_score?: number | null
           shortness_of_breath?: boolean | null
@@ -169,6 +174,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           user_notes?: string | null
+          water_intake?: string | null
           weight?: number | null
         }
         Relationships: [
