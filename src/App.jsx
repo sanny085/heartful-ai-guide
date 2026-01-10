@@ -132,9 +132,7 @@ const App = () => (
             <Route
               path="/12-weeks-program"
               element={
-                <PrivateRoute>
-                  <TwelveWeekProgram />
-                </PrivateRoute>
+                <TwelveWeekProgram />
               }
             />
             <Route
