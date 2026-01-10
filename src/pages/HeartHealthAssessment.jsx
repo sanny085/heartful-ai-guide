@@ -35,7 +35,7 @@ const STEPS = [
   "Personal Notes"
 ];
 
-const ADMIN_EMAIL = ["subahan.official@gmail.com" , "10000heartsteam@gmail.com" , "bhavanidevi0101@gmail.com","sannykumar085@gmail.com","sannyert848@gmail.com","sriradha2dart@gmail.com","abdul9676511756@gmail.com"];
+export const ADMIN_EMAIL = ["subahan.official@gmail.com" , "10000heartsteam@gmail.com" , "bhavanidevi0101@gmail.com","sannykumar085@gmail.com","sannyert848@gmail.com","sriradha2dart@gmail.com","abdul9676511756@gmail.com"];
 
 export default function HeartHealthAssessment() {
   const navigate = useNavigate();
@@ -1307,7 +1307,7 @@ export default function HeartHealthAssessment() {
                   variant="outline" 
                   size="lg"
                   className="border-accent text-accent hover:bg-accent/10"
-                  onClick={() => setReportsTableOpen(true)}
+                  onClick={() => navigate("/heart-health-results")}
                 >
                   View Patient Reports
                 </Button>
@@ -1373,93 +1373,6 @@ export default function HeartHealthAssessment() {
             <DialogFooter>
                <Button variant="ghost" size="sm" onClick={() => setImportModalOpen(false)}>Cancel</Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Reports Table Modal - Available in this view too */}
-        <Dialog open={reportsTableOpen} onOpenChange={setReportsTableOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-background border-accent/20">
-            {isAdmin ? (
-              <>
-                <DialogHeader>
-                  <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                    <Eye className="h-6 w-6 text-accent" />
-                    Patient Reports Dashboard
-                  </DialogTitle>
-                  <DialogDescription>
-                    View and manage all patient assessments in a structured format.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="rounded-md border border-accent/20 overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-accent/5 hover:bg-accent/5">
-                        <TableHead className="font-bold text-foreground">Name</TableHead>
-                        <TableHead className="font-bold text-foreground">Date</TableHead>
-                        <TableHead className="font-bold text-foreground">Mobile</TableHead>
-                        <TableHead className="font-bold text-foreground">BMI</TableHead>
-                        <TableHead className="font-bold text-foreground text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {allAssessments.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
-                            <div className="flex flex-col items-center gap-2">
-                              <Heart className="h-8 w-8 opacity-20" />
-                              <span>No reports found yet</span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        allAssessments.map((assessment) => (
-                          <TableRow key={assessment.id} className="hover:bg-accent/5 cursor-pointer transition-colors" onClick={() => navigate(`/heart-health-results?id=${assessment.id}`)}>
-                            <TableCell className="font-medium text-foreground">{assessment.name || "Patient"}</TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {new Date(assessment.created_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">{assessment.mobile || "-"}</TableCell>
-                            <TableCell>
-                              {assessment.bmi ? (
-                                <span className={`${parseFloat(assessment.bmi) > 25 ? "text-orange-500" : "text-success"}`}>
-                                  {parseFloat(assessment.bmi).toFixed(1)}
-                                </span>
-                              ) : "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-accent hover:text-accent hover:bg-accent/10"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/heart-health-results?id=${assessment.id}`);
-                                }}
-                              >
-                                <Eye className="h-4 w-4 mr-2" />
-                                Details
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <DialogFooter className="sm:justify-between items-center border-t border-accent/10 pt-4">
-                  <p className="text-xs text-muted-foreground">
-                    Showing {allAssessments.length} records
-                  </p>
-                  <Button variant="outline" onClick={() => setReportsTableOpen(false)}>Close Dashboard</Button>
-                </DialogFooter>
-              </>
-            ) : (
-              <div className="py-12 text-center text-muted-foreground italic">
-                You do not have permission to view the patient directory.
-              </div>
-            )}
           </DialogContent>
         </Dialog>
       </div>
@@ -1553,18 +1466,10 @@ export default function HeartHealthAssessment() {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-accent border-accent hover:bg-accent/10"
-                    onClick={() => setReportsTableOpen(true)}
+                    onClick={() => navigate("/heart-health-results")}
                   >
                     <Eye className="mr-2 h-4 w-4" />
                     View Reports
-                  </Button>
-                  
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-muted-foreground hover:text-foreground"
-                    onClick={() => setImportModalOpen(true)}
-                  >
-                    Import from Excel
                   </Button>
                 </div>
               )}
@@ -1803,173 +1708,6 @@ export default function HeartHealthAssessment() {
               <Button variant="ghost" size="sm" onClick={() => setImportModalOpen(false)}>Cancel</Button>
             </DialogFooter>
           )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Reports Table Modal - Always Available */}
-      <Dialog open={reportsTableOpen} onOpenChange={setReportsTableOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-background border-accent/20">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Eye className="h-6 w-6 text-accent" />
-              Patient Reports Dashboard
-            </DialogTitle>
-            <DialogDescription>
-              View and manage all patient assessments in a structured format.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4 mt-2">
-            <div className="relative w-full md:w-72">
-               <Input
-                 placeholder="Search by Name or Mobile..."
-                 value={searchQuery}
-                 onChange={(e) => setSearchQuery(e.target.value)}
-                 className="pl-8"
-               />
-               <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground opacity-50" />
-            </div>
-             <Button 
-              variant="default" 
-              size="sm" 
-              className="bg-primary text-primary-foreground hover:bg-primary/90 ml-auto"
-              onClick={() => {
-                setReportsTableOpen(false);
-                // navigate("/"); // If actual navigation is needed, uncomment
-              }}
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Back to Home
-            </Button>
-          </div>
-
-          <div className="rounded-md border border-accent/20 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-accent/5 hover:bg-accent/5">
-                  <TableHead className="font-bold text-foreground">Name</TableHead>
-                  <TableHead className="font-bold text-foreground">Date</TableHead>
-                  <TableHead className="font-bold text-foreground">Age/Sex</TableHead>
-                  <TableHead className="font-bold text-foreground">Mobile</TableHead>
-                  <TableHead className="font-bold text-foreground">BP (S/D)</TableHead>
-                  <TableHead className="font-bold text-foreground">Pulse</TableHead>
-                  <TableHead className="font-bold text-foreground">BMI</TableHead>
-                  <TableHead className="font-bold text-foreground">Sugar (F/P)</TableHead>
-                  <TableHead className="font-bold text-foreground">Lipids (L/H)</TableHead>
-                  <TableHead className="font-bold text-foreground">Symptoms</TableHead>
-                  <TableHead className="font-bold text-foreground">Smoking/Tobacco</TableHead>
-                  <TableHead className="font-bold text-foreground">Diet</TableHead>
-                  <TableHead className="font-bold text-foreground">Exercise</TableHead>
-                  <TableHead className="font-bold text-foreground">Heart Risk</TableHead>
-                  <TableHead className="font-bold text-foreground">Heart Age</TableHead>
-                  <TableHead className="font-bold text-foreground">CV Score</TableHead>
-                  <TableHead className="font-bold text-foreground text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {allAssessments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={17} className="text-center py-12 text-muted-foreground">
-                      <div className="flex flex-col items-center gap-2">
-                        <Heart className="h-8 w-8 opacity-20" />
-                        <span>No reports found yet</span>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  allAssessments
-                    .filter(item => {
-                      const query = searchQuery.toLowerCase();
-                      return (
-                        (item.name && item.name.toLowerCase().includes(query)) ||
-                        (item.mobile && item.mobile.toString().includes(query))
-                      );
-                    })
-                    .map((assessment) => (
-                    <TableRow key={assessment.id} className="hover:bg-accent/5 cursor-pointer transition-colors" onClick={() => navigate(`/heart-health-results?id=${assessment.id}`)}>
-                      <TableCell className="font-medium text-foreground">{assessment.name || "Patient"}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {new Date(assessment.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {assessment.age || "-"}/{assessment.gender?.charAt(0)?.toUpperCase() || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{assessment.mobile || "-"}</TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {assessment.systolic || "-"}/{assessment.diastolic || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {assessment.pulse || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {assessment.bmi ? (
-                          <span className={`${parseFloat(assessment.bmi) > 25 ? "text-orange-500" : "text-success"}`}>
-                            {parseFloat(assessment.bmi).toFixed(1)}
-                          </span>
-                        ) : "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {assessment.fasting_sugar || "-"}/{assessment.post_meal_sugar || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {assessment.ldl || "-"}/{assessment.hdl || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {[
-                          assessment.chest_pain,
-                          assessment.shortness_of_breath,
-                          assessment.dizziness,
-                          assessment.fatigue,
-                          assessment.swelling,
-                          assessment.palpitations
-                        ].filter(Boolean).length}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {assessment.smoking || "-"}
-                        {Array.isArray(assessment.tobacco_use) && assessment.tobacco_use.length > 0 ? ` (${assessment.tobacco_use.join(", ")})` : (typeof assessment.tobacco_use === 'string' && assessment.tobacco_use ? ` (${assessment.tobacco_use})` : "")}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate" title={assessment.diet}>
-                        {assessment.diet || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate" title={assessment.exercise}>
-                        {assessment.exercise || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {assessment.risk_score ? `${assessment.risk_score.toFixed(1)}%` : "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground whitespace-nowrap">
-                        {assessment.heart_age ? `${assessment.heart_age} yrs` : (assessment.age ? `${assessment.age} yrs` : "-")}
-                      </TableCell>
-                      <TableCell className="font-bold text-accent whitespace-nowrap">
-                        {calcCVScore(assessment)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-accent hover:text-accent hover:bg-accent/10"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/heart-health-results?id=${assessment.id}`);
-                          }}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <DialogFooter className="sm:justify-between items-center border-t border-accent/10 pt-4">
-            <p className="text-xs text-muted-foreground">
-              Showing {allAssessments.length} records
-            </p>
-            <Button variant="outline" onClick={() => setReportsTableOpen(false)}>Close Dashboard</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

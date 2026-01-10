@@ -6,7 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download, Edit, Save, X, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download, Edit, Save, X, ArrowLeft, Eye, Search, Trash2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -133,6 +135,44 @@ export default function HeartHealthResults() {
   const [saving, setSaving] = useState(false);
 
   const [accessDenied, setAccessDenied] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [assessmentToDelete, setAssessmentToDelete] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+  
+  const isAdmin = useMemo(() => {
+    const currentEmail = user?.email?.toLowerCase().trim();
+    return currentEmail && ADMIN_EMAIL.some(email => email.toLowerCase().trim() === currentEmail);
+  }, [user]);
+
+  const filteredAssessments = useMemo(() => {
+    if (!searchQuery) return allAssessments;
+    
+    const lowerQuery = searchQuery.toLowerCase();
+    return allAssessments.filter(item => 
+      (item.name && item.name.toLowerCase().includes(lowerQuery)) || 
+      (item.mobile && item.mobile.includes(searchQuery))
+    );
+  }, [allAssessments, searchQuery]);
+
+  const paginatedAssessments = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAssessments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAssessments, currentPage]);
+
+  const totalPages = Math.ceil(filteredAssessments.length / ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (assessmentId) {
+      setIsModalOpen(true);
+    }
+  }, [assessmentId]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -265,6 +305,89 @@ export default function HeartHealthResults() {
     if (!height || !weight) return null;
     const heightInMeters = height / 100;
     return weight / (heightInMeters * heightInMeters);
+  };
+
+  const confirmDelete = async () => {
+    if (!assessmentToDelete) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from(envConfig.heart_health_assessments)
+        .delete()
+        .eq("id", assessmentToDelete);
+
+      if (error) throw error;
+
+      setAllAssessments(prev => prev.filter(item => item.id !== assessmentToDelete));
+      if (assessmentId === assessmentToDelete) {
+        setIsModalOpen(false);
+        navigate("/heart-health-results");
+      }
+      toast.success("Assessment deleted successfully");
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      toast.error(`Failed to delete assessment: ${error.message}`);
+    } finally {
+      setSaving(false);
+      setIsDeleteDialogOpen(false);
+      setAssessmentToDelete(null);
+    }
+  };
+
+  const handleDelete = (e, id) => {
+    e.stopPropagation();
+    setAssessmentToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const markAsSent = async (id) => {
+    try {
+      const { error } = await supabase
+        .from(envConfig.heart_health_assessments)
+        .update({ is_report_send: true })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Update local state for all assessments
+      setAllAssessments(prev => 
+        prev.map(item => item.id === id ? { ...item, is_report_send: true } : item)
+      );
+      
+      // Update individual assessment if it's the one currently being viewed
+      if (assessment?.id === id) {
+        setAssessment(prev => ({ ...prev, is_report_send: true }));
+      }
+    } catch (error) {
+      console.error("Error marking as sent:", error);
+    }
+  };
+
+  const handleToggleSent = async (id, currentStatus) => {
+    try {
+      const { error } = await supabase
+        .from(envConfig.heart_health_assessments)
+        .update({ is_report_send: !currentStatus })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Update local state for all assessments
+      setAllAssessments(prev => 
+        prev.map(item => item.id === id ? { ...item, is_report_send: !currentStatus } : item)
+      );
+      
+      // Update individual assessment if it's the one currently being viewed
+      if (assessment?.id === id) {
+        setAssessment(prev => ({ ...prev, is_report_send: !currentStatus }));
+      }
+
+      toast.success(`Report marked as ${!currentStatus ? "sent" : "not sent"}`);
+    } catch (error) {
+      console.error("Error toggling sent status:", error);
+      toast.error(`Failed to update status: ${error.message || "Unknown error"}`);
+    }
   };
 
   const handleRegenerateInsights = async () => {
@@ -527,7 +650,7 @@ export default function HeartHealthResults() {
     return `${age}-year-old ${genderText}`;
   };
 
-  const downloadPDFReport = async () => {
+  const downloadPDFReport = async (action = 'download') => {
     try {
       if (!assessment) {
         toast.error("Assessment data not available");
@@ -634,23 +757,25 @@ export default function HeartHealthResults() {
         watermarkGray: [220, 220, 220]
       },
       spacing: {
-        afterHeader: 5,
-        afterSectionHeader: 5,
-        afterSubsectionHeader: 3, // Reduced spacing after subheadings
-        betweenItems: 5,
-        betweenSections: 3,
-        afterSubsection: 2,
-        titleTop: 30, // Position after header (25mm) + spacing (7mm) to prevent overlap - consistent on all pages
-        titleExtraSpace: 1,
+        afterHeader: 3, 
+        afterSectionHeader: 3, 
+        afterSubsectionHeader: 3, 
+        betweenItems: 3,
+        significantlyBetweenSpace : 6, 
+        betweenSections: 3, 
+        afterSubsection: 3, 
+        titleTop: 30, 
+        titleExtraSpace: 3,
         pageMargin: 20,
         contentIndent: 10,
-        boxPadding: 2,
+        boxPadding: 3,
         headerHeight: 8,
         subsectionHeaderHeight: 5,
         headerTextOffset: 1,
         headerBoxOffset: 5,
         subsectionBoxOffset: 4,
-        headerBottomMargin: 5 // Space after header before content starts
+        headerBottomMargin: 5,
+        lineHeightFactor: 5
       },
       lineWidth: {
         separator: 0.5,
@@ -658,35 +783,34 @@ export default function HeartHealthResults() {
       }
     };
 
-    // Helper function to set standard subsection header style (highlighted)
+    // Helper function to set standard subsection header style (Simple, Bold, No Background)
     const setSubsectionHeader = (text, y) => {
-      // Add spacing before subheading for better gaps
-      y += 5; // Extra space before subheading
-      checkPageBreak(15); // Check before adding subheading
+      // Add generous spacing before subheading
+      y += 8; // Increased from 5
+      checkPageBreak(15);
       
       const headerHeight = PDF_STYLES.spacing.subsectionHeaderHeight;
       
-      // Set font size first to calculate width correctly
+      // Calculate text vertical center (no box anymore)
+      const textY = y + (headerHeight / 1.5);
+      
+      // Bold subheading text - Dark Gray/Black, No Background Box
       doc.setFontSize(PDF_STYLES.fontSize.subsectionHeader);
       doc.setFont("helvetica", "bold");
-      const headerWidth = doc.getTextWidth(text) + 8;
-      
-      // Calculate background box position and text vertical center
-      const boxTop = y - PDF_STYLES.spacing.subsectionBoxOffset;
-      const boxBottom = boxTop + headerHeight;
-      const textCenterY = boxTop + (headerHeight / 2); // Vertical center of the box
-      
-      // Highlight background for header - using dynamic color
-      doc.setFillColor(PDF_STYLES.color.lightBlue[0], PDF_STYLES.color.lightBlue[1], PDF_STYLES.color.lightBlue[2]);
-      doc.rect(PDF_STYLES.spacing.pageMargin, boxTop, headerWidth, headerHeight, "F");
-      
-      // Bold subheading text - vertically centered in the box
       doc.setTextColor(PDF_STYLES.color.darkGray[0], PDF_STYLES.color.darkGray[1], PDF_STYLES.color.darkGray[2]);
-      doc.text(text, PDF_STYLES.spacing.pageMargin + 4, textCenterY);
+      
+      // Draw text directly
+      doc.text(text, PDF_STYLES.spacing.pageMargin, textY);
+      
+      // Draw a line under the subsection header for separation (optional, but looks professional)
+      // doc.line(PDF_STYLES.spacing.pageMargin, textY + 2, PDF_STYLES.spacing.pageMargin + 30, textY + 2);
+
+      // Reset font
       doc.setFontSize(PDF_STYLES.fontSize.body);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
-      return boxBottom + PDF_STYLES.spacing.afterSubsectionHeader; // Proper spacing after subsection header
+      
+      return y + headerHeight + PDF_STYLES.spacing.afterSubsectionHeader + 2; // Extra gap after header content
     };
     
     // Helper function to check if value is abnormal and highlight it (labels are bold) - returns new Y
@@ -720,7 +844,7 @@ export default function HeartHealthResults() {
     };
     
     // Helper function to add label and value with bold label - returns new Y
-    const addLabelValue = (label, value, x, y, maxWidth = 170) => {
+    const addLabelValue = (label, value, x, y, maxWidth = 170, lineHeight = null) => {
       // First, check if we need a page break for the label
       yPosition = y;
       checkPageBreak(5);
@@ -734,7 +858,7 @@ export default function HeartHealthResults() {
       const valueX = x + labelWidth + 2;
       const valueWidth = maxWidth - (labelWidth + 2);
       
-      return addWrappedText(value.toString(), valueX, currentY, valueWidth);
+      return addWrappedText(value.toString(), valueX, currentY, valueWidth, PDF_STYLES.fontSize.body, lineHeight);
     };
 
     // Helper function to set standard body text style
@@ -748,129 +872,20 @@ export default function HeartHealthResults() {
     const addWrappedText = (text, x, y, maxWidth, fontSize = 10, lineHeight = null) => {
       doc.setFontSize(fontSize);
       const lines = doc.splitTextToSize(text, maxWidth);
-      const spacing = lineHeight || PDF_STYLES.spacing.betweenItems;
+      const spacing = lineHeight || (PDF_STYLES.spacing.betweenItems * 2); 
       let currentY = y;
       
       lines.forEach((line) => {
-        // Update global yPosition so checkPageBreak can see it
         yPosition = currentY;
         checkPageBreak(spacing);
-        // If checkPageBreak moved us to a new page, currentY will be updated
         currentY = yPosition;
         
         doc.text(line, x, currentY);
         currentY += spacing;
       });
       
-      // Update global yPosition for the rest of the PDF generation
       yPosition = currentY;
       return currentY;
-    };
-
-    // Helper function to check page break - MUST be defined before other functions that use it
-    const checkPageBreak = (requiredSpace, isLastContent = false) => {
-      // Calculate header area (header height + separator line)
-      const headerHeight = 25; // Header band height
-      const headerSeparatorHeight = 1; // Line separator below header
-      const totalHeaderHeight = headerHeight + headerSeparatorHeight;
-      
-      // Calculate footer area accurately
-      const contactInfoHeight = 12;
-      const disclaimerHeight = 17;
-      const lineHeight = 1;
-      const bottomMargin = 1; // Minimal space from bottom
-      const totalFooterHeight = contactInfoHeight + disclaimerHeight + lineHeight;
-      const footerStartY = pageHeight - totalFooterHeight - bottomMargin;
-      
-      // Proper margins to prevent overlap
-      const marginFromHeader = 5; // Safety margin from header area
-      const marginFromFooter = 12; // Increased spacing from footer to prevent any overlap (12mm safety margin)
-      const safeTop = totalHeaderHeight + marginFromHeader; // Safe area starts after header
-      const safeBottom = footerStartY - marginFromFooter; // Safe area ends before footer
-      
-      // Ensure content never starts before safeTop (in case yPosition is somehow too high)
-      if (yPosition < safeTop) {
-        yPosition = safeTop;
-      }
-      
-      // Break only when content would overlap the safe area (footer)
-      // This ensures content doesn't overlap with footer while maximizing page usage
-      // If it's the last content, don't add a new page even if it overflows
-      if (yPosition + requiredSpace > safeBottom && !isLastContent) {
-          doc.addPage();
-        
-        // White background for new page
-        doc.setFillColor(PDF_STYLES.color.white[0], PDF_STYLES.color.white[1], PDF_STYLES.color.white[2]);
-        doc.rect(0, 0, pageWidth, pageHeight, "F");
-        
-        // Add header, watermark, and footer to new page
-        addHeader(logoDataUrl);
-        addWatermark(logoWatermarkUrl);
-        addFooter();
-        
-        // Start content directly below header area (consistent on all pages)
-        yPosition = safeTop;
-      }
-    };
-
-    // Helper function to add section divider
-    const addSectionDivider = (y) => {
-      yPosition = y;
-      checkPageBreak(5); // Check before adding divider
-      const currentY = yPosition;
-      
-      doc.setDrawColor(PDF_STYLES.color.separatorGray[0], PDF_STYLES.color.separatorGray[1], PDF_STYLES.color.separatorGray[2]);
-      doc.setLineWidth(PDF_STYLES.lineWidth.separator);
-      doc.line(PDF_STYLES.spacing.pageMargin, currentY, pageWidth - PDF_STYLES.spacing.pageMargin, currentY);
-      return currentY + PDF_STYLES.spacing.afterHeader; // Consistent spacing after divider
-    };
-
-    // Helper function to add section header with background (matching image style)
-    const addSectionHeader = (text, y, fontSize = PDF_STYLES.fontSize.sectionHeader) => {
-      yPosition = y;
-      checkPageBreak(15); // Check with adequate space for header + spacing
-      const currentY = yPosition;
-      
-      const headerHeight = PDF_STYLES.spacing.headerHeight;
-      
-      // Background box - light teal banner - using dynamic color
-      doc.setFillColor(PDF_STYLES.color.teal[0], PDF_STYLES.color.teal[1], PDF_STYLES.color.teal[2]);
-      doc.rect(PDF_STYLES.spacing.pageMargin, currentY - PDF_STYLES.spacing.headerBoxOffset, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), headerHeight, "F");
-      
-      // Text - centered, bold, dark font - using dynamic color
-      doc.setTextColor(PDF_STYLES.color.darkGray[0], PDF_STYLES.color.darkGray[1], PDF_STYLES.color.darkGray[2]);
-      doc.setFontSize(fontSize);
-      doc.setFont("helvetica", "bold");
-      const textWidth = doc.getTextWidth(text);
-      const textX = (pageWidth - textWidth) / 2; // Center the text
-      doc.text(text, textX, currentY + PDF_STYLES.spacing.headerTextOffset);
-      
-      // Reset
-      doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
-      return currentY + headerHeight + PDF_STYLES.spacing.afterSectionHeader; // More space after section header
-    };
-    
-    // Helper function to get text width for current font settings
-    const getTextWidth = (text, fontSize = 10) => {
-      doc.setFontSize(fontSize);
-      return doc.getTextWidth(text);
-    };
-
-    // Helper function to draw curved shape background (curved bottom-right corner)
-    const drawCurvedShape = (x, y, w, h) => {
-      const lightGreenColor = [144, 238, 144];
-      doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
-      
-      // Draw main rectangle
-      doc.rect(x, y, w, h, "F");
-      
-      // Add curved shape at bottom-right using a circle to create curved edge
-      const curveRadius = 8; // Radius of the curve
-      // Draw a circle at the bottom-right corner to create curved effect
-      doc.circle(x + w - curveRadius, y + h - curveRadius, curveRadius, "F");
-      
-      // Also add a smaller curve for smoother appearance
-      doc.circle(x + w - 5, y + h - 3, 3, "F");
     };
 
     // Helper function to add footer to page (matching header color) - MUST be defined before checkPageBreak
@@ -999,6 +1014,106 @@ export default function HeartHealthResults() {
       }
     };
 
+    // Helper function to check page break - MUST be defined before other functions that use it
+    const checkPageBreak = (requiredSpace, isLastContent = false) => {
+      // Header Height is 25mm + separator and margin = 35mm safe zone at top
+      const safeTop = 35;
+      
+      // Footer Height is approx 30mm + margin = 35mm safe zone at bottom
+      const safeBottom = pageHeight - 35;
+      
+      // Ensure content never starts before safeTop
+      if (yPosition < safeTop) {
+        yPosition = safeTop;
+      }
+      
+      // Break only when content would overlap the safe area
+      if (yPosition + requiredSpace > safeBottom && !isLastContent) {
+          doc.addPage();
+        
+        // White background for new page
+        doc.setFillColor(PDF_STYLES.color.white[0], PDF_STYLES.color.white[1], PDF_STYLES.color.white[2]);
+        doc.rect(0, 0, pageWidth, pageHeight, "F");
+        
+        // Add Header, Watermark, and Footer back to the new page
+        addHeader(logoDataUrl);
+        addWatermark(logoWatermarkUrl);
+        addFooter();
+        
+        // Reset Y position to content start area
+        yPosition = safeTop;
+      }
+    };
+
+    // Helper function to add section divider
+    const addSectionDivider = (y) => {
+      yPosition = y;
+      checkPageBreak(5); // Check before adding divider
+      const currentY = yPosition;
+      
+      doc.setDrawColor(PDF_STYLES.color.separatorGray[0], PDF_STYLES.color.separatorGray[1], PDF_STYLES.color.separatorGray[2]);
+      doc.setLineWidth(PDF_STYLES.lineWidth.separator);
+      doc.line(PDF_STYLES.spacing.pageMargin, currentY, pageWidth - PDF_STYLES.spacing.pageMargin, currentY);
+      return currentY + PDF_STYLES.spacing.afterHeader; // Consistent spacing after divider
+    };
+
+    // Helper function to add section header with background (matching image style)
+    const addSectionHeader = (text, y, fontSize = PDF_STYLES.fontSize.sectionHeader) => {
+      yPosition = y;
+      checkPageBreak(15); // Check with adequate space for header + spacing
+      const currentY = yPosition;
+      
+      const headerHeight = PDF_STYLES.spacing.headerHeight;
+      
+      // Background box - light teal banner - using dynamic color
+      doc.setFillColor(PDF_STYLES.color.teal[0], PDF_STYLES.color.teal[1], PDF_STYLES.color.teal[2]);
+      doc.rect(PDF_STYLES.spacing.pageMargin, currentY - PDF_STYLES.spacing.headerBoxOffset, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), headerHeight, "F");
+      
+      // Text - centered, bold, dark font - using dynamic color
+      doc.setTextColor(PDF_STYLES.color.darkGray[0], PDF_STYLES.color.darkGray[1], PDF_STYLES.color.darkGray[2]);
+      doc.setFontSize(fontSize);
+      doc.setFont("helvetica", "bold");
+      const textWidth = doc.getTextWidth(text);
+      const textX = (pageWidth - textWidth) / 2; // Center the text
+      doc.text(text, textX, currentY + PDF_STYLES.spacing.headerTextOffset);
+      
+      // Reset
+      doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
+      return currentY + headerHeight + PDF_STYLES.spacing.afterSectionHeader; // More space after section header
+    };
+    
+    // Helper function to get text width for current font settings
+    const getTextWidth = (text, fontSize = 10) => {
+      doc.setFontSize(fontSize);
+      return doc.getTextWidth(text);
+    };
+
+    // Helper function to draw curved shape background (curved bottom-right corner)
+    const drawCurvedShape = (x, y, w, h) => {
+      const lightGreenColor = [144, 238, 144];
+      doc.setFillColor(lightGreenColor[0], lightGreenColor[1], lightGreenColor[2]);
+      
+      // Draw main rectangle
+      doc.rect(x, y, w, h, "F");
+      
+      // Add curved shape at bottom-right using a circle to create curved edge
+      const curveRadius = 8; // Radius of the curve
+      // Draw a circle at the bottom-right corner to create curved effect
+      doc.circle(x + w - curveRadius, y + h - curveRadius, curveRadius, "F");
+      
+      // Also add a smaller curve for smoother appearance
+      doc.circle(x + w - 5, y + h - 3, 3, "F");
+    };
+
+    // Helper function to add footer to page (matching header color) - MUST be defined before checkPageBreak
+
+
+    // Helper function to add header to page (matching reference image) - MUST be defined before checkPageBreak
+
+
+    // Helper function to add watermark to page (with logo image - centered on page)
+
+
     // White background (default) - using dynamic color
     doc.setFillColor(PDF_STYLES.color.white[0], PDF_STYLES.color.white[1], PDF_STYLES.color.white[2]);
     doc.rect(0, 0, pageWidth, pageHeight, "F");
@@ -1071,7 +1186,9 @@ export default function HeartHealthResults() {
     let summaryY = summaryBoxStart;
     
     // Following form sequence: Patient Details -> Initial Symptoms -> Blood Pressure -> Blood Glucose -> Lipid Levels -> Diet & Activity -> Sleep & Tobacco -> Additional Symptoms -> Personal Notes
-    const leftCol = 25;
+    // Following form sequence: Patient Details -> Initial Symptoms -> Blood Pressure -> Blood Glucose -> Lipid Levels -> Diet & Activity -> Sleep & Tobacco -> Additional Symptoms -> Personal Notes
+    // Align content with background start (pageMargin)
+    const leftCol = PDF_STYLES.spacing.pageMargin;
     
     // 1. Patient Details (Step 1) - all labels bold
     summaryY = addLabelValue("Name: ", assessment?.name || "N/A", leftCol, summaryY);
@@ -1178,7 +1295,7 @@ export default function HeartHealthResults() {
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
-    if (assessment?.smoking) {
+    if (assessment?.smoking && !['never', 'no'].includes(assessment.smoking.toLowerCase())) {
       summaryY = addLabelValue("Smoking: ", assessment?.smoking, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
@@ -1193,9 +1310,9 @@ export default function HeartHealthResults() {
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
-    // 9. Personal Notes (Step 8) - label bold with text wrapping
+    // 9. Personal Notes (Step 8) - label bold with text wrapping (split enabled)
     if (assessment?.user_notes) {
-      summaryY = addLabelValue("Personal Notes: ", assessment.user_notes, leftCol, summaryY);
+      summaryY = addLabelValue("Personal Notes: ", assessment.user_notes, leftCol, summaryY, 170, 6);
       summaryY += PDF_STYLES.spacing.afterSubsection;
     }
     
@@ -1222,19 +1339,8 @@ export default function HeartHealthResults() {
       if (bmiClass) {
       const isBMIAbnormal = (assessment?.bmi ?? 0) >= 25; // Overweight or obese
       const bmiValue = `${assessment?.bmi?.toFixed(1)} = ${bmiClass?.class ?? ''}`;
-      addValueWithHighlight("BMI ", bmiValue, isBMIAbnormal, 20, yPosition);
+      addValueWithHighlight("BMI: ", bmiValue, isBMIAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
       yPosition += PDF_STYLES.spacing.betweenItems;
-      
-      if (bmiClass?.risks?.length > 0) {
-        checkPageBreak(20 + (bmiClass?.risks?.length * PDF_STYLES.spacing.betweenItems)); // Check before risks list
-        doc.text(`This significantly increases the risk of:`, PDF_STYLES.spacing.pageMargin, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
-          bmiClass?.risks?.forEach(risk => {
-            doc.text(`  • ${risk}`, PDF_STYLES.spacing.contentIndent, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
-        });
-        yPosition += PDF_STYLES.spacing.afterSubsection; // Dynamic spacing after risks list
-      }
       
       // Ideal weight recommendation
       if (weightRec && assessment?.height) {
@@ -1247,25 +1353,13 @@ export default function HeartHealthResults() {
       doc.setFont("helvetica", "bold");
         doc.text(boldRange, PDF_STYLES.spacing.pageMargin + textWidth, yPosition);
       doc.setFont("helvetica", "normal");
-        yPosition += PDF_STYLES.spacing.betweenItems;
+        yPosition += (PDF_STYLES.spacing.betweenItems + 5); // Increased gap as requested
+        
         
         if (weightRec?.action === "lose") {
-          checkPageBreak(15); // Check before weight loss text
-          const loseText = `Needs to lose `;
-          const boldKg = `~${weightRec?.kg?.toFixed(0) ?? 0} kg`;
-          const butText = `, but this should be `;
-          const boldPhased = `gradual and phased`;
-          const loseWidth1 = getTextWidth(loseText);
-          const loseWidth2 = getTextWidth(loseText + boldKg + butText);
-          doc.text(loseText, PDF_STYLES.spacing.pageMargin, yPosition);
-    doc.setFont("helvetica", "bold");
-          doc.text(boldKg, PDF_STYLES.spacing.pageMargin + loseWidth1, yPosition);
-    doc.setFont("helvetica", "normal");
-          doc.text(butText, PDF_STYLES.spacing.pageMargin + loseWidth1 + getTextWidth(boldKg), yPosition);
-      doc.setFont("helvetica", "bold");
-          doc.text(boldPhased, PDF_STYLES.spacing.pageMargin + loseWidth2, yPosition);
-      doc.setFont("helvetica", "normal");
-          yPosition += PDF_STYLES.spacing.betweenItems;
+          checkPageBreak(10); // Check before weight loss text
+          const weightLossText = `Needs to lose ~${weightRec?.kg?.toFixed(0) ?? 0} kg, but this should be gradual and phased`;
+          yPosition = addWrappedText(weightLossText, PDF_STYLES.spacing.pageMargin, yPosition, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, PDF_STYLES.spacing.betweenItems);
         } else if (weightRec?.action === "gain") {
         checkPageBreak(15); // Check before weight gain text
           yPosition = addWrappedText(`Needs to gain ~${weightRec?.kg?.toFixed(0) ?? 0} kg through healthy weight gain strategies.`, PDF_STYLES.spacing.pageMargin, yPosition, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, PDF_STYLES.spacing.betweenItems);
@@ -1286,10 +1380,11 @@ export default function HeartHealthResults() {
       const diaLabel = (assessment?.diastolic ?? 0) >= 90 ? "clearly high" : (assessment?.diastolic ?? 0) >= 85 ? "elevated" : "normal";
       const isSystolicAbnormal = (assessment?.systolic ?? 0) >= 130;
       const isDiastolicAbnormal = (assessment?.diastolic ?? 0) >= 90;
-      addValueWithHighlight("Systolic: ", sysLabel, isSystolicAbnormal, 20, yPosition);
+      addValueWithHighlight("Systolic: ", sysLabel, isSystolicAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
       yPosition += PDF_STYLES.spacing.betweenItems;
-      addValueWithHighlight("Diastolic: ", diaLabel, isDiastolicAbnormal, 20, yPosition);
+      addValueWithHighlight("Diastolic: ", diaLabel, isDiastolicAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
       yPosition += PDF_STYLES.spacing.betweenItems;
+      
       
       if (bpInfo?.category) {
         const categoryLength = bpInfo?.category?.length ?? 0;
@@ -1302,18 +1397,6 @@ export default function HeartHealthResults() {
         doc.setFont("helvetica", "normal");
       }
       
-      if (bpInfo?.category && bpInfo?.category?.includes("High Blood Pressure")) {
-        checkPageBreak(30);
-        doc.setFontSize(PDF_STYLES.fontSize.small);
-        doc.text(`This level of BP, if persistent, increases risk of:`, PDF_STYLES.spacing.pageMargin, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
-          BP_RISKS.forEach(risk => {
-            doc.text(`  • ${risk}`, PDF_STYLES.spacing.contentIndent, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
-        });
-        setBodyText();
-        yPosition += PDF_STYLES.spacing.afterSubsection;
-      }
       yPosition += PDF_STYLES.spacing.afterSubsection;
     }
 
@@ -1340,24 +1423,36 @@ export default function HeartHealthResults() {
       // Show reference ranges
       if (sugarInfo?.type === "2-hour Post-prandial") {
         doc.text("Normal: <140 mg/dL", PDF_STYLES.spacing.pageMargin, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
+          yPosition += 6; // Increased spacing
         doc.text("Prediabetes: 140-199 mg/dL", PDF_STYLES.spacing.pageMargin, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
+          yPosition += 6; // Increased spacing
         doc.text("Diabetes: >=200 mg/dL", PDF_STYLES.spacing.pageMargin, yPosition);
-        yPosition += PDF_STYLES.spacing.betweenItems;
+        yPosition += 6; // Increased spacing
       } else {
         doc.text("Normal: <100 mg/dL", PDF_STYLES.spacing.pageMargin, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
+          yPosition += 6; // Increased spacing
         doc.text("Prediabetes: 100-125 mg/dL", PDF_STYLES.spacing.pageMargin, yPosition);
-          yPosition += PDF_STYLES.spacing.betweenItems;
+          yPosition += 6; // Increased spacing
         doc.text("Diabetes: >=126 mg/dL", PDF_STYLES.spacing.pageMargin, yPosition);
-        yPosition += PDF_STYLES.spacing.betweenItems;
+        yPosition += 6; // Increased spacing
       }
       checkPageBreak(10);
       const isSugarAbnormal = sugarInfo?.status?.includes("PRE-DIABETIC") || sugarInfo?.status === "DIABETIC";
       const statusText = sugarInfo?.status?.includes("PRE-DIABETIC") ? "PRE-DIABETIC (risk)" : sugarInfo?.status ?? '';
-      addValueWithHighlight("Status: ", statusText, isSugarAbnormal, 20, yPosition);
+      addValueWithHighlight("Status: ", statusText, isSugarAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
       yPosition += PDF_STYLES.spacing.betweenItems;
+      
+      if (sugarInfo?.risks?.length > 0) {
+        checkPageBreak(20 + (sugarInfo?.risks?.length * PDF_STYLES.spacing.betweenItems));
+        doc.text(`This level of blood sugar increases risk of:`, PDF_STYLES.spacing.pageMargin, yPosition);
+        yPosition += PDF_STYLES.spacing.betweenItems;
+        sugarInfo?.risks?.forEach(risk => {
+           // Fix bullet indentation
+           doc.text(`  • ${risk}`, PDF_STYLES.spacing.pageMargin + 8, yPosition);
+           yPosition += 6; // Increased spacing for bullets
+        });
+      }
+      
       yPosition += PDF_STYLES.spacing.betweenSections;
     }
 
@@ -1371,14 +1466,14 @@ export default function HeartHealthResults() {
       if (assessment?.ldl) {
         const isLDLAbnormal = (assessment?.ldl ?? 0) >= 160;
         const ldlStatus = (assessment?.ldl ?? 0) < 100 ? "Optimal" : (assessment?.ldl ?? 0) < 130 ? "Near optimal" : (assessment?.ldl ?? 0) < 160 ? "Borderline high" : (assessment?.ldl ?? 0) < 190 ? "High" : "Very high";
-        addValueWithHighlight("LDL Status: ", ldlStatus, isLDLAbnormal, 20, yPosition);
+        addValueWithHighlight("LDL Status: ", ldlStatus, isLDLAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
         yPosition += PDF_STYLES.spacing.betweenItems;
       }
       
       if (assessment?.hdl) {
         const isHDLAbnormal = (assessment?.hdl ?? 0) < 40;
         const hdlStatus = (assessment?.hdl ?? 0) >= 60 ? "Optimal" : (assessment?.hdl ?? 0) >= 40 ? "Normal" : "Low";
-        addValueWithHighlight("HDL Status: ", hdlStatus, isHDLAbnormal, 20, yPosition);
+        addValueWithHighlight("HDL Status: ", hdlStatus, isHDLAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
         yPosition += PDF_STYLES.spacing.betweenItems;
       }
       yPosition += PDF_STYLES.spacing.betweenSections;
@@ -1487,13 +1582,12 @@ export default function HeartHealthResults() {
         estimatedHeight += lines2.length * PDF_STYLES.spacing.betweenItems;
       }
     
-      const impressionBoxHeight = estimatedHeight + PDF_STYLES.spacing.afterSubsection;
-      checkPageBreak(impressionBoxHeight + 10, true); // Check before adding box if it would overflow - don't add new page for last content
+      setBodyText();
       
       // No background box - plain content area
       
       // Draw text - bold only (no background)
-      let impressionY = impressionBoxStart;
+      let impressionY = yPosition;
       doc.setFontSize(PDF_STYLES.fontSize.body);
       doc.setFont("helvetica", "bold"); // Make content bold
       doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
@@ -1501,14 +1595,15 @@ export default function HeartHealthResults() {
       if (assessment.ai_insights?.summary && clinicalImpressionText) {
         // Capitalize first letter of the text
         const capitalizedText = clinicalImpressionText.trim().charAt(0).toUpperCase() + clinicalImpressionText.trim().slice(1);
-        // Draw bold text
-        impressionY = addWrappedText(capitalizedText, PDF_STYLES.spacing.contentIndent, impressionY, pageWidth - (PDF_STYLES.spacing.contentIndent * 2), PDF_STYLES.fontSize.body, PDF_STYLES.spacing.betweenItems);
+        // Draw bold text with increased line spacing for readability
+        impressionY = addWrappedText(capitalizedText, PDF_STYLES.spacing.pageMargin, impressionY, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, 8);
       } else {
         let clinicalImpression = "You are currently ";
         
         // First paragraph
-        impressionY = addWrappedText(clinicalImpression + clinicalImpressionText, PDF_STYLES.spacing.contentIndent, impressionY, pageWidth - (PDF_STYLES.spacing.contentIndent * 2), PDF_STYLES.fontSize.body, PDF_STYLES.spacing.betweenItems);
-        impressionY += PDF_STYLES.spacing.betweenItems; // Space between paragraphs
+        // First paragraph with increased line spacing
+        impressionY = addWrappedText(clinicalImpression + clinicalImpressionText, PDF_STYLES.spacing.pageMargin, impressionY, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, 8);
+        impressionY += 8; // Space between paragraphs
         
         // Second paragraph
         const para2Text = (!sugarInfo || !sugarInfo.status.includes("DIABETIC")) 
@@ -1519,7 +1614,13 @@ export default function HeartHealthResults() {
       
       // Reset font to normal after Clinical Impression
       doc.setFont("helvetica", "normal");
-      // No additional spacing needed - PDF ends here
+      
+      // Add "Important Note" if risk is high (matching Insights tab)
+      if (assessment?.risk_score && assessment?.risk_score > 20) {
+        yPosition += 5;
+        const noteText = "Important Note: Based on your risk score, we strongly recommend consulting with a healthcare provider or registered dietitian for a comprehensive dietary plan tailored to your specific needs.";
+        yPosition = addWrappedText(noteText, PDF_STYLES.spacing.pageMargin, yPosition, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, 8);
+      }
     }
 
     // Key Counseling Points and all subsequent sections removed from PDF - only shown in screen view
@@ -1530,6 +1631,11 @@ export default function HeartHealthResults() {
     // Save the PDF
     const patientName = assessment?.name || "Patient";
     const fileName = `Heart_Health_Assessment_Report_${patientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    
+    if (action === 'share') {
+      return doc.output('blob');
+    }
+    
     doc.save(fileName);
     toast.success("PDF report downloaded successfully!");
     } catch (error) {
@@ -1572,101 +1678,7 @@ export default function HeartHealthResults() {
     );
   }
 
-  // Dashboard View - access without ID
-  if (!assessmentId && !loading) {
 
-    return (
-      <div className="min-h-screen bg-background py-12">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <Button variant="ghost" onClick={() => navigate("/heart-health")} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Assessment
-          </Button>
-
-          <div className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Heart className="w-12 h-12 text-accent fill-accent" />
-              <div>
-                <h2 className="text-2xl font-bold">Heart Health Reports</h2>
-                <p className="text-muted-foreground">
-                  {user?.email?.toLowerCase().trim() === ADMIN_EMAIL ? "Managing all patient reports" : "View your past assessment history"}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-foreground">
-                {user?.email?.toLowerCase().trim() === ADMIN_EMAIL ? "All Member Reports" : "Your Reports"}
-              </h3>
-              <Button onClick={() => navigate("/heart-health")} size="sm" className="bg-accent hover:bg-accent/90">
-                + Start New Assessment
-              </Button>
-            </div>
-
-            {allAssessments.length === 0 ? (
-              <div className="text-center py-12 bg-muted/20 rounded-lg">
-                <p className="text-muted-foreground mb-4">No reports found.</p>
-                <Button onClick={() => navigate("/heart-health")} variant="outline">
-                  Create your first report
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {allAssessments.map((item) => (
-                  <Card
-                    key={item.id}
-                    className="p-4 cursor-pointer transition-all hover:shadow-lg border-border hover:border-accent/50 group"
-                    onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
-                  >
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-foreground text-lg group-hover:text-accent transition-colors">
-                            {item.name || "Anonymous"}
-                          </h3>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                           Mobile: {item.mobile || "N/A"}
-                        </p>
-                      </div>
-
-                      <div className="pt-2 border-t border-dashed">
-                        <div className="flex justify-between items-center text-sm mb-1">
-                          <span className="text-muted-foreground">Date</span>
-                          <span className="font-medium">
-                            {new Date(item.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm mb-1">
-                          <span className="text-muted-foreground">Risk Score</span>
-                          <span className={`font-bold ${
-                             (item.risk_score || 0) < 10 ? "text-success" : 
-                             (item.risk_score || 0) < 20 ? "text-warning" : "text-destructive"
-                          }`}>
-                            {(item.risk_score || 0).toFixed(1)}%
-                          </span>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full mt-2 bg-muted/50 group-hover:bg-accent group-hover:text-white transition-colors"
-                      >
-                        View Full Report
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   // Not Found View
   if (assessmentId && !assessment) {
@@ -1682,122 +1694,298 @@ export default function HeartHealthResults() {
     );
   }
 
+  // Handle WhatsApp Share
+  const handleWhatsAppShare = async () => {
+    try {
+      const message = `Hi ${assessment?.name}, Your medical camp report is ready. Please go through it once - some small health signals are easier to improve when noticed early. If you need clarity or support, you can reach us at +91 8977757494`;
+    
+      // 2. Direct Redirect (Text Only) - For Desktop or if Share fails
+      // Direct links (wa.me) CANNOT attach files, so this is text-only.
+      const waLink = `https://wa.me/${assessment?.mobile}?text=${encodeURIComponent(message)}`;
+      
+      // Open WhatsApp
+      window.open(waLink, "_blank");
+      
+      // Mark as sent in database
+      if (assessment?.id) {
+        markAsSent(assessment.id);
+      }
+      
+      // Notify user about the limitation if they are expecting a file
+      if (navigator.canShare) {
+        toast.info("Opening WhatsApp...");
+      }
+      
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast.error("Failed to share report.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background py-12">
-      <div className="container mx-auto px-4 max-w-5xl">
-        <Button variant="ghost" onClick={() => (window.location.href = "https://10000hearts.com/")} className="mb-4">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <Button variant="ghost" onClick={() => navigate("/heart-health")} className="mb-4">
           <Home className="mr-2 h-4 w-4" />
-          Back to Home
+          Back to Heart Health
         </Button>
 
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Heart className="w-12 h-12 text-accent fill-accent" />
             <div>
-              <h2 className="text-2xl font-bold">Hi {assessment?.name},</h2>
+              {assessmentId && assessment?.name ? (
+                <h2 className="text-2xl font-bold">Hi {assessment.name},</h2>
+              ) : (
+                <h2 className="text-2xl font-bold">Welcome,</h2>
+              )}
               <h1 className="text-3xl font-bold">Heart Health Reports</h1>
             </div>
           </div>
         </div>
 
-        {/* Report History Section - Now at the top */}
+        {/* Report History Table Section - Now at the top */}
         {allAssessments.length > 0 && (
-          <Card className="p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-6 mb-8 overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-foreground">Your Reports</h3>
+              <div className="flex items-center gap-2 w-full max-w-sm">
+                <div className="relative w-full">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search by name or mobile..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 w-full bg-background"
+                  />
+                </div>
+              </div>
               <Button onClick={() => navigate("/heart-health")} size="sm" className="bg-accent hover:bg-accent/90">
                 + Create New Report
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allAssessments.map((item, index) => (
-                <Card
-                  key={item.id}
-                  className={`p-4 cursor-pointer transition-all hover:shadow-lg ${
-                    item.id === assessmentId
-                      ? "border-accent border-2 bg-accent/10"
-                      : "border-border hover:border-accent/50"
-                  }`}
-                  onClick={() => navigate(`/heart-health-results?id=${item.id}`)}
-                >
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-foreground text-lg">{item.name}</h3>
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm text-muted-foreground">Report #{allAssessments.length - index}</h4>
-                        {item.id === assessmentId && (
-                          <span className="text-xs bg-accent text-accent-foreground px-2 py-1 rounded-full">
-                            Viewing
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">Date</span>
-                        <span className="text-xs font-medium text-foreground">
-                          {new Date(item.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">Heart Age</span>
-                        <span className="text-xs font-medium text-foreground">{item.heart_age || "N/A"}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">Risk</span>
-                        <span className="text-xs font-medium text-foreground">
-                          {item.risk_score ? `${item.risk_score.toFixed(1)}%` : "N/A"}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs text-muted-foreground">BMI</span>
-                        <span className="text-xs font-medium text-foreground">
-                          {item.bmi ? item.bmi.toFixed(1) : "N/A"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {item.id !== assessmentId && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
+            
+            <div className="rounded-md border border-border overflow-x-auto min-h-[500px]">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="font-bold text-center">Name</TableHead>
+                    <TableHead className="font-bold text-center">Date</TableHead>
+                    <TableHead className="font-bold text-center">Heart Age</TableHead>
+                    <TableHead className="font-bold text-center">Risk (%)</TableHead>
+                    <TableHead className="font-bold text-center">BMI</TableHead>
+                    <TableHead className="font-bold text-center w-[100px]">Sent</TableHead>
+                    <TableHead className="font-bold text-center w-[60px]">WhatsApp</TableHead>
+                    {isAdmin && <TableHead className="font-bold text-center w-[60px]">Action</TableHead>}
+                    <TableHead className="font-bold text-center">View</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAssessments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={isAdmin ? 9 : 8} className="h-24 text-center">
+                        No results found.
+                      </TableCell>
+                    </TableRow>
+                  ) : paginatedAssessments.map((item, index) => {
+                    const isViewing = item.id === assessmentId;
+                    // Calculate real index for report number based on pagination
+                    const realIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
+                    
+                    return (
+                      <TableRow 
+                        key={item.id} 
+                        className={`cursor-pointer transition-colors ${
+                          isViewing ? "bg-accent/10 hover:bg-accent/15" : "hover:bg-muted/30"
+                        }`}
+                        onClick={() => {
                           navigate(`/heart-health-results?id=${item.id}`);
+                          setIsModalOpen(true);
                         }}
                       >
-                        View Report
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
+                        <TableCell className="text-center font-medium">
+                          <div className="flex flex-col items-center">
+                            <span>{item.name}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                              Report #{filteredAssessments.length - realIndex}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center text-sm font-medium">
+                          {new Date(item.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-center font-semibold text-accent">
+                          {item.heart_age || "N/A"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.risk_score ? (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                              item.risk_score > 20 ? "bg-red-100 text-red-700" : 
+                              item.risk_score > 10 ? "bg-orange-100 text-orange-700" : 
+                              "bg-green-100 text-green-700"
+                            }`}>
+                              {item.risk_score.toFixed(1)}%
+                            </span>
+                          ) : "N/A"}
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          {item.bmi ? item.bmi.toFixed(1) : "N/A"}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                            <Checkbox 
+                              checked={item.is_report_send || false} 
+                              onCheckedChange={() => handleToggleSent(item.id, item.is_report_send)}
+                              className="h-5 w-5"
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                            {item.mobile ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-[#25D366] hover:text-[#128C7E] hover:bg-[#25D366]/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const message = `Hi ${item.name}, Your medical camp report is ready. Please go through it once - some small health signals are easier to improve when noticed early. If you need clarity or support, you can reach us at +91 8977757494`;
+                                  const cleanNumber = item.mobile.replace(/\D/g, '');
+                                  const waLink = `https://wa.me/${cleanNumber.startsWith('91') ? cleanNumber : '91' + cleanNumber}?text=${encodeURIComponent(message)}`;
+                                  window.open(waLink, "_blank");
+                                  markAsSent(item.id);
+                                }}
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                            ) : "-"}
+                          </div>
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className="text-center">
+                            <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                                onClick={(e) => handleDelete(e, item.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                        <TableCell className="text-center">
+                          <Button
+                            variant="isViewing"
+                            size="sm"
+                            className="h-8 gap-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!isViewing) {
+                                navigate(`/heart-health-results?id=${item.id}`);
+                              }
+                              setIsModalOpen(true);
+                            }}
+                          >
+                            {isViewing ? (
+                              <>
+                                <CheckCircle className="h-4 w-4" />
+                                Viewing
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-4 w-4" />
+                                View
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
+            
+            {/* Pagination Controls */}
+            {filteredAssessments.length > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssessments.length)} of {filteredAssessments.length} results
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="text-sm font-medium">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
 
-        {/* Assessment Details Section */}
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-2xl font-bold text-foreground">Assessment Details</h3>
-            <div className="flex gap-2">
-              {!isEditMode && (
-                <Button onClick={handleEdit} variant="outline" size="sm">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Button>
-              )}
-              <Button onClick={downloadPDFReport} variant="default" size="sm" disabled={saving}>
-                <Download className="mr-2 h-4 w-4" />
-                {saving ? "Generating..." : "Download PDF"}
-              </Button>
-            </div>
-          </div>
+        {/* Assessment Details Modal */}
+        <Dialog open={isModalOpen} onOpenChange={(open) => {
+          setIsModalOpen(open);
+          if (!open) navigate("/heart-health-results");
+        }}>
+        <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto p-0 border-none bg-transparent shadow-none [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-accent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-accent/10 hover:[&::-webkit-scrollbar-thumb]:bg-accent/80">
+            {!assessment ? (
+              <div className="bg-background rounded-lg p-6 md:p-10 shadow-2xl border border-border">
+                <div className="text-center py-12">
+                  <Activity className="w-12 h-12 text-accent animate-pulse mx-auto mb-4" />
+                  <p className="text-muted-foreground">Loading assessment details...</p>
+                </div>
+              </div>
+            ) : (
+            <div className="bg-background rounded-lg p-6 md:p-10 shadow-2xl border border-border">
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-3xl font-bold text-foreground">Assessment Details</DialogTitle>
+              </DialogHeader>
+
+              <Card className="p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold text-foreground">Assessment Details</h3>
+                  <div className="flex gap-2">
+                    {!isEditMode && (
+                      <>
+                        <Button
+                          onClick={handleWhatsAppShare}
+                          className="bg-[#25D366] hover:bg-[#128C7E] text-white border-none"
+                          size="sm"
+                        >
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Consult on WhatsApp
+                        </Button>
+                        <Button onClick={handleEdit} variant="outline" size="sm">
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </Button>
+                        <Button onClick={downloadPDFReport} variant="default" size="sm" disabled={saving}>
+                          <Download className="mr-2 h-4 w-4" />
+                          {saving ? "Generating..." : "Download PDF"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
 
         {/* Current Report Details */}
           <div className="mb-4">
@@ -1834,16 +2022,16 @@ export default function HeartHealthResults() {
 
               <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-foreground">
-                  {assessment.heart_age || assessment.age || "N/A"}
+                  {assessment?.heart_age || assessment?.age || "N/A"}
                 </div>
                 <h3 className="text-lg font-semibold text-accent">Heart Age</h3>
-                <p className="text-xs text-muted-foreground">vs {assessment.age} years</p>
+                <p className="text-xs text-muted-foreground">vs {assessment?.age} years</p>
                 <p className="text-xs text-muted-foreground mt-2">Biological Age</p>
               </Card>
 
               <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
                 <div className="text-4xl font-bold text-foreground">
-                  {assessment.risk_score ? `${assessment.risk_score.toFixed(1)}%` : "N/A"}
+                  {assessment?.risk_score ? `${assessment.risk_score.toFixed(1)}%` : "N/A"}
                 </div>
                 <h3 className="text-lg font-semibold text-accent">Heart Risk</h3>
                 <p className={`text-xs font-medium ${getRiskCategory().color}`}>{getRiskCategory().level}</p>
@@ -1907,7 +2095,7 @@ export default function HeartHealthResults() {
                       </p>
                     </div>
                   )}
-                  {bpInfo.category && bpInfo.category.includes("High Blood Pressure") && (
+                  {bpInfo?.category && bpInfo?.category?.includes("High Blood Pressure") && (
                     <div className="mt-4 p-3 bg-warning/10 rounded-lg">
                       <p className="text-xs text-foreground">
                         This level of BP, if persistent, increases risk of: • Stroke • Heart disease • Kidney damage
@@ -1924,50 +2112,50 @@ export default function HeartHealthResults() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <div className="space-y-4">
-                      {assessment.ldl && (
+                      {assessment?.ldl && (
                         <div className="p-4 bg-muted/30 rounded-lg">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-medium">LDL (Bad Cholesterol)</span>
                             <span
                               className={`text-2xl font-bold ${
                                 (() => {
-                                  const level = LDL_LEVELS.find(lvl => assessment.ldl < lvl.max);
+                                  const level = LDL_LEVELS.find(lvl => assessment?.ldl < lvl.max);
                                   return level?.color || "text-success";
                                 })()
                               }`}
                             >
-                              {assessment.ldl}
+                              {assessment?.ldl}
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">mg/dL</p>
                           <div className="mt-2 text-sm font-medium">
                             {(() => {
-                              const level = LDL_LEVELS.find(lvl => assessment.ldl < lvl.max);
+                              const level = LDL_LEVELS.find(lvl => assessment?.ldl < lvl.max);
                               return level ? <span className={level.color}>{level.label}</span> : null;
                             })()}
                           </div>
                         </div>
                       )}
 
-                      {assessment.hdl && (
+                      {assessment?.hdl && (
                         <div className="p-4 bg-muted/30 rounded-lg">
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm font-medium">HDL (Good Cholesterol)</span>
                             <span
                               className={`text-2xl font-bold ${
                                 (() => {
-                                  const level = HDL_LEVELS.find(lvl => assessment.hdl < lvl.max);
+                                  const level = HDL_LEVELS.find(lvl => assessment?.hdl < lvl.max);
                                   return level?.color || "text-success";
                                 })()
                               }`}
                             >
-                              {assessment.hdl}
+                              {assessment?.hdl}
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">mg/dL</p>
                           <div className="mt-2 text-sm font-medium">
                             {(() => {
-                              const level = HDL_LEVELS.find(lvl => assessment.hdl < lvl.max);
+                              const level = HDL_LEVELS.find(lvl => assessment?.hdl < lvl.max);
                               return level ? <span className={level.color}>{level.label}</span> : null;
                             })()}
                           </div>
@@ -3145,6 +3333,10 @@ export default function HeartHealthResults() {
             </div>
           </Card>
         </div>
+            </div>
+          )}
+          </DialogContent>
+        </Dialog>
 
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
@@ -3155,6 +3347,39 @@ export default function HeartHealthResults() {
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-destructive flex items-center gap-2">
+              <AlertCircle className="h-6 w-6" />
+              Confirm Deletion
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <p className="text-lg text-foreground">
+              Are you sure you want to delete this assessment? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={saving}
+            >
+              {saving ? "Deleting..." : "Delete Permanently"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
