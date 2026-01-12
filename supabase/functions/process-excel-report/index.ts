@@ -6,6 +6,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface Assessment {
+  gender?: string;
+  age?: number | string;
+  systolic?: number | string;
+  bmi?: number | string;
+  smoking?: string | boolean;
+  diabetes?: string | boolean;
+  sleep_hours?: number;
+  diet?: string;
+  exercise?: string;
+  chest_pain?: boolean;
+  shortness_of_breath?: boolean;
+  family_history?: boolean;
+  ldl?: number;
+  hdl?: number;
+  height?: number;
+  weight?: number;
+  [key: string]: unknown;
+}
+
+interface ProcessedData extends Assessment {
+  name: string;
+  mobile: string;
+  risk_score?: number;
+  heart_age?: number;
+}
+
 const FRAMINGHAM_COEFFICIENTS = {
   men: {
     lnAge: 3.06117,
@@ -27,17 +54,17 @@ const FRAMINGHAM_COEFFICIENTS = {
   },
 };
 
-function calculateFraminghamRisk(assessment) {
+function calculateFraminghamRisk(assessment: Assessment): number {
   const gender = (assessment.gender || "male").toLowerCase();
-  const age = parseFloat(assessment.age) || 30;
-  const systolic = parseFloat(assessment.systolic) || 120;
-  const bmi = parseFloat(assessment.bmi) || 24;
+  const age = parseFloat(String(assessment.age)) || 30;
+  const systolic = parseFloat(String(assessment.systolic)) || 120;
+  const bmi = parseFloat(String(assessment.bmi)) || 24;
   const isSmoker = assessment.smoking === "regularly" || assessment.smoking === "occasionally" || assessment.smoking === "yes" || assessment.smoking === true;
   const hasDiabetes = assessment.diabetes === "yes" || assessment.diabetes === true;
 
   const coeffs = gender === "female" || gender === "other" ? FRAMINGHAM_COEFFICIENTS.women : FRAMINGHAM_COEFFICIENTS.men;
 
-  let betaX = (coeffs.lnAge * Math.log(age)) +
+  const betaX = (coeffs.lnAge * Math.log(age)) +
     (coeffs.lnBMI * Math.log(bmi)) +
     (coeffs.lnSBP * Math.log(systolic)) +
     (isSmoker ? coeffs.smoking : 0) +
@@ -47,16 +74,17 @@ function calculateFraminghamRisk(assessment) {
   return risk * 100;
 }
 
-function calculateHeartAge(assessment) {
-  const actualAge = parseFloat(assessment.age) || 30;
+function calculateHeartAge(assessment: Assessment): number {
+  const actualAge = parseFloat(String(assessment.age)) || 30;
   const riskPercent = calculateFraminghamRisk(assessment);
 
-  const idealPerson = {
+  const idealPerson: Assessment = {
     gender: assessment.gender,
     bmi: 22.5,
     systolic: 115,
     smoking: false,
     diabetes: false,
+    age: 30,
   };
 
   let minDiff = Number.MAX_VALUE;
@@ -94,7 +122,7 @@ function calculateHeartAge(assessment) {
   return Math.max(18, Math.min(100, calculatedHeartAge + modifier));
 }
 
-function calculateRiskScore(assessment) {
+function calculateRiskScore(assessment: Assessment): number {
   let riskPercent = calculateFraminghamRisk(assessment);
   if (assessment.ldl && assessment.ldl > 160) riskPercent *= 1.3;
   if (assessment.hdl && assessment.hdl < 40) riskPercent *= 1.2;
@@ -103,7 +131,7 @@ function calculateRiskScore(assessment) {
   return parseFloat(Math.min(99.9, riskPercent).toFixed(1));
 }
 
-function findVal(row, keys) {
+function findVal(row: Record<string, unknown>, keys: string[]): unknown {
   const rowKeys = Object.keys(row);
   for (const k of keys) {
     const normalizedK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -127,12 +155,12 @@ serve(async (req) => {
     
     // If action is calculate and we already have data, just calculate
     if (action === "calculate" && incomingData) {
-      const results = incomingData.map(item => {
-        const heightM = (parseFloat(item.height) || 160) / 100;
-        const weight = parseFloat(item.weight) || 60;
+      const results = incomingData.map((item: Assessment) => {
+        const heightM = (parseFloat(String(item.height)) || 160) / 100;
+        const weight = parseFloat(String(item.weight)) || 60;
         const bmi = parseFloat((weight / (heightM * heightM)).toFixed(1));
-        const calculations = { ...item, bmi };
-        calculations.risk = calculateRiskScore(calculations);
+        const calculations: ProcessedData = { ...item, bmi, name: String(item.name || ''), mobile: String(item.mobile || '') };
+        calculations.risk_score = calculateRiskScore(calculations);
         calculations.heart_age = Math.round(calculateHeartAge(calculations));
         return calculations;
       });
@@ -150,7 +178,7 @@ serve(async (req) => {
     const arrayBuffer = await response.arrayBuffer();
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(worksheet, { defval: "" }); // defval ensures empty cells are included
+    const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
     // Discovery tracking
     const discoveredFields = {
@@ -164,9 +192,9 @@ serve(async (req) => {
       bmi_input: false,
     };
 
-    const isYes = (val) => {
+    const isYes = (val: unknown): boolean => {
       if (val === undefined || val === null) return false;
-      const s = val.toString().toLowerCase().trim();
+      const s = String(val).toLowerCase().trim();
       return s === "yes" || s === "y" || s === "1" || s === "true" || s === "present";
     };
 
@@ -219,7 +247,7 @@ serve(async (req) => {
         return null;
       }
       
-      const nameStr = field_name ? field_name.toString().trim() : `Patient ${index + 1}`;
+      const nameStr = field_name ? String(field_name).trim() : `Patient ${index + 1}`;
       
       if (index < 3) {
         console.log(`Row ${index} - Name: ${nameStr}, Age: ${field_age}, BP: ${bpRaw}, Mobile: ${field_mobile}`);
@@ -228,52 +256,52 @@ serve(async (req) => {
       // BP Parser
       let systolic = 120;
       let diastolic = 80;
-      if (bpRaw && bpRaw.toString().includes("/")) {
-        const parts = bpRaw.toString().split("/");
+      if (bpRaw && String(bpRaw).includes("/")) {
+        const parts = String(bpRaw).split("/");
         systolic = parseFloat(parts[0]) || 120;
         diastolic = parseFloat(parts[1]) || 80;
       } else {
         const sysVal = findVal(row, ["systolic", "sys", "bp high", "sbp"]);
         const diaVal = findVal(row, ["diastolic", "dia", "bp low", "dbp"]);
-        if (sysVal !== null) systolic = parseFloat(sysVal) || 120;
-        if (diaVal !== null) diastolic = parseFloat(diaVal) || 80;
+        if (sysVal !== null) systolic = parseFloat(String(sysVal)) || 120;
+        if (diaVal !== null) diastolic = parseFloat(String(diaVal)) || 80;
       }
 
       // Symptoms & Sleep parsing
-      const initialSymptoms = (field_initial_symptoms || "").toString().toLowerCase();
-      const additionalSymptoms = (field_additional_symptoms || "").toString().toLowerCase();
+      const initialSymptoms = String(field_initial_symptoms || "").toLowerCase();
+      const additionalSymptoms = String(field_additional_symptoms || "").toLowerCase();
       const combSymptoms = initialSymptoms + " " + additionalSymptoms;
       
       let sleep = 7;
       if (field_sleep) {
-        const matches = field_sleep.toString().match(/\d+/);
+        const matches = String(field_sleep).match(/\d+/);
         if (matches) sleep = parseFloat(matches[0]);
       }
 
-      const pData = {
+      const pData: ProcessedData = {
         name: nameStr,
-        mobile: field_mobile ? field_mobile.toString().trim() : "",
-        age: parseFloat(field_age) || 30,
-        gender: (findVal(row, ["gender", "sex", "m/f"]) || "male").toLowerCase(),
-        height: parseFloat(field_height) || 165,
-        weight: parseFloat(field_weight) || 65,
-        diet: field_diet || "Balanced",
-        exercise: findVal(row, ["exercise", "activity", "physical activity"]) || "Active",
+        mobile: field_mobile ? String(field_mobile).trim() : "",
+        age: parseFloat(String(field_age)) || 30,
+        gender: String(findVal(row, ["gender", "sex", "m/f"]) || "male").toLowerCase(),
+        height: parseFloat(String(field_height)) || 165,
+        weight: parseFloat(String(field_weight)) || 65,
+        diet: String(field_diet || "Balanced"),
+        exercise: String(findVal(row, ["exercise", "activity", "physical activity"]) || "Active"),
         sleep_hours: sleep,
-        water_intake: parseFloat(field_water_intake) || null,
-        profession: field_profession || "",
-        smoking: field_smoking || "no",
+        water_intake: parseFloat(String(field_water_intake)) || undefined,
+        profession: String(field_profession || ""),
+        smoking: String(field_smoking || "no"),
         tobacco_use: isYes(findVal(row, ["tobacco use", "tobacco", "chewing tobacco", "gutka"])),
         knows_lipids: isYes(field_lipids),
         high_cholesterol: isYes(findVal(row, ["high cholesterol", "cholesterol", "high lipids"])),
-        diabetes: field_diabetes || "no",
+        diabetes: String(field_diabetes || "no"),
         systolic: systolic,
         diastolic: diastolic,
-        pulse: parseFloat(field_pulse) || 72,
-        fasting_sugar: parseFloat(field_fbs) || null,
-        post_meal_sugar: parseFloat(field_ppbs) || null,
-        ldl: parseFloat(findVal(row, ["ldl", "bad cholesterol", "ldl cholesterol"])) || null,
-        hdl: parseFloat(findVal(row, ["hdl", "good cholesterol", "hdl cholesterol"])) || null,
+        pulse: parseFloat(String(field_pulse)) || 72,
+        fasting_sugar: parseFloat(String(field_fbs)) || undefined,
+        post_meal_sugar: parseFloat(String(field_ppbs)) || undefined,
+        ldl: parseFloat(String(findVal(row, ["ldl", "bad cholesterol", "ldl cholesterol"]))) || undefined,
+        hdl: parseFloat(String(findVal(row, ["hdl", "good cholesterol", "hdl cholesterol"]))) || undefined,
         chest_pain: isYes(findVal(row, ["chest pain", "angina", "cp"])) || combSymptoms.includes("chest pain"),
         shortness_of_breath: isYes(findVal(row, ["sob", "shortness of breath"])) || combSymptoms.includes("shortness of breath"),
         dizziness: isYes(findVal(row, ["dizziness", "fainting"])) || combSymptoms.includes("dizziness") || combSymptoms.includes("fainting"),
@@ -281,13 +309,13 @@ serve(async (req) => {
         swelling: isYes(findVal(row, ["swelling", "edema"])) || combSymptoms.includes("swelling"),
         palpitations: isYes(findVal(row, ["palpitations", "heart racing"])) || combSymptoms.includes("palpitations") || combSymptoms.includes("heart racing"),
         family_history: isYes(findVal(row, ["family history", "fh"])) || combSymptoms.includes("family history"),
-        user_notes: field_notes || "",
-        email: field_email ? field_email.toString().trim().toLowerCase() : "",
+        user_notes: String(field_notes || ""),
+        email: field_email ? String(field_email).trim().toLowerCase() : "",
       };
 
       if (action === "calculate") {
-        const heightM = pData.height / 100;
-        pData.bmi = parseFloat((pData.weight / (heightM * heightM)).toFixed(1));
+        const heightM = (pData.height as number) / 100;
+        pData.bmi = parseFloat(((pData.weight as number) / (heightM * heightM)).toFixed(1));
         pData.risk_score = calculateRiskScore(pData);
         pData.heart_age = Math.round(calculateHeartAge(pData));
       }
@@ -311,7 +339,8 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error processing Excel:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
