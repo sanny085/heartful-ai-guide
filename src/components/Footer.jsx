@@ -175,7 +175,7 @@ const Footer = () => {
               </Link>
             </div>
             <p className="text-sm text-white/70 leading-relaxed max-w-2xl">
-              10000hearts was founded with a mission to use artificial intelligence to make healthcare more accessible and affordable. We're dedicated to saving hearts and building health across India through preventive care and AI-powered wellness guidance.
+              10000hearts is a preventive wellness program that helps people reduce heart-attack risk naturally by building healthier daily habits and restoring balance in the body.
             </p>
             <div className="flex items-center gap-2 text-sm text-white/60">
               <Globe className="w-4 h-4 text-white/60" />

@@ -97,7 +97,7 @@ export const getColorClasses = (color) => {
 // Common CTA button handler with optional chaining
 export const handleCTAClick = (navigate) => {
   window?.scrollTo?.({ top: 0, behavior: "smooth" });
-  navigate?.("/12-weeks-program/apply");
+  navigate?.("/wellness-program/apply");
 };
 
 // Common CTA button styles

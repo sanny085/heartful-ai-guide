@@ -84,12 +84,28 @@ const PlansSection = memo(() => {
       ],
       highlighted: false,
       color:"green"
-    }
+    },
+    {
+    title: "Energy Boost Plan",
+    badge: "Complete Plan",
+    badgeColor: "gray",
+    highlighted: false,
+    features: [
+      "12-week personalized lifestyle transformation plan",
+      // "Low energy, fatigue & burnout recovery support",
+      "Restore energy, overcome fatigue, and recover from burnout naturally",
+      "Root-cause analysis of lifestyle-related health issues",
+      "Customized Indian diet plan (home food, no extreme diets)",
+      "Daily routine optimization (sleep, meals, movement, stress)",
+      "Physical activity & mobility guidance (home-based, age-appropriate)",
+      "Stress, anxiety & mental wellness support",
+    ],
+  },
   ], []);
 
   const handleButtonClick = useCallback((programTitle) => {
     window?.scrollTo?.({ top: 0, behavior: "smooth" });
-    navigate?.(`/12-weeks-program/apply?program=${encodeURIComponent(programTitle)}`);
+    navigate?.(`/wellness-program/apply?program=${encodeURIComponent(programTitle)}`);
   }, [navigate]);
 
   return (
@@ -101,7 +117,7 @@ const PlansSection = memo(() => {
             description="Select the right program for your health concern. Designed for Indian lifestyle with our traditional foods."
           />
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan, index) => {
               const { title, badge, features, highlighted, color } = plan ?? {};
               const { badge: badgeClass = "", border = "", checkmark = "", button = "", buttonHover = "" } = getColorClasses(color) ?? {};
