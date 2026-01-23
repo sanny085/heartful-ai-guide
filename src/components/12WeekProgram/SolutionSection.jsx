@@ -1,100 +1,98 @@
-import { memo, useMemo, useCallback } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Star, XCircle, CheckCircle2 } from "lucide-react";
+import { ClipboardCheck, Users, TrendingUp, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { handleCTAClick, CTA_BUTTON_CLASSES, CTA_BUTTON_CONTENT_CLASSES, CTA_BUTTON_TEXT_CLASSES, CTA_BUTTON_SHINE_CLASSES } from "./programUtils";
-import SectionHeader from "./SectionHeader";
 
-const SolutionSection = memo(() => {
-  const navigate = useNavigate();
-  
-  const notList = useMemo(() => [
-    "A generic diet plan",
-    "Just another yoga class",
-    "Quick-fix supplements",
-    "One-size-fits-all approach",
-  ], []);
+const steps = [
+  {
+    number: "01",
+    icon: ClipboardCheck,
+    title: "Free Health Assessment",
+    description:
+      "Share your health reports, lifestyle details, and concerns. We analyze everything deeply - not just numbers, but your complete health story.",
+    duration: "15 min form + 30 min call",
+  },
+  {
+    number: "02",
+    icon: Users,
+    title: "Personalized Roadmap",
+    description:
+      "Based on your assessment, we create a 100% customized healing plan - diet, exercise, remedies, and lifestyle changes tailored just for you.",
+    duration: "Delivered in 48 hours",
+  },
+  {
+    number: "03",
+    icon: TrendingUp,
+    title: "Guided Transformation",
+    description:
+      "Execute your plan with continuous doctor observation, weekly check-ins, adjustments, and unwavering support until you see real results.",
+    duration: "90-day transformation",
+  },
+];
 
-  const isList = useMemo(() => [
-    "Structured lifestyle correction",
-    "Personalized guidance",
-    "Doctor-monitored progress",
-    "Path to long-term independence",
-  ], []);
-
-  const handleButtonClick = useCallback(() => {
-    handleCTAClick(navigate);
-  }, [navigate]);
+const ProcessSection = () => {
+  const navigate = useNavigate()
 
   return (
-    <section className="py-8 md:py-12 bg-gradient-to-br from-green-50/50 via-white to-emerald-50/50 relative overflow-hidden">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <SectionHeader
-            badgeIcon={Star}
-            badgeText="Introducing"
-            title="Your Solution Awaits! ✨"
-            description="A doctor-led, science-backed program designed specifically for Indian lifestyles to help you take control of your health—naturally."
-          />
+    <section id="process" className="section-padding bg-[#276852] text-primary-foreground">
+      <div className="container-wide">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <span className="inline-block font-semibold text-sm uppercase tracking-wider mb-4 text-[#288A7A]">
+            Simple 3-Step Process
+          </span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4">
+            Your Journey to <span className="text-secondary">Natural Health</span>
+          </h2>
+          <p className="text-lg text-primary-foreground/80 leading-relaxed">
+            No confusion. No overwhelm. Just a clear path from where you are to where you want to be.
+          </p>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-            {/* This is NOT */}
-            <Card className="relative pt-4 pb-8 px-8 bg-gradient-to-br from-gray-100 to-gray-50 border-4 border-gray-300 rounded-3xl overflow-hidden group shadow-xl">
-              <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 mt-0 relative z-10">
-                <XCircle className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-gray-500" />
-                <h3 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold text-gray-800">This is NOT:</h3>
-              </div>
-              <ul className="space-y-3 md:space-y-4 relative z-10">
-                {notList.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 md:gap-3 relative pl-6 md:pl-8">
-                    <div className="absolute left-0 top-1 w-4 h-4 md:w-5 md:h-5 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-400">
-                      <XCircle className="w-2 h-2 md:w-3 md:h-3 text-gray-500" />
+        {/* Process Steps */}
+        <div className="relative">
+          {/* Connection Line - Desktop */}
+          <div className="hidden lg:block absolute top-24 left-1/2 -translate-x-1/2 w-[60%] h-0.5 bg-primary-foreground/20" />
+
+          <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
+            {steps.map((step, index) => (
+              <div key={index} className="relative">
+                {/* Step Card */}
+                <div className="bg-primary-foreground/10 backdrop-blur-sm rounded-2xl p-8 border border-primary-foreground/20 h-full">
+                  {/* Step Number */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <span className="text-5xl font-extrabold text-secondary/40">{step.number}</span>
+                    <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                      <step.icon className="w-6 h-6 text-foreground" />
                     </div>
-                    <span className="text-sm md:text-base lg:text-lg text-gray-800 font-semibold">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+                  </div>
 
-            {/* This IS */}
-            <Card className="relative pt-4 pb-8 px-8 bg-gradient-to-br from-green-50 via-yellow-50 to-emerald-50 border-4 border-green-300 rounded-3xl overflow-hidden group shadow-xl">
-              <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 mt-0 relative z-10">
-                <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-green-400" />
-                <h3 className="text-lg md:text-xl lg:text-2xl xl:text-3xl font-extrabold text-gray-800">This IS:</h3>
+                  <h3 className="text-2xl font-bold mb-4">{step.title}</h3>
+                  <p className="text-primary-foreground/80 leading-relaxed mb-6">{step.description}</p>
+                  <div className="inline-block bg-primary-foreground/10 px-4 py-2 rounded-full text-sm font-medium">
+                    {step.duration}
+                  </div>
+                </div>
+
+                {/* Arrow - Mobile */}
+                {index < steps.length - 1 && (
+                  <div className="lg:hidden flex justify-center my-4">
+                    <ArrowRight className="w-6 h-6 text-primary-foreground/40 rotate-90" />
+                  </div>
+                )}
               </div>
-              <ul className="space-y-3 md:space-y-4 relative z-10">
-                {isList.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 md:gap-3 relative pl-6 md:pl-8">
-                    <div className="absolute left-0 top-1 w-4 h-4 md:w-5 md:h-5 bg-yellow-200 rounded-full flex items-center justify-center border-2 border-yellow-400">
-                      <CheckCircle2 className="w-2 h-2 md:w-3 md:h-3 text-yellow-600" />
-                    </div>
-                    <span className="text-sm md:text-base lg:text-lg text-gray-800 font-semibold">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+            ))}
           </div>
+        </div>
 
-          <div className="text-center mt-12">
-            <Button
-              onClick={handleButtonClick}
-              className={CTA_BUTTON_CLASSES}
-              size="lg"
-            >
-              <span className={CTA_BUTTON_CONTENT_CLASSES}>
-                <span className={CTA_BUTTON_TEXT_CLASSES}>Join the Program 🚀</span>
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 ml-1 sm:ml-2 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className={CTA_BUTTON_SHINE_CLASSES}></div>
-            </Button>
-          </div>
+        {/* CTA */}
+        <div className="text-center mt-10">
+          <button onClick={() => navigate("/wellness-program/apply")} className="btn-cta">
+            Start My Health Journey Now
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </section>
   );
-});
+};
 
-SolutionSection.displayName = "SolutionSection";
-
-export default SolutionSection;
+export default ProcessSection;

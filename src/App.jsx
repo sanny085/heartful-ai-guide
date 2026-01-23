@@ -130,17 +130,15 @@ const App = () => (
               }
             />
             <Route
-              path="/12-weeks-program"
+              path="/wellness-program"
               element={
                 <TwelveWeekProgram />
               }
             />
             <Route
-              path="/12-weeks-program/apply"
+              path="/wellness-program/apply"
               element={
-                <PrivateRoute>
-                  <TwelveWeekProgramApplication />
-                </PrivateRoute>
+                <TwelveWeekProgramApplication />
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
