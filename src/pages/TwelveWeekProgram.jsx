@@ -28,6 +28,9 @@ const TwelveWeekProgram = () => {
       {/* Problem Awareness Section */}
       <ProblemsSection />
 
+      {/* Plans Section */}
+      <PlansSection />
+
       {/* Medicine Education Section */}
       <ServicesSection />
 
@@ -42,9 +45,6 @@ const TwelveWeekProgram = () => {
 
       {/* Trust Section */}
       {/* <ChooseProgramSection /> */}
-
-      {/* Plans Section */}
-      <PlansSection />
 
       {/* Testimonials Section */}
       <TestimonialsSection />
