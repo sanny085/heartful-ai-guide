@@ -59,6 +59,8 @@ All colors MUST be HSL.
     --health-green: 100 75% 45%;
     --health-orange: 20 100% 64%;
     --health-light-blue: 185 45% 93%;
+    --health-dark-green: 155 40% 25%;
+    --health-soft-green: 100 60% 95%;
     
     /* Shadows */
     --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
