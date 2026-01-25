@@ -90,7 +90,7 @@ const Navbar = () => {
           />
         <span className="text-xs sm:text-xs md:text-sm lg:text-sm xl:text-base 2xl:text-base">{envType === 'dev' ? envType : ''}</span>
           {/* Services Navigation Menu */}
-          <NavigationMenu className="hidden md:block">
+          <NavigationMenu className="hidden lg:block">
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="text-foreground hover:text-primary text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg px-2 md:px-3 lg:px-4 h-8 md:h-9 lg:h-10">
@@ -98,11 +98,22 @@ const Navbar = () => {
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="w-[200px] md:w-[220px] lg:w-[240px] xl:w-[260px] 2xl:w-[280px] p-2 space-y-1">
+                    <button
+                      onClick={() => navigate("/wellness-program")}
+                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <CalendarCheck className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
+                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
+                          Wellness Program
+                        </span>
+                      </div>
+                    </button>
                     {ADMIN_EMAIL.includes(user?.email) && <button onClick={() => navigate("/heart-health")} className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 rounded-md hover:bg-accent/10 transition-colors">
                       <div className="flex items-center gap-2">
                         <Heart className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:h-5 text-primary" />
                         <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
-                          Heart Health
+                          Heart Health Checkup
                         </span>
                       </div>
                     </button>}
@@ -126,17 +137,6 @@ const Navbar = () => {
                         <Calendar className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
                         <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
                           My Appointments
-                        </span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => navigate("/12-weeks-program")}
-                      className="w-full text-left px-3 md:px-4 lg:px-4 py-2.5 md:py-3 lg:py-3 rounded-md hover:bg-accent/10 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <CalendarCheck className="w-4 h-4 md:w-4 md:h-4 lg:w-5 lg:h-5 xl:w-5 xl:h-5 2xl:w-5 2xl:h-5 text-primary" />
-                        <span className="font-medium text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg">
-                          12-Weeks Program
                         </span>
                       </div>
                     </button>
@@ -236,22 +236,33 @@ const Navbar = () => {
                   <Button
                     variant="ghost"
                     onClick={() => {
+                      navigate("/wellness-program");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
+                  >
+                    <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
+                    Wellness Program
+                  </Button>
+                  {ADMIN_EMAIL.includes(user?.email) && <Button
+                    variant="ghost"
+                    onClick={() => {
                       handleHeartHealthCheckup();
                     }}
-                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     Heart Health Checkup
-                  </Button>
+                  </Button>}
                   <Button
                     variant="ghost"
                     onClick={() => {
                       navigate("/videoconsult");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     Video Consult
                   </Button>
                   <Button
@@ -260,21 +271,10 @@ const Navbar = () => {
                       navigate("/my-appointments");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     My Appointments
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      navigate("/12-weeks-program");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
-                  >
-                    <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
-                    12-Week Program
                   </Button>
                 </div>
 
@@ -286,9 +286,9 @@ const Navbar = () => {
                       navigate("/blogs");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     Blogs
                   </Button>
                   <Button
@@ -297,9 +297,9 @@ const Navbar = () => {
                       navigate("/reviews");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-accent hover:bg-accent/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-accent hover:bg-accent/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     Reviews
                   </Button>
                   <Button
@@ -308,9 +308,9 @@ const Navbar = () => {
                       navigate("/volunteer");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-success hover:bg-success/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-success hover:bg-success/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <HandHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <HandHeart className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     Volunteer
                   </Button>
                   <Button
@@ -319,9 +319,9 @@ const Navbar = () => {
                       navigate("/about-us");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-warning hover:bg-warning/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-warning hover:bg-warning/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     About Us
                   </Button>
                   <Button
@@ -330,9 +330,9 @@ const Navbar = () => {
                       navigate("/partner-with-us");
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
+                    className="w-full justify-start text-foreground hover:text-primary hover:bg-primary/10 text-[11px] sm:text-sm md:text-base h-9 sm:h-10 md:h-11 whitespace-nowrap px-2"
                   >
-                    <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3" />
+                    <Handshake className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 mr-2 sm:mr-2.5 md:mr-3 shrink-0" />
                     Partner With Us
                   </Button>
                 </div>
