@@ -1,106 +1,144 @@
-import { memo, useMemo, useCallback } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, ArrowRight, Leaf, Heart } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+import naveenStress from "@/assets/whatsapp-naveen-stress.png";
+import rahulDiabetes from "@/assets/whatsapp-rahul-diabetes.png";
+import rameshBp from "@/assets/whatsapp-ramesh-bp.png";
+import bhavaniPcod from "@/assets/whatsapp-bhavani-pcod.png";
+import shirishaStamina from "@/assets/whatsapp-shirisha-stamina.png";
+import saiSleep from "@/assets/whatsapp-sai-sleep.png";
+import kiranBp from "@/assets/whatsapp-kiran-bp.png";
+import prakashDiabetic from "@/assets/whatsapp-prakash-diabetic.png";
+import anushaThyroid from "@/assets/whatsapp-anusha-thyroid.png";
+import sureshPrediabetic from "@/assets/whatsapp-suresh-prediabetic.png";
 import { useNavigate } from "react-router-dom";
-import { handleCTAClick, CTA_BUTTON_CLASSES, CTA_BUTTON_CONTENT_CLASSES, CTA_BUTTON_TEXT_CLASSES, CTA_BUTTON_SHINE_CLASSES } from "./programUtils";
-import SectionHeader from "./SectionHeader";
 
-const WhoIsThisForSection = memo(() => {
-  const navigate = useNavigate();
-  
-  const forList = useMemo(() => [
-    "Adults with BP or pre-hypertension diagnosis",
-    "Busy professionals dealing with chronic stress",
-    "Those worried about rising sugar levels",
-    "People serious about lifestyle change",
-    "Anyone seeking natural, long-term solutions",
-  ], []);
+const testimonials = [
+  { image: naveenStress, name: "Naveen", condition: "Lifestyle Reset" },
+  { image: rahulDiabetes, name: "Rahul", condition: "Diabetes Reversed" },
+  { image: rameshBp, name: "Ramesh Kumar", condition: "BP Normalized" },
+  { image: bhavaniPcod, name: "Bhavani", condition: "PCOD Managed" },
+  { image: shirishaStamina, name: "Shirisha", condition: "Weight & Energy Improved" },
+  { image: saiSleep, name: "Sai", condition: "Sleep & Anxiety Better" },
+  { image: kiranBp, name: "Kiran", condition: "BP Stabilized" },
+  { image: prakashDiabetic, name: "Prakash", condition: "6 Years Diabetes Controlled" },
+  { image: anushaThyroid, name: "Anusha", condition: "Thyroid Managed" },
+  { image: sureshPrediabetic, name: "Suresh", condition: "Pre-Diabetes Prevented" },
+];
 
-  const notForList = useMemo(() => [
-    "Those looking for quick fixes or magic pills",
-    "People unwilling to follow a structured routine",
-    "Anyone expecting results without effort",
-  ], []);
+const WhatsAppTestimonialsSection = () => {
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const handleButtonClick = useCallback(() => {
-    handleCTAClick(navigate);
-  }, [navigate]);
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const container = scrollRef.current;
+    if (container) {
+      container.addEventListener("scroll", checkScroll);
+      return () => container.removeEventListener("scroll", checkScroll);
+    }
+  }, []);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = 280;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const scrollToForm = () => {
+    document.getElementById("assessment-form")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const navigate = useNavigate()
 
   return (
-    <section className="py-8 md:py-12 bg-gradient-to-br from-green-50/50 via-white to-emerald-50/50 relative overflow-hidden">
+    <section className="py-12 bg-[#E0EBE64C]">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <SectionHeader
-            badgeIcon={Leaf}
-            badgeText="Program Fit"
-            title="Is This Program Your Perfect Match?"
-            titleIcon={Heart}
-            description="This program is designed for committed individuals ready for real change"
-          />
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-foreground mb-2">
+            Real Conversations, <span className="text-[#2b9281]">Real Results</span>
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            See what our members share with us — unfiltered messages of gratitude and transformation
+          </p>
+        </div>
 
-          {/* Comparison Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* This is for you */}
-            <Card className="relative p-8 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 border-4 border-green-300 rounded-3xl overflow-hidden shadow-xl group">
-              <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 relative z-10">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-green-200 rounded-full flex items-center justify-center border-2 border-green-400">
-                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-green-400" />
-                </div>
-                <h3 className="text-base md:text-lg lg:text-xl xl:text-2xl font-extrabold text-gray-800">This is for you if:</h3>
-              </div>
-              <ul className="space-y-3 md:space-y-4 relative z-10">
-                {forList.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 md:gap-3 relative pl-6 md:pl-8">
-                    <div className="absolute left-0 top-1 w-4 h-4 md:w-5 md:h-5 bg-green-100 rounded-full flex items-center justify-center border-2 border-green-300">
-                      <CheckCircle2 className="w-2 h-2 md:w-3 md:h-3 text-green-400" />
-                    </div>
-                    <span className="text-xs md:text-sm lg:text-base text-gray-800 font-semibold">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+        <div className="relative">
+          {/* Left Arrow */}
+          <button
+            onClick={() => scroll("left")}
+            disabled={!canScrollLeft}
+            className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background shadow-lg flex items-center justify-center transition-all duration-200 ${
+              canScrollLeft
+                ? "opacity-100 hover:bg-[#276852] hover:text-primary-foreground cursor-pointer"
+                : "opacity-40 cursor-not-allowed"
+            }`}
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
 
-            {/* This is NOT for you */}
-            <Card className="relative p-8 bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 border-4 border-gray-300 rounded-3xl overflow-hidden group">
-              <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 relative z-10">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-400">
-                  <XCircle className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-gray-500" />
+          {/* Scrollable Container */}
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto px-12 scrollbar-hide"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="flex-shrink-0 w-[200px] md:w-[220px] group relative bg-background rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
+              >
+                <div className="aspect-[9/16] overflow-hidden">
+                  <img
+                    src={testimonial.image}
+                    alt={`${testimonial.name}'s WhatsApp testimonial`}
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                  />
                 </div>
-                <h3 className="text-base md:text-lg lg:text-xl xl:text-2xl font-extrabold text-gray-700">This is NOT for you if:</h3>
               </div>
-              <ul className="space-y-3 md:space-y-4 relative z-10">
-                {notForList.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 md:gap-3 relative pl-6 md:pl-8">
-                    <div className="absolute left-0 top-1 w-4 h-4 md:w-5 md:h-5 bg-gray-200 rounded-full flex items-center justify-center border-2 border-gray-400">
-                      <XCircle className="w-2 h-2 md:w-3 md:h-3 text-gray-500" />
-                    </div>
-                    <span className="text-xs md:text-sm lg:text-base text-gray-800 font-semibold">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+            ))}
           </div>
 
-          <div className="text-center mt-12">
-            <Button
-              onClick={handleButtonClick}
-              className={CTA_BUTTON_CLASSES}
-              size="lg"
-            >
-              <span className={CTA_BUTTON_CONTENT_CLASSES}>
-                <span className={CTA_BUTTON_TEXT_CLASSES}>Apply Now for a Healthier Future! ✨</span>
-                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 ml-1 sm:ml-2 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
-              </span>
-              <div className={CTA_BUTTON_SHINE_CLASSES}></div>
-            </Button>
-          </div>
+          {/* Right Arrow */}
+          <button
+            onClick={() => scroll("right")}
+            disabled={!canScrollRight}
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-background shadow-lg flex items-center justify-center transition-all duration-200 ${
+              canScrollRight
+                ? "opacity-100 hover:bg-[#276852] hover:text-primary-foreground cursor-pointer"
+                : "opacity-40 cursor-not-allowed"
+            }`}
+            aria-label="Scroll right"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="text-center mt-10">
+          <button
+            onClick={() => navigate("/wellness-program/apply")}
+            className="btn-cta inline-flex items-center gap-2 text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            Start Your Transformation Today
+          </button>
         </div>
       </div>
     </section>
   );
-});
+};
 
-WhoIsThisForSection.displayName = "WhoIsThisForSection";
-
-export default WhoIsThisForSection;
+export default WhatsAppTestimonialsSection;

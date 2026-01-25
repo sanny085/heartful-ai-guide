@@ -1,123 +1,121 @@
-import { memo, useMemo, useCallback } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Activity, Moon, UtensilsCrossed, Clock, ArrowRight, Lightbulb } from "lucide-react";
+import { Droplets, Leaf, Stethoscope, Dumbbell, Apple, Sun, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { handleCTAClick, CTA_BUTTON_CLASSES, CTA_BUTTON_CONTENT_CLASSES, CTA_BUTTON_TEXT_CLASSES, CTA_BUTTON_SHINE_CLASSES, getColorClasses } from "./programUtils";
-import SectionHeader from "./SectionHeader";
+import servicesStyles from "./wellness-program.module.css"
+import drop from "../../assets/water-droplets.jpg"
+import sun from "../../assets/sun.avif"
+import skethoscope from "../../assets/skethoscope.webp"
+import apple from "../../assets/apple.webp"
+import dumble from "../../assets/dumble.jpg"
+import leaf from "../../assets/leaf.jpg"
 
-const MedicineEducationSection = memo(() => {
-  const navigate = useNavigate();
-  
-  const factors = useMemo(() => [
-    {
-      icon: Activity,
-      title: "Chronic Stress",
-      color: "green",
-    },
-    {
-      icon: Moon,
-      title: "Poor Sleep",
-      color: "emerald",
-    },
-    {
-      icon: UtensilsCrossed,
-      title: "Food Timing",
-      color: "teal",
-    },
-    {
-      icon: Clock,
-      title: "Routine Imbalance",
-      color: "lime",
-    },
-  ], []);
+const services = [
+  {
+    icon: drop,
+    title: "Guided Water Fasting",
+    description:
+      "Safe, customized fasting protocols that reset your metabolism and accelerate healing under expert supervision.",
+    benefits: ["Cellular detox", "Insulin reset", "Mental clarity"],
+  },
+  {
+    icon: leaf,
+    title: "Natural Home Remedies",
+    description: "Time-tested Indian remedies adapted to your lifestyle - simple, effective, and easy to follow.",
+    benefits: ["Kitchen-based", "No side effects", "Cost-effective"],
+  },
+  {
+    icon: skethoscope,
+    title: "Doctor Observation",
+    description: "Continuous monitoring by wellness doctors who track your progress and adjust your plan in real-time.",
+    benefits: ["Weekly check-ins", "Report analysis", "Emergency support"],
+  },
+  {
+    icon: dumble,
+    title: "Fitness Guidance",
+    description:
+      "Custom exercise plans that fit your schedule, fitness level, and health conditions — no gym required.",
+    benefits: ["Home workouts", "Office exercises", "Yoga & breathing"],
+  },
+  {
+      icon: apple,
+      title: "Personalized Diet Plans",
+    description:
+      "Diet is EVERYTHING. We create meal plans based on your food preferences, family structure, and health goals.",
+    benefits: ["Indian cuisine", "Family-friendly", "Sustainable"],
+  },
+  {
+    icon: sun,
+    title: "Lifestyle Correction",
+    description:
+      "Sleep optimization, stress management, hydration habits, and daily routine restructuring for lasting change.",
+    benefits: ["Sleep hygiene", "Stress tools", "Daily rituals"],
+  },
+];
 
-  const handleButtonClick = useCallback(() => {
-    handleCTAClick(navigate);
-  }, [navigate]);
-
+const ServicesSection = () => {
+  const navigate = useNavigate()
   return (
-    <section className="py-8 md:py-12 bg-gradient-to-br from-white via-green-50/30 to-emerald-50/30 relative">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <SectionHeader
-            badgeIcon={Lightbulb}
-            badgeText="Understanding Root Causes"
-            title="Why Medicine Alone Is Not Enough"
-          />
+    <section id="services" className="section-padding bg-white">
+      <div className="container-wide">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <span className="inline-block text-[#276852] font-semibold text-sm uppercase tracking-wider mb-4">
+            Our Natural Approach
+          </span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground mb-4 text-[#1D3029]">
+            6 Pillars of <span className={`${servicesStyles["text-gradient"]}`}>Natural Healing</span>
+          </h2>
+          <p className="text-lg text-muted-foreground leading-relaxed text-[#628478]">
+            No pills. No shortcuts. No generic plans. Just science-backed natural methods, personalized for your unique
+            body, lifestyle, and goals.
+          </p>
+        </div>
 
-          {/* Main Content Card */}
-          <Card className="relative p-8 md:p-12 bg-white shadow-2xl border-4 border-green-100 rounded-3xl overflow-hidden">
-            <div className="space-y-8 mb-10 relative z-10">
-              <div className="relative pl-4 md:pl-6 border-l-4 border-green-400">
-                <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-700 leading-relaxed font-medium">
-                  Medicines are important—they help control your numbers. But they don't address the{" "}
-                  <span className="text-gray-800 font-extrabold relative">
-                    root causes
-                  </span>{" "}
-                  that created the problem in the first place.
-                </p>
+        {/* Services Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {services.map((service, index) => (
+            <div
+              key={index}
+              className={`group ${servicesStyles["card-wellness"]} hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[#2768521A] flex items-center justify-center mb-6 group-hover:bg-[#276852] group-hover:scale-110 transition-all duration-300">
+                <img
+                  src={service.icon}
+                  alt={service.title}
+                  className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors"
+                />
               </div>
-
-              <div className="relative pl-4 md:pl-6 border-l-4 border-emerald-400">
-                <p className="text-sm md:text-base lg:text-lg xl:text-xl text-gray-700 leading-relaxed font-medium">
-                  Blood pressure doesn't rise overnight. It's the result of years of accumulated stress, irregular routines, poor sleep, and unhealthy eating patterns. To truly control BP, we need to correct these underlying factors.
-                </p>
-              </div>
-            </div>
-
-            {/* Factor Cards - Greenery Grid with distinct colors */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-              {factors.map((factor, index) => {
-                const { icon: Icon, title, color } = factor ?? {};
-                const { bg = "", border = "", hoverBorder = "", iconBg = "", iconBorder = "" } = getColorClasses(color) ?? {};
-                return (
-                  <Card
-                    key={index}
-                    className={`relative p-5 bg-gradient-to-br ${bg} text-center border-2 ${border} rounded-2xl group hover:shadow-xl transition-all overflow-hidden ${hoverBorder}`}
+              <h3 className="text-xl font-bold text-foreground mb-3 text-[#1D3029]">{service.title}</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed text-[#628478]">{service.description}</p>
+              <div className="flex flex-wrap gap-2">
+                {service.benefits.map((benefit, i) => (
+                  <span
+                    key={i}
+                    className="inline-block text-xs font-medium bg-[#288A7A1A] text-[#288A7A] px-3 py-1 rounded-full"
                   >
-                    <div className="relative z-10">
-                      <div className="flex justify-center items-center mb-2 md:mb-3">
-                        <div className={`w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-br ${iconBg} rounded-xl flex items-center justify-center border-2 ${iconBorder} group-hover:scale-110 transition-transform mx-auto`}>
-                          {Icon && <Icon className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />}
-                        </div>
-                      </div>
-                      <p className="text-xs md:text-sm lg:text-base font-extrabold text-gray-800 text-center">
-                        {title}
-                      </p>
-                    </div>
-                  </Card>
-                );
-              })}
+                    {benefit}
+                  </span>
+                ))}
+              </div>
             </div>
+          ))}
+        </div>
 
-            {/* Solution Block */}
-            <Card className="relative p-4 md:p-6 lg:p-8 bg-gradient-to-r from-green-50 via-yellow-50 to-emerald-50 border-l-4 border-green-400 rounded-2xl mb-6 md:mb-8 overflow-hidden">
-              <p className="text-sm md:text-base lg:text-lg xl:text-xl font-extrabold text-gray-800">
-                The solution? A structured lifestyle correction program that addresses all these factors together. 🚀
-              </p>
-            </Card>
-
-            <div className="text-center">
-              <Button
-                onClick={handleButtonClick}
-                className={CTA_BUTTON_CLASSES}
-                size="lg"
-              >
-                <span className={CTA_BUTTON_CONTENT_CLASSES}>
-                  <span className={CTA_BUTTON_TEXT_CLASSES}>Start Your Lifestyle Reset 🎉</span>
-                  <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 ml-1 sm:ml-2 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
-                </span>
-                <div className={CTA_BUTTON_SHINE_CLASSES}></div>
-              </Button>
+        {/* Bottom Message */}
+        <div className="text-center mt-10">
+          <p className="text-[#628478] text-lg mb-2">
+            All services are included in your personalized wellness plan
+          </p>
+            <div className="text-center mt-10">
+              <button className="btn-cta" onClick={() => navigate("/wellness-program/apply")}>
+                Check Your Health
+                <ArrowRight className="w-5 h-5" />
+              </button>
             </div>
-          </Card>
         </div>
       </div>
     </section>
   );
-});
+};
 
-MedicineEducationSection.displayName = "MedicineEducationSection";
+export default ServicesSection;
 
-export default MedicineEducationSection;

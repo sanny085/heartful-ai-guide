@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap'); 
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities; 
+
+@layer base {
+  :root {
+    /* Natural Wellness Palette */
+    --background: 40 33% 98%;
+    --foreground: 160 25% 15%;
+
+    --card: 40 30% 96%;
+    --card-foreground: 160 25% 15%;
+
+    --popover: 40 33% 98%;
+    --popover-foreground: 160 25% 15%;
+
+    /* Forest Green - Primary */
+    --primary: 160 45% 28%;
+    --primary-foreground: 40 33% 98%;
+
+    /* Soft Cream - Secondary */
+    --secondary: 40 35% 92%;
+    --secondary-foreground: 160 25% 15%;
+
+    /* Sage Green - Muted */
+    --muted: 150 20% 90%;
+    --muted-foreground: 160 15% 45%;
+
+    /* Teal - Accent */
+    --accent: 170 55% 35%;
+    --accent-foreground: 40 33% 98%;
+
+    /* Heart Red - CTA Only */
+    --destructive: 0 75% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Heart Red for CTAs */
+    --cta: 0 75% 50%;
+    --cta-foreground: 0 0% 100%;
+    --cta-hover: 0 80% 45%;
+
+    --border: 150 15% 85%;
+    --input: 150 15% 85%;
+    --ring: 160 45% 28%;
+
+    --radius: 0.75rem;
+
+    /* Custom Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(160 45% 28% / 0.95) 0%, hsl(170 55% 35% / 0.9) 100%);
+    --gradient-warm: linear-gradient(180deg, hsl(40 33% 98%) 0%, hsl(40 35% 94%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(40 30% 98%) 0%, hsl(150 20% 95%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(160 25% 15% / 0.08);
+    --shadow-elevated: 0 12px 40px -8px hsl(160 25% 15% / 0.12);
+    --shadow-cta: 0 8px 24px -4px hsl(0 75% 50% / 0.35);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 160 25% 8%;
+    --foreground: 40 33% 95%;
+    --card: 160 25% 12%;
+    --card-foreground: 40 33% 95%;
+    --popover: 160 25% 10%;
+    --popover-foreground: 40 33% 95%;
+    --primary: 160 45% 45%;
+    --primary-foreground: 160 25% 8%;
+    --secondary: 160 20% 18%;
+    --secondary-foreground: 40 33% 95%;
+    --muted: 160 20% 18%;
+    --muted-foreground: 150 15% 60%;
+    --accent: 170 55% 45%;
+    --accent-foreground: 160 25% 8%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --cta: 0 75% 55%;
+    --cta-foreground: 0 0% 100%;
+    --cta-hover: 0 80% 50%;
+    --border: 160 20% 20%;
+    --input: 160 20% 20%;
+    --ring: 160 45% 45%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply font-bold;
+  }
+}
+
+@layer components {
+  .section-padding {
+    @apply px-4 py-12 md:px-6 md:py-16 lg:py-20;
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(160 45% 28%) 0%, hsl(170 55% 35%) 100%);
+  }
+
+  .card-wellness {
+    @apply rounded-2xl bg-card border border-border/50 p-6 md:p-8;
+    box-shadow: var(--shadow-soft);
+    background: var(--gradient-card);
+  }
+
+  .btn-cta {
+    @apply inline-flex items-center justify-center gap-2 px-8 py-2 rounded-full font-semibold text-lg transition-all duration-300;
+    background: hsl(var(--cta));
+    color: hsl(var(--cta-foreground));
+    box-shadow: var(--shadow-cta);
+  }
+
+  .btn-cta:hover {
+    background: hsl(var(--cta-hover));
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px -4px hsl(0 75% 50% / 0.4);
+  }
+
+  .btn-secondary-wellness {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 border-2;
+    border-color: hsl(var(--primary));
+    color: hsl(var(--primary));
+    background: transparent;
+  }
+
+  .btn-secondary-wellness:hover {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}
+
+@layer utilities {
+  /* Heartbeat Animation for CTAs */
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.05); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.05); }
+    70% { transform: scale(1); }
+  }
+
+  .animate-heartbeat {
+    animation: heartbeat 2s ease-in-out infinite;
+  }
+
+  /* Fade up animation */
+  @keyframes fade-up {
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.8s ease-out forwards;
+  }
+
+  .animate-fade-up-delay-1 {
+    animation: fade-up 0.8s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-2 {
+    animation: fade-up 0.8s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-up-delay-3 {
+    animation: fade-up 0.8s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  /* Pulse glow for CTA */
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 8px 24px -4px hsl(0 75% 50% / 0.35);
+    }
+    50% {
+      box-shadow: 0 8px 32px -4px hsl(0 75% 50% / 0.5);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Float animation */
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+}
