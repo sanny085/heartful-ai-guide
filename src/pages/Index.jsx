@@ -272,7 +272,7 @@ const Index = () => {
           <div className="flex flex-col md:flex-row gap-6 justify-center items-center w-full max-w-4xl mx-auto mb-20">
             {/* Talk to AI Now */}
             <Button
-              onClick={() => navigate("/12-weeks-program/apply")}
+              onClick={() => navigate("/wellness-program/apply")}
               className="bg-[#1E5631] hover:bg-[#143d22] text-white px-8 py-7 rounded-full text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-3 min-w-[200px]"
             >
               <MessageCircle className="w-6 h-6" />
@@ -301,7 +301,7 @@ const Index = () => {
 
             {/* Check Your Risk */}
              <Button
-              onClick={() => navigate("/12-weeks-program/apply")}
+              onClick={() => navigate("/wellness-program/apply")}
               className="bg-[#FF6B35] hover:bg-[#e85a26] text-white px-8 py-7 rounded-full text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-3 min-w-[200px]"
             >
               <Activity className="w-6 h-6" />
@@ -413,7 +413,7 @@ const Index = () => {
                         </p>
                         <div className="flex justify-center mt-4">
                             <Button 
-                                onClick={() => navigate("/12-weeks-program/apply")}
+                                onClick={() => navigate("/wellness-program/apply")}
                                 className="bg-white text-[#107C6B] hover:bg-gray-100 font-bold px-8 py-7 rounded-full flex items-center gap-3 transition-all group w-full sm:w-auto"
                             >
                                 <Rocket className="w-6 h-6 group-hover:rotate-12 transition-transform" />
@@ -614,7 +614,7 @@ const Index = () => {
 
           <div className="flex justify-center">
             <Button
-              onClick={() => navigate("/12-weeks-program/apply")}
+              onClick={() => navigate("/wellness-program/apply")}
               className="bg-[#107C6B] hover:bg-[#0d6b5c] text-white px-10 py-7 rounded-full text-lg font-bold shadow-xl shadow-[#107C6B]/30 transition-all flex items-center gap-3"
             >
               <Bot className="w-6 h-6" />
@@ -674,7 +674,7 @@ const Index = () => {
                         {program.description}
                       </p>
                       <div className="flex justify-center w-full">
-                        <div className="flex items-center text-[#107C6B] font-bold gap-2 cursor-pointer group/link" onClick={() => navigate("/12-weeks-program/apply")}>
+                        <div className="flex items-center text-[#107C6B] font-bold gap-2 cursor-pointer group/link" onClick={() => navigate("/wellness-program/apply")}>
                           <span className="border-b-2 border-transparent transition-all">View Program</span>
                           <ArrowRight className="w-5 h-5 group-hover/link:translate-x-1 transition-transform" />
                         </div>
@@ -745,7 +745,7 @@ const Index = () => {
 
           <div className="flex justify-center">
             <Button
-              onClick={() => navigate("/12-weeks-program/apply")}
+              onClick={() => navigate("/wellness-program/apply")}
               className="bg-white text-[#064E3B] hover:bg-gray-100 px-10 py-7 rounded-full text-lg font-bold shadow-xl transition-all flex items-center gap-3 group"
             >
               <Users className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -832,7 +832,7 @@ const Index = () => {
 
               <div className="pt-6 flex justify-center">
                 <Button
-                  onClick={() => navigate("/12-weeks-program/apply")}
+                  onClick={() => navigate("/wellness-program/apply")}
                   className="bg-[#107C6B] hover:bg-[#0d6b5c] text-white px-10 py-7 rounded-full text-lg font-bold shadow-xl shadow-[#107C6B]/30 transition-all flex items-center gap-3"
                 >
                   <Rocket className="w-6 h-6" />
@@ -983,7 +983,7 @@ const Index = () => {
             </p>
             <div className="flex justify-center">
               <Button
-                onClick={() => navigate("/12-weeks-program/apply")}
+                onClick={() => navigate("/wellness-program/apply")}
                 className="bg-white text-[#107C6B] hover:bg-gray-100 px-10 py-8 rounded-full text-xl font-bold shadow-2xl transition-all flex items-center gap-3 active:scale-95"
               >
                 <Rocket className="w-6 h-6" />
@@ -1020,7 +1020,7 @@ const Index = () => {
 
             <div className="flex flex-wrap gap-6 justify-center">
               <Button
-                onClick={() => navigate("/12-weeks-program/apply")}
+                onClick={() => navigate("/wellness-program/apply")}
                 className="bg-[#107C6B] hover:bg-[#0d6b5c] text-white px-10 py-8 rounded-full text-xl font-bold shadow-2xl transition-all flex items-center gap-3 active:scale-95"
               >
                 <Rocket className="w-6 h-6" />
