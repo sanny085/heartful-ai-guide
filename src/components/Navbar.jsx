@@ -75,7 +75,9 @@ const Navbar = () => {
   const envType = import.meta.env.VITE_PUBLIC_env_type;
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border transition-all duration-300">
+    <header className={`sticky top-0 z-50 transition-all duration-300 border-b border-border ${
+      isScrolled ? "bg-white" : "bg-background/80 backdrop-blur-sm"
+    }`}>
       <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12 py-2 sm:py-2.5 md:py-3 flex justify-between items-center">
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 xl:gap-8 2xl:gap-10">
           <img
@@ -93,7 +95,7 @@ const Navbar = () => {
           <NavigationMenu className="hidden lg:block">
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="text-foreground hover:text-primary text-xs md:text-sm lg:text-base xl:text-base 2xl:text-lg px-2 md:px-3 lg:px-4 h-8 md:h-9 lg:h-10">
+                <NavigationMenuTrigger className="text-foreground hover:text-primary text-[11px] lg:text-xs xl:text-base 2xl:text-lg px-1 md:px-2 lg:px-3 h-8 md:h-9 lg:h-10">
                   Services
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -147,72 +149,83 @@ const Navbar = () => {
           </NavigationMenu>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-2.5 xl:gap-3">
+        <div className="flex items-center gap-0.5 sm:gap-1.5 md:gap-2 lg:gap-1 xl:gap-1">
           {/* Desktop Navigation - Hidden on Mobile and MD, shown on LG+ */}
-          <div className="hidden lg:flex items-center gap-2 lg:gap-2.5 xl:gap-3 2xl:gap-3.5">
+          <div className="hidden lg:flex items-center gap-0.5 lg:gap-1 xl:gap-1 2xl:gap-3">
             <Button
               variant="ghost"
               onClick={() => navigate("/blogs")}
-              className="text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
+              className="text-foreground hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-500/10 dark:hover:bg-purple-500/10 text-[11px] lg:text-xs xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-1.5 lg:px-2 xl:px-3 2xl:px-4"
             >
-              <BookOpen className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+              <BookOpen className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1 lg:mr-1 xl:mr-2 2xl:mr-2" />
               Blogs
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/reviews")}
-              className="text-foreground hover:text-accent hover:bg-accent/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
+              className="text-foreground hover:text-accent hover:bg-accent/10 text-[11px] lg:text-xs xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-1.5 lg:px-2 xl:px-3 2xl:px-4"
             >
-              <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+              <Users className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1 lg:mr-1 xl:mr-2 2xl:mr-2" />
               Reviews
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/volunteer")}
-              className="text-foreground hover:text-success hover:bg-success/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
+              className="text-foreground hover:text-success hover:bg-success/10 text-[11px] lg:text-xs xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-1.5 lg:px-2 xl:px-3 2xl:px-4"
             >
-              <HandHeart className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+              <HandHeart className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1 lg:mr-1 xl:mr-2 2xl:mr-2" />
               Volunteer
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/about-us")}
-              className="text-foreground hover:text-warning hover:bg-warning/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
+              className="text-foreground hover:text-warning hover:bg-warning/10 text-[11px] lg:text-xs xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-1.5 lg:px-2 xl:px-3 2xl:px-4"
             >
-              <Info className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+              <Info className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1 lg:mr-1 xl:mr-2 2xl:mr-2" />
               About Us
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate("/partner-with-us")}
-              className="text-foreground hover:text-primary hover:bg-primary/10 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2 lg:px-3 xl:px-3 2xl:px-4"
+              className="text-foreground hover:text-primary hover:bg-primary/10 text-[11px] lg:text-xs xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-1.5 lg:px-2 xl:px-3 2xl:px-4"
             >
-              <Handshake className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+              <Handshake className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1 lg:mr-1 xl:mr-2 2xl:mr-2" />
               Partner With Us
             </Button>
           </div>
 
           {/* Desktop/Tablet Auth Button - Hidden on Mobile and MD, shown on LG+ */}
           {!loading && (
-            <div className="hidden lg:block">
-              {user ? (
+            <div className="flex items-center gap-2">
+              {location.pathname === "/" && isScrolled && (
                 <Button
-                  variant="outline"
-                  onClick={() => navigate("/profile")}
-                  className="border-primary text-primary hover:bg-primary/5 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2.5 lg:px-3 xl:px-4 2xl:px-4"
+                  onClick={() => navigate("/wellness-program/apply")}
+                  className="bg-gradient-to-r from-[#107C6B] to-[#1E5631] hover:from-[#1E5631] hover:to-[#107C6B] text-white px-4 sm:px-6 py-2 rounded-full text-[10px] sm:text-[11px] md:text-xs lg:text-sm font-bold shadow-[0_4px_14px_0_rgba(16,124,107,0.39)] hover:shadow-[0_6px_20px_rgba(16,124,107,0.23)] transition-all animate-in fade-in slide-in-from-top-1 whitespace-nowrap active:scale-95"
                 >
-                  <User className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
-                  Profile
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/auth")}
-                  className="border-primary text-primary hover:bg-primary/5 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-3 lg:px-3.5 xl:px-4 2xl:px-5"
-                >
-                  Sign In
+                  Join Program
                 </Button>
               )}
+              
+              <div className="hidden lg:block">
+                {user ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/profile")}
+                    className="border-primary text-primary hover:bg-primary/5 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-2.5 lg:px-3 xl:px-4 2xl:px-4"
+                  >
+                    <User className="w-3.5 h-3.5 lg:w-4 lg:h-4 xl:w-4 xl:h-4 2xl:w-4.5 2xl:h-4.5 mr-1.5 lg:mr-1.5 xl:mr-2 2xl:mr-2" />
+                    Profile
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/auth")}
+                    className="border-primary text-primary hover:bg-primary/5 text-xs lg:text-sm xl:text-base 2xl:text-base h-8 lg:h-9 xl:h-10 2xl:h-10 px-3 lg:px-3.5 xl:px-4 2xl:px-5"
+                  >
+                    Sign In
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
