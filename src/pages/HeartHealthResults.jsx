@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download, Edit, Save, X, ArrowLeft, Eye, Search, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Phone, Home, Activity, CheckCircle, AlertCircle, Download, Edit, Save, X, ArrowLeft, Eye, Search, Trash2, Wand2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,19 +33,25 @@ const BP_CHART = [
 ];
 
 const BMI_CATEGORIES = [
-  { max: 18.5, category: "Underweight", risks: [] },
+  { max: 16, category: "Severe Thinness", risks: [] },
+  { max: 17, category: "Moderate Thinness", risks: [] },
+  { max: 18.5, category: "Mild Thinness", risks: [] },
   { max: 25, category: "Normal", risks: [] },
   { max: 30, category: "Overweight", risks: ["Type 2 diabetes", "Hypertension", "Heart disease"] },
-  { max: 35, category: "Obese (Class I)", risks: ["Type 2 diabetes", "Hypertension", "Heart disease", "Fatty liver", "Joint problems"] },
-  { max: 40, category: "Obese (Class II)", risks: ["Type 2 diabetes", "Hypertension", "Heart disease", "Fatty liver", "Joint problems", "Sleep apnea"] },
-  { max: Infinity, category: "Obese (Class III)", risks: ["Type 2 diabetes", "Hypertension", "Heart disease", "Fatty liver", "Joint problems", "Sleep apnea", "Multiple comorbidities"] }
+  { max: 35, category: "Obese Class I", risks: ["Type 2 diabetes", "Hypertension", "Heart disease", "Fatty liver", "Joint problems"] },
+  { max: 40, category: "Obese Class II", risks: ["Type 2 diabetes", "Hypertension", "Heart disease", "Fatty liver", "Joint problems", "Sleep apnea"] },
+  { max: Infinity, category: "Obese Class III", risks: ["Type 2 diabetes", "Hypertension", "Heart disease", "Fatty liver", "Joint problems", "Sleep apnea", "Multiple comorbidities"] }
 ];
 
 const BMI_SIMPLE_CATEGORIES = [
-  { max: 18.5, category: "Underweight" },
+  { max: 16, category: "Severe Thinness" },
+  { max: 17, category: "Moderate Thinness" },
+  { max: 18.5, category: "Mild Thinness" },
   { max: 25, category: "Normal" },
   { max: 30, category: "Overweight" },
-  { max: Infinity, category: "Obese" }
+  { max: 35, category: "Obese Class I" },
+  { max: 40, category: "Obese Class II" },
+  { max: Infinity, category: "Obese Class III" }
 ];
 
 const CV_RISK_LEVELS = [
@@ -69,7 +75,7 @@ const BLOOD_SUGAR_THRESHOLDS = {
 
 const BP_RISKS = ["Stroke", "Heart disease", "Kidney damage"];
 
-const IDEAL_BMI_RANGE = { min: 18.5, max: 24.9 };
+const IDEAL_BMI_RANGE = { min: 18.5, max: 25 };
 
 const LDL_LEVELS = [
   { max: 100, label: "✓ Optimal", color: "text-success" },
@@ -253,7 +259,7 @@ export default function HeartHealthResults() {
           }
         }
       }
-      
+
       setAssessment(data);
       setEditingData(data || {});
       
@@ -432,6 +438,10 @@ export default function HeartHealthResults() {
         fasting_sugar: editingData.fasting_sugar ? parseInt(editingData.fasting_sugar) : null,
         post_meal_sugar: editingData.post_meal_sugar ? parseInt(editingData.post_meal_sugar) : null,
         sleep_hours: editingData.sleep_hours ? parseFloat(editingData.sleep_hours) : null,
+        water_intake: editingData.water_intake ? parseFloat(editingData.water_intake) : null,
+        profession: editingData.profession || "",
+        diabetes: editingData.diabetes || "no",
+        knows_lipids: !!editingData.knows_lipids
       };
 
       // Calculate BMI if height/weight changed
@@ -474,10 +484,63 @@ export default function HeartHealthResults() {
     }
   };
 
+  const correctedSleep = useMemo(() => {
+    if (!assessment) return null;
+    const { sleep_hours, age, name, mobile } = assessment;
+    
+    // Check if suspicious: sleep matches age AND is unrealistic (> 15 hours)
+    // In the user's case, it was 59 for both.
+    const isSuspicious = sleep_hours != null && sleep_hours === age && sleep_hours > 15;
+    
+    if (!isSuspicious) return { value: sleep_hours, isCorrected: false };
+    
+    // Try to find a valid value in history for the same patient
+    const history = allAssessments.filter(a => 
+      a.id !== assessment.id && 
+      (a.name && name && a.name.toLowerCase().trim() === name.toLowerCase().trim()) &&
+      a.sleep_hours && a.sleep_hours <= 12 && a.sleep_hours >= 4
+    );
+    
+    if (history.length > 0) {
+      return { value: history[0].sleep_hours, isCorrected: true, original: sleep_hours };
+    }
+    
+    return { value: null, isCorrected: true, original: sleep_hours, notFound: true };
+  }, [assessment, allAssessments]);
+
+  const handleQuickFixSleep = async () => {
+    if (!assessmentId || !correctedSleep?.isCorrected || correctedSleep.notFound) return;
+
+    setSaving(true);
+    toast.loading("Applying fix...", { id: "quick-fix" });
+
+    try {
+      const { error } = await supabase
+        .from(envConfig.heart_health_assessments)
+        .update({ sleep_hours: correctedSleep.value })
+        .eq("id", assessmentId);
+
+      if (error) throw error;
+
+      // Regenerate insights since sleep affects heart age
+      await supabase.functions.invoke("generate-health-insights", {
+        body: { assessmentId: assessmentId }
+      });
+
+      toast.success("Corrected sleep hours and regenerated insights!", { id: "quick-fix" });
+      await loadAssessment();
+    } catch (error) {
+      console.error("Quick fix error:", error);
+      toast.error("Failed to apply correction", { id: "quick-fix" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const calculateCardiovascularScore = () => {
     if (!assessment) return 0;
     const scoreReductions = [
-      { condition: (assessment?.bmi ?? 0) > 25, reduction: 10 },
+      { condition: Number((assessment?.bmi ?? 0).toFixed(1)) > 25, reduction: 10 },
       { condition: (assessment?.systolic ?? 0) > 140, reduction: 15 },
       { condition: assessment?.risk_score, reduction: (assessment?.risk_score ?? 0) * 2 }
     ];
@@ -595,9 +658,56 @@ export default function HeartHealthResults() {
   const getBMICategory = () => {
     const bmi = assessment?.bmi;
     if (!bmi) return "Unknown";
-    const category = BMI_SIMPLE_CATEGORIES.find(cat => bmi < cat.max);
-    return category?.category || "Unknown";
+    const roundedBmi = Number(bmi.toFixed(1));
+    if (roundedBmi < 16) return "Severe Thinness";
+    if (roundedBmi < 17) return "Moderate Thinness";
+    if (roundedBmi < 18.5) return "Mild Thinness";
+    if (roundedBmi <= 25) return "Normal";
+    if (roundedBmi <= 30) return "Overweight";
+    if (roundedBmi <= 35) return "Obese Class I";
+    if (roundedBmi <= 40) return "Obese Class II";
+    return "Obese Class III";
   };
+
+  const weightMetrics = useMemo(() => {
+    if (!assessment) return null;
+    
+    const currentWeight = assessment.weight || 0;
+    const height = assessment.height || 0;
+    const bmi = assessment.bmi || 0;
+    
+    // Find starting weight (oldest assessment)
+    const oldestAssessment = allAssessments.length > 0 
+      ? allAssessments[allAssessments.length - 1] 
+      : assessment;
+    const startingWeight = oldestAssessment?.weight || currentWeight;
+    
+    const weightReduced = Math.max(0, startingWeight - currentWeight);
+    const weightGained = Math.max(0, currentWeight - startingWeight);
+    
+    // Target Weight Calculation: targetWeight = 25 * (height_in_meters)^2
+    const heightInMeters = height / 100;
+    const targetWeight = heightInMeters > 0 ? 25 * (heightInMeters * heightInMeters) : 0;
+    
+    // Use rounded BMI for classification and weight-to-lose check
+    const roundedBmi = Number(bmi.toFixed(1));
+    const isNormalBMI = roundedBmi >= 18.5 && roundedBmi <= 25;
+    
+    // Force weightToLose to 0 if BMI rounds to 25.0 or less
+    const rawWeightToLose = Math.max(0, currentWeight - targetWeight);
+    const weightToLose = isNormalBMI ? 0 : rawWeightToLose;
+
+    return {
+      currentWeight,
+      startingWeight,
+      weightReduced,
+      weightGained,
+      targetWeight,
+      weightToLose,
+      isNormalBMI,
+      status: getBMICategory()
+    };
+  }, [assessment, allAssessments, getBMICategory]);
 
   const getCVRiskLevel = () => {
     const score = calculateCardiovascularScore();
@@ -623,14 +733,15 @@ export default function HeartHealthResults() {
 
   const getRiskCategory = () => {
     const risk = assessment?.risk_score || 0;
-    const category = RISK_CATEGORIES.find(cat => risk < cat.max);
+    const category = RISK_CATEGORIES.find(cat => risk <= cat.max);
     return category || RISK_CATEGORIES[RISK_CATEGORIES.length - 1];
   };
 
   const getBMIClassification = () => {
     const bmi = assessment?.bmi;
     if (!bmi) return null;
-    const classification = BMI_CATEGORIES.find(cat => bmi < cat.max);
+    const roundedBmi = Number(bmi.toFixed(1));
+    const classification = BMI_CATEGORIES.find(cat => roundedBmi <= cat.max);
     return classification ? { class: classification.category, risks: classification.risks } : null;
   };
 
@@ -814,13 +925,14 @@ export default function HeartHealthResults() {
     };
     
     // Helper function to check if value is abnormal and highlight it (labels are bold) - returns new Y
-    const addValueWithHighlight = (label, value, isAbnormal, x, y, maxWidth = 170) => {
+    const addValueWithHighlight = (label, value, isAbnormal, x, y, maxWidth = 170, isHealthy = false) => {
       // First, check if we need a page break for the label
       yPosition = y;
       checkPageBreak(5);
       const currentY = yPosition;
       
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
       const labelWidth = doc.getTextWidth(label);
       doc.text(label, x, currentY);
       doc.setFont("helvetica", "normal");
@@ -830,15 +942,17 @@ export default function HeartHealthResults() {
       
       if (isAbnormal) {
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(200, 0, 0);
+        doc.setTextColor(200, 0, 0); // Red
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
       }
       
       const newY = addWrappedText(value.toString(), valueX, currentY, valueWidth);
       
-      if (isAbnormal) {
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
-      }
+      // Always reset to normal black after writing value
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(PDF_STYLES.color.black[0], PDF_STYLES.color.black[1], PDF_STYLES.color.black[2]);
       
       return newY;
     };
@@ -1143,21 +1257,42 @@ export default function HeartHealthResults() {
     
     // Start position for summary box
     const summaryBoxStart = yPosition;
+
+    // Weight Metrics for PDF - MUST be initialized before itemCount calculation
+    const oldestAssessment = allAssessments.length > 0 ? allAssessments[allAssessments.length - 1] : assessment;
+    const startingWeightValue = oldestAssessment?.weight || assessment?.weight || 0;
+    const currentWeightValue = assessment?.weight || 0;
+    const weightReducedValue = Math.max(0, startingWeightValue - currentWeightValue);
+    const weightGainedValue = Math.max(0, currentWeightValue - startingWeightValue);
+    const heightValueInMeters = (assessment?.height || 0) / 100;
+    const targetWeightValue = heightValueInMeters > 0 ? 25 * (heightValueInMeters * heightValueInMeters) : 0;
     
+    // Use rounded BMI for PDF as well to ensure parity with UI
+    const bmiValueForPDF = assessment?.bmi || 0;
+    const roundedBMIToPDF = Number(bmiValueForPDF.toFixed(1));
+    const bmiStatusText = getBMICategory();
+    
+    // Force weightToLoseValue to 0 if BMI rounds to 25.0 or less
+    const rawWeightToLoseValue = Math.max(0, currentWeightValue - targetWeightValue);
+    const weightToLoseValue = (roundedBMIToPDF >= 18.5 && roundedBMIToPDF <= 25) ? 0 : rawWeightToLoseValue;
+
     // Calculate content height first - following form order
     let itemCount = 0;
     itemCount += 2; // Name and Age/Sex always present
     if (assessment?.height) itemCount++;
     if (assessment?.weight) itemCount++;
     if (assessment?.bmi) itemCount++;
+    // Additional Weight Metrics
+    itemCount += 3; // Starting Weight, Weight Reduced, Target Weight
+    if (weightGainedValue > 0) itemCount++;
+    if (weightToLoseValue > 0) itemCount++;
     // Initial Symptoms
     if (assessment?.chest_pain || assessment?.shortness_of_breath || assessment?.dizziness || assessment?.fatigue) itemCount++;
-    // Define helper variables early for use throughout PDF generation
     const bpInfo = getBPCategory();
     const sugarInfo = getBloodSugarClassification();
     const weightRec = getWeightRecommendation();
     const bmiClass = getBMIClassification(); // Define bmiClass early for use in multiple sections
-    
+
     // Blood Pressure
     if (assessment?.systolic && assessment?.diastolic) itemCount++;
     if (assessment?.pulse) itemCount++;
@@ -1171,14 +1306,14 @@ export default function HeartHealthResults() {
     if (assessment?.water_intake) itemCount++;
     if (assessment?.profession) itemCount++;
     // Sleep & Tobacco
-    if (assessment?.sleep_hours) itemCount++;
+    if (correctedSleep?.value || assessment?.sleep_hours) itemCount++;
     if (assessment?.smoking) itemCount++;
     // Additional Symptoms
     if (assessment?.swelling || assessment?.palpitations || assessment?.family_history) itemCount++;
     // Personal Notes
     if (assessment?.user_notes) itemCount++;
     
-    const summaryBoxHeight = (itemCount * PDF_STYLES.spacing.betweenItems) + PDF_STYLES.spacing.afterSubsection;
+    const summaryBoxHeight = (itemCount * PDF_STYLES.spacing.betweenItems) + 20; // Increased buffer for new items
     
       // No background box - plain content area
     
@@ -1213,9 +1348,30 @@ export default function HeartHealthResults() {
     }
     
     if (assessment?.bmi) {
-      const isBMIAbnormal = (assessment?.bmi ?? 0) >= 25; // Overweight or obese
-      const bmiValue = `${assessment?.bmi?.toFixed(1)} kg/m² (${getBMICategory()})`;
-      summaryY = addValueWithHighlight("BMI: ", bmiValue, isBMIAbnormal, leftCol, summaryY);
+      const isBMIAbnormal = Number(bmiValueForPDF.toFixed(1)) > 25; // Normal at 25.0
+      const isBMIHealthy = !isBMIAbnormal && Number(bmiValueForPDF.toFixed(1)) >= 18.5;
+      const bmiValue = `${bmiValueForPDF.toFixed(1)} (${bmiStatusText})`;
+      summaryY = addValueWithHighlight("BMI Status: ", bmiValue, isBMIAbnormal, leftCol, summaryY, 170, isBMIHealthy);
+      summaryY += PDF_STYLES.spacing.betweenItems;
+    }
+
+    // Detailed Weight metrics in Summary
+    summaryY = addLabelValue("Starting Weight: ", `${startingWeightValue.toFixed(1)} kg`, leftCol, summaryY);
+    summaryY += PDF_STYLES.spacing.betweenItems;
+
+    summaryY = addLabelValue("Weight Reduced: ", `${weightReducedValue.toFixed(1)} kg`, leftCol, summaryY);
+    summaryY += PDF_STYLES.spacing.betweenItems;
+
+    if (weightGainedValue > 0) {
+      summaryY = addLabelValue("Weight Gained: ", `+${weightGainedValue.toFixed(1)} kg`, leftCol, summaryY);
+      summaryY += PDF_STYLES.spacing.betweenItems;
+    }
+
+    summaryY = addLabelValue("Target Weight: ", `${targetWeightValue.toFixed(1)} kg`, leftCol, summaryY);
+    summaryY += PDF_STYLES.spacing.betweenItems;
+
+    if (weightToLoseValue > 0) {
+      summaryY = addLabelValue("Weight To Lose: ", `${weightToLoseValue.toFixed(1)} kg`, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1233,15 +1389,17 @@ export default function HeartHealthResults() {
     // 3. Blood Pressure (Step 4) - highlight if abnormal
     if (assessment?.systolic && assessment?.diastolic) {
       const isBPAbnormal = (assessment?.systolic ?? 0) >= 130 || (assessment?.diastolic ?? 0) >= 90;
+      const isBPHealthy = (assessment?.systolic ?? 0) < 120 && (assessment?.diastolic ?? 0) < 80;
       const bpValue = `${assessment?.systolic}/${assessment?.diastolic} mmHg`;
-      summaryY = addValueWithHighlight("Blood Pressure: ", bpValue, isBPAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("Blood Pressure: ", bpValue, isBPAbnormal, leftCol, summaryY, 170, isBPHealthy);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
     if (assessment?.pulse) {
       const isPulseAbnormal = (assessment?.pulse ?? 0) < 60 || (assessment?.pulse ?? 0) > 100;
+      const isPulseHealthy = (assessment?.pulse ?? 0) >= 60 && (assessment?.pulse ?? 0) <= 100;
       const pulseValue = `${assessment?.pulse}/min`;
-      summaryY = addValueWithHighlight("Pulse: ", pulseValue, isPulseAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("Pulse: ", pulseValue, isPulseAbnormal, leftCol, summaryY, 170, isPulseHealthy);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1249,8 +1407,9 @@ export default function HeartHealthResults() {
     if (sugarInfo) {
       const sugarType = sugarInfo?.type === "2-hour Post-prandial" ? "2-hour Post-meal" : "Fasting";
       const isSugarAbnormal = sugarInfo?.status?.includes("PRE-DIABETIC") || sugarInfo?.status === "DIABETIC";
+      const isSugarHealthy = sugarInfo?.status === "NORMAL";
       const sugarValue = `${sugarInfo?.value} mg/dL`;
-      summaryY = addValueWithHighlight(`${sugarType} Blood Sugar: `, sugarValue, isSugarAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight(`${sugarType} Blood Sugar: `, sugarValue, isSugarAbnormal, leftCol, summaryY, 170, isSugarHealthy);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1258,18 +1417,29 @@ export default function HeartHealthResults() {
     if (assessment?.ldl || assessment?.hdl) {
       const lipidParts = [];
       let isLipidAbnormal = false;
+      let isLipidHealthy = true;
       if (assessment?.ldl) {
         const isLDLAbnormal = (assessment?.ldl ?? 0) >= 160;
-        if (isLDLAbnormal) isLipidAbnormal = true;
+        if (isLDLAbnormal) {
+          isLipidAbnormal = true;
+          isLipidHealthy = false;
+        } else if ((assessment?.ldl ?? 0) >= 130) {
+          isLipidHealthy = false; // Borderline
+        }
         lipidParts.push(`LDL: ${assessment?.ldl} mg/dL`);
       }
       if (assessment?.hdl) {
         const isHDLAbnormal = (assessment?.hdl ?? 0) < 40;
-        if (isHDLAbnormal) isLipidAbnormal = true;
+        if (isHDLAbnormal) {
+          isLipidAbnormal = true;
+          isLipidHealthy = false;
+        } else if ((assessment?.hdl ?? 0) <= 60) {
+           // HDL 40-60 is normal but not "ideal" (>60 is ideal but let's say normal is healthy enough)
+        }
         lipidParts.push(`HDL: ${assessment?.hdl} mg/dL`);
       }
       const lipidValue = lipidParts.join(", ");
-      summaryY = addValueWithHighlight("Lipid Levels: ", lipidValue, isLipidAbnormal, leftCol, summaryY);
+      summaryY = addValueWithHighlight("Lipid Levels: ", lipidValue, isLipidAbnormal, leftCol, summaryY, 170, isLipidHealthy);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
     
@@ -1290,7 +1460,13 @@ export default function HeartHealthResults() {
     }
     
     // 7. Sleep & Tobacco (Step 3) - labels bold
-    if (assessment?.sleep_hours) {
+    if (correctedSleep?.isCorrected) {
+      const sleepDisplayText = correctedSleep.notFound 
+        ? `${correctedSleep.original} hours/day (Incorrect Value)`
+        : `${correctedSleep.value} hours/day (Corrected from history)`;
+      summaryY = addValueWithHighlight("Sleep: ", sleepDisplayText, true, leftCol, summaryY);
+      summaryY += PDF_STYLES.spacing.betweenItems;
+    } else if (assessment?.sleep_hours) {
       summaryY = addLabelValue("Sleep: ", `${assessment?.sleep_hours} hours/day`, leftCol, summaryY);
       summaryY += PDF_STYLES.spacing.betweenItems;
     }
@@ -1320,7 +1496,7 @@ export default function HeartHealthResults() {
     setBodyText(); // Reset text style for following sections
 
     // Interpretation of Results Section - Only show if there's content to interpret
-    const hasInterpretationContent = assessment?.bmi || (assessment?.systolic && assessment?.diastolic) || sugarInfo || assessment?.pulse || assessment?.ldl || assessment?.hdl;
+    const hasInterpretationContent = assessment?.bmi || (assessment?.systolic && assessment?.diastolic) || assessment?.fasting_sugar != null || assessment?.post_meal_sugar != null || assessment?.pulse || assessment?.ldl || assessment?.hdl;
     
     if (hasInterpretationContent) {
       checkPageBreak(25);
@@ -1330,44 +1506,62 @@ export default function HeartHealthResults() {
       const interpStart = yPosition;
       let interpY = interpStart;
 
-      // Weight & BMI subsection - Only show if data exists
+      // Weight & BMI subsection - formatted to match image
     if (assessment?.bmi) {
-      checkPageBreak(30); // Check before Weight & BMI (optimized for equal spacing)
-    yPosition = setSubsectionHeader("Weight & BMI", yPosition);
-    setBodyText();
-      // bmiClass is already defined at the top of the function
-      if (bmiClass) {
-      const isBMIAbnormal = (assessment?.bmi ?? 0) >= 25; // Overweight or obese
-      const bmiValue = `${assessment?.bmi?.toFixed(1)} = ${bmiClass?.class ?? ''}`;
-      addValueWithHighlight("BMI: ", bmiValue, isBMIAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
-      yPosition += PDF_STYLES.spacing.betweenItems;
+      checkPageBreak(35);
+      yPosition = setSubsectionHeader("Weight & BMI", yPosition);
+      setBodyText();
       
-      // Ideal weight recommendation
-      if (weightRec && assessment?.height) {
-        const idealMin = weightRec?.range?.[0] ?? 0;
-        const idealMax = weightRec?.range?.[1] ?? 0;
-        const idealText = `Ideal weight for height ~${assessment?.height} cm is around `;
-        const boldRange = `${idealMin.toFixed(0)}-${idealMax.toFixed(0)} kg`;
-        const textWidth = getTextWidth(idealText);
-        doc.text(idealText, PDF_STYLES.spacing.pageMargin, yPosition);
+      const leftGap = PDF_STYLES.spacing.pageMargin;
+      
+      // Line 1: BMI: value = category (Red and Bold for value = category)
       doc.setFont("helvetica", "bold");
-        doc.text(boldRange, PDF_STYLES.spacing.pageMargin + textWidth, yPosition);
-      doc.setFont("helvetica", "normal");
-        yPosition += (PDF_STYLES.spacing.betweenItems + 5); // Increased gap as requested
-        
-        
-        if (weightRec?.action === "lose") {
-          checkPageBreak(10); // Check before weight loss text
-          const weightLossText = `Needs to lose ~${weightRec?.kg?.toFixed(0) ?? 0} kg, but this should be gradual and phased`;
-          yPosition = addWrappedText(weightLossText, PDF_STYLES.spacing.pageMargin, yPosition, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, PDF_STYLES.spacing.betweenItems);
-        } else if (weightRec?.action === "gain") {
-        checkPageBreak(15); // Check before weight gain text
-          yPosition = addWrappedText(`Needs to gain ~${weightRec?.kg?.toFixed(0) ?? 0} kg through healthy weight gain strategies.`, PDF_STYLES.spacing.pageMargin, yPosition, pageWidth - (PDF_STYLES.spacing.pageMargin * 2), PDF_STYLES.fontSize.body, PDF_STYLES.spacing.betweenItems);
-          yPosition += PDF_STYLES.spacing.betweenItems;
-        }
+      doc.text("BMI: ", leftGap, yPosition);
+      const bmiLabelWidth = doc.getTextWidth("BMI: ");
+      
+      const isBMIAbnormal = Number(bmiValueForPDF.toFixed(1)) > 25;
+      if (isBMIAbnormal) {
+        doc.setTextColor(200, 0, 0); // Red
+      } else {
+        doc.setTextColor(0, 0, 0); // Black
       }
-    }
-    yPosition += PDF_STYLES.spacing.betweenSections;
+      doc.text(`${bmiValueForPDF.toFixed(1)} = ${bmiStatusText}`, leftGap + bmiLabelWidth, yPosition);
+      doc.setTextColor(0, 0, 0); // Reset to black
+      yPosition += PDF_STYLES.spacing.betweenItems * 1.5;
+
+      // Line 2: Ideal weight for height ~160 cm is around 47-64 kg (Bold for range)
+      doc.setFont("helvetica", "normal");
+      const heightText = `Ideal weight for height ~${assessment?.height || 160} cm is around `;
+      doc.text(heightText, leftGap, yPosition);
+      const heightTextWidth = doc.getTextWidth(heightText);
+      
+      doc.setFont("helvetica", "bold");
+      const idealMin = weightRec?.range?.[0] || 0;
+      const idealMax = weightRec?.range?.[1] || 0;
+      doc.text(`${idealMin.toFixed(0)}-${idealMax.toFixed(0)} kg`, leftGap + heightTextWidth, yPosition);
+      yPosition += PDF_STYLES.spacing.betweenItems * 1.5;
+
+      // Line 3: Needs to lose ~0 kg ...
+      doc.setFont("helvetica", "normal");
+      const actionText = weightToLoseValue > 0 
+        ? `Needs to lose ~${weightToLoseValue.toFixed(0)} kg, but this should be gradual and phased`
+        : `Weight is within healthy range. Maintain existing healthy habits.`;
+      doc.text(actionText, leftGap, yPosition);
+      yPosition += PDF_STYLES.spacing.betweenItems * 2;
+
+      if (bmiClass?.risks && bmiClass.risks.length > 0 && ! (bmiValueForPDF >= 18.5 && bmiValueForPDF <= 25)) {
+        checkPageBreak(25);
+        doc.setFont("helvetica", "bold");
+        doc.text("This increases the risk of:", leftGap, yPosition);
+        doc.setFont("helvetica", "normal");
+        yPosition += 6;
+        bmiClass.risks.forEach(risk => {
+          doc.text(`  • ${risk}`, leftGap + 8, yPosition);
+          yPosition += 6;
+        });
+      }
+      
+      yPosition += PDF_STYLES.spacing.afterSubsection;
     }
 
     // Blood Pressure subsection - Only show if data exists
@@ -1380,11 +1574,13 @@ export default function HeartHealthResults() {
       const diaLabel = (assessment?.diastolic ?? 0) >= 90 ? "clearly high" : (assessment?.diastolic ?? 0) >= 85 ? "elevated" : "normal";
       const isSystolicAbnormal = (assessment?.systolic ?? 0) >= 130;
       const isDiastolicAbnormal = (assessment?.diastolic ?? 0) >= 90;
-      addValueWithHighlight("Systolic: ", sysLabel, isSystolicAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
+      const isSystolicHealthy = !isSystolicAbnormal && sysLabel === "normal";
+      const isDiastolicHealthy = !isDiastolicAbnormal && diaLabel === "normal";
+      addValueWithHighlight("Systolic: ", sysLabel, isSystolicAbnormal, PDF_STYLES.spacing.pageMargin, yPosition, 170, isSystolicHealthy);
       yPosition += PDF_STYLES.spacing.betweenItems;
-      addValueWithHighlight("Diastolic: ", diaLabel, isDiastolicAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
+      addValueWithHighlight("Diastolic: ", diaLabel, isDiastolicAbnormal, PDF_STYLES.spacing.pageMargin, yPosition, 170, isDiastolicHealthy);
       yPosition += PDF_STYLES.spacing.betweenItems;
-      
+
       
       if (bpInfo?.category) {
         const categoryLength = bpInfo?.category?.length ?? 0;
@@ -1407,8 +1603,9 @@ export default function HeartHealthResults() {
       setBodyText();
       const pulse = assessment?.pulse ?? 0;
       const isPulseAbnormal = pulse < 60 || pulse > 100;
+      const isPulseHealthy = pulse >= 60 && pulse <= 80; // Ideal range
       const pulseStatus = isPulseAbnormal ? "Abnormal" : "Normal";
-      doc.text(`Status: ${pulseStatus} (Normal range: 60-100/min)`, PDF_STYLES.spacing.pageMargin, yPosition);
+      addValueWithHighlight("Status: ", pulseStatus, isPulseAbnormal, PDF_STYLES.spacing.pageMargin, yPosition, 170, isPulseHealthy);
       yPosition += PDF_STYLES.spacing.betweenItems;
       yPosition += PDF_STYLES.spacing.afterSubsection;
     }
@@ -1438,8 +1635,9 @@ export default function HeartHealthResults() {
       }
       checkPageBreak(10);
       const isSugarAbnormal = sugarInfo?.status?.includes("PRE-DIABETIC") || sugarInfo?.status === "DIABETIC";
+      const isSugarHealthy = sugarInfo?.status === "NORMAL";
       const statusText = sugarInfo?.status?.includes("PRE-DIABETIC") ? "PRE-DIABETIC (risk)" : sugarInfo?.status ?? '';
-      addValueWithHighlight("Status: ", statusText, isSugarAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
+      addValueWithHighlight("Status: ", statusText, isSugarAbnormal, PDF_STYLES.spacing.pageMargin, yPosition, 170, isSugarHealthy);
       yPosition += PDF_STYLES.spacing.betweenItems;
       
       if (sugarInfo?.risks?.length > 0) {
@@ -1465,15 +1663,17 @@ export default function HeartHealthResults() {
       
       if (assessment?.ldl) {
         const isLDLAbnormal = (assessment?.ldl ?? 0) >= 160;
+        const isLDLHealthy = (assessment?.ldl ?? 0) < 100;
         const ldlStatus = (assessment?.ldl ?? 0) < 100 ? "Optimal" : (assessment?.ldl ?? 0) < 130 ? "Near optimal" : (assessment?.ldl ?? 0) < 160 ? "Borderline high" : (assessment?.ldl ?? 0) < 190 ? "High" : "Very high";
-        addValueWithHighlight("LDL Status: ", ldlStatus, isLDLAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
+        addValueWithHighlight("LDL Status: ", ldlStatus, isLDLAbnormal, PDF_STYLES.spacing.pageMargin, yPosition, 170, isLDLHealthy);
         yPosition += PDF_STYLES.spacing.betweenItems;
       }
       
       if (assessment?.hdl) {
         const isHDLAbnormal = (assessment?.hdl ?? 0) < 40;
+        const isHDLHealthy = (assessment?.hdl ?? 0) >= 60;
         const hdlStatus = (assessment?.hdl ?? 0) >= 60 ? "Optimal" : (assessment?.hdl ?? 0) >= 40 ? "Normal" : "Low";
-        addValueWithHighlight("HDL Status: ", hdlStatus, isHDLAbnormal, PDF_STYLES.spacing.pageMargin, yPosition);
+        addValueWithHighlight("HDL Status: ", hdlStatus, isHDLAbnormal, PDF_STYLES.spacing.pageMargin, yPosition, 170, isHDLHealthy);
         yPosition += PDF_STYLES.spacing.betweenItems;
       }
       yPosition += PDF_STYLES.spacing.betweenSections;
@@ -1699,9 +1899,13 @@ export default function HeartHealthResults() {
     try {
       const message = `Hi ${assessment?.name}, Your medical camp report is ready. Please go through it once - some small health signals are easier to improve when noticed early. If you need clarity or support, you can reach us at +91 8977757494`;
     
+      const mobileNumber = assessment?.mobile || "";
+      const cleanNumber = mobileNumber.toString().replace(/\D/g, '');
+      const finalNumber = cleanNumber.startsWith('91') ? cleanNumber : '91' + cleanNumber;
+
       // 2. Direct Redirect (Text Only) - For Desktop or if Share fails
       // Direct links (wa.me) CANNOT attach files, so this is text-only.
-      const waLink = `https://wa.me/${assessment?.mobile}?text=${encodeURIComponent(message)}`;
+      const waLink = `https://wa.me/${finalNumber}?text=${encodeURIComponent(message)}`;
       
       // Open WhatsApp
       window.open(waLink, "_blank");
@@ -1982,6 +2186,18 @@ export default function HeartHealthResults() {
                           <Download className="mr-2 h-4 w-4" />
                           {saving ? "Generating..." : "Download PDF"}
                         </Button>
+                        {isAdmin && correctedSleep?.isCorrected && !correctedSleep.notFound && (
+                          <Button 
+                            onClick={handleQuickFixSleep} 
+                            variant="destructive" 
+                            size="sm" 
+                            disabled={saving}
+                            className="bg-orange-500 hover:bg-orange-600 animate-pulse"
+                          >
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Fix Sleep Data
+                          </Button>
+                        )}
                       </>
                     )}
                   </div>
@@ -2004,13 +2220,25 @@ export default function HeartHealthResults() {
           <TabsContent value="health" className="space-y-8">
             {/* Key Metrics Cards */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
+              <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow bg-accent/5">
                 <div className="text-4xl font-bold text-foreground">
                   {assessment?.bmi ? assessment?.bmi?.toFixed(1) : "N/A"}
                 </div>
-                <h3 className="text-lg font-semibold text-accent">BMI</h3>
-                <p className="text-xs text-muted-foreground">{getBMICategory()}</p>
-                <p className="text-xs text-muted-foreground mt-2">Body Mass Index</p>
+                <h3 className="text-lg font-semibold text-accent">BMI & Status</h3>
+                <p className={`text-sm font-bold ${weightMetrics?.isNormalBMI ? "text-success" : "text-warning"}`}>
+                  {weightMetrics?.status || getBMICategory()}
+                </p>
+                {weightMetrics && (
+                  <div className="pt-2 text-[10px] text-muted-foreground grid grid-cols-2 gap-x-2 gap-y-1 border-t border-accent/10 mt-2">
+                    <div className="text-left font-medium text-foreground">Weight: {weightMetrics.currentWeight.toFixed(1)}kg</div>
+                    <div className="text-right">Start: {weightMetrics.startingWeight.toFixed(1)}kg</div>
+                    <div className="text-left">Reduced: {weightMetrics.weightReduced.toFixed(1)}kg</div>
+                    <div className="text-right">Target: {weightMetrics.targetWeight.toFixed(1)}kg</div>
+                    <div className="text-left col-span-2 border-t border-accent/5 pt-1 text-danger font-bold text-[11px]">
+                      Weight To Lose: {weightMetrics.weightToLose.toFixed(1)}kg
+                    </div>
+                  </div>
+                )}
               </Card>
 
               <Card className="p-6 text-center space-y-2 shadow-md hover:shadow-lg transition-shadow">
@@ -2049,16 +2277,36 @@ export default function HeartHealthResults() {
                 </p>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
-                    <span className="text-muted-foreground">18.5 - 24.9</span>
+                    <span className="text-muted-foreground">&lt; 16</span>
+                    <span className="font-medium text-danger">Severe Thinness</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">16 - 17</span>
+                    <span className="font-medium text-warning">Moderate Thinness</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">17 - 18.5</span>
+                    <span className="font-medium text-warning">Mild Thinness</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">18.5 - 25</span>
                     <span className="font-medium text-success">Normal</span>
                   </div>
                   <div className="flex justify-between text-sm pb-2 border-b border-border">
-                    <span className="text-muted-foreground">25 - 29.9</span>
+                    <span className="text-muted-foreground">25 - 30</span>
                     <span className="font-medium text-warning">Overweight</span>
                   </div>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">30 - 35</span>
+                    <span className="font-medium text-danger">Obese Class I</span>
+                  </div>
+                  <div className="flex justify-between text-sm pb-2 border-b border-border">
+                    <span className="text-muted-foreground">35 - 40</span>
+                    <span className="font-medium text-danger">Obese Class II</span>
+                  </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">≥ 30</span>
-                    <span className="font-medium text-danger">Obese</span>
+                    <span className="text-muted-foreground">&gt; 40</span>
+                    <span className="font-medium text-danger">Obese Class III</span>
                   </div>
                 </div>
               </Card>
@@ -2194,11 +2442,23 @@ export default function HeartHealthResults() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center pb-2 border-b border-border">
-                    <span className="text-sm font-medium text-foreground">BMI</span>
-                    <span className="text-sm font-bold text-accent">
+                    <span className="text-sm font-medium text-foreground">BMI Status</span>
+                    <span className={`text-sm font-bold ${weightMetrics?.isNormalBMI ? "text-success" : "text-danger"}`}>
                       {assessment.bmi?.toFixed(1)} - {getBMICategory()}
                     </span>
                   </div>
+                  {weightMetrics && (
+                    <>
+                      <div className="flex justify-between items-center pb-2 border-b border-border">
+                        <span className="text-sm font-medium text-foreground">Weight Reduced</span>
+                        <span className="text-sm font-bold text-accent">{weightMetrics.weightReduced.toFixed(1)} kg</span>
+                      </div>
+                      <div className="flex justify-between items-center pb-2 border-b border-border">
+                        <span className="text-sm font-medium text-foreground">Target Weight</span>
+                        <span className="text-sm font-bold text-accent">{weightMetrics.targetWeight.toFixed(1)} kg</span>
+                      </div>
+                    </>
+                  )}
                   <div className="flex justify-between items-center pb-2 border-b border-border">
                     <span className="text-sm font-medium text-foreground">CV Score</span>
                     <span className="text-sm font-bold text-accent">
@@ -2221,13 +2481,21 @@ export default function HeartHealthResults() {
                   </div>
                   <div className="flex justify-between items-center pb-2 border-b border-border">
                     <span className="text-sm font-medium text-foreground">Blood Pressure</span>
-                    <span className="text-sm font-bold text-accent">
+                    <span className={`text-sm font-bold ${bpInfo?.category?.includes("High Blood Pressure") ? "text-red-600" : "text-accent"}`}>
                           {assessment?.systolic}/{assessment?.diastolic} - {bpInfo?.category}
                     </span>
                   </div>
                   <div className="flex justify-between items-center pb-2 border-b border-border">
                     <span className="text-sm font-medium text-foreground">Age</span>
                     <span className="text-sm font-bold text-accent">{assessment?.age} years</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Profession</span>
+                    <span className="text-sm font-bold text-accent">{assessment?.profession || "Not specified"}</span>
+                  </div>
+                  <div className="flex justify-between items-center pb-2 border-b border-border">
+                    <span className="text-sm font-medium text-foreground">Water Intake</span>
+                    <span className="text-sm font-bold text-accent">{assessment?.water_intake || "-"} L/day</span>
                   </div>
                 </div>
               </div>
@@ -2306,6 +2574,25 @@ export default function HeartHealthResults() {
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
+                          <Label htmlFor="edit-profession">Profession</Label>
+                          <Input
+                            id="edit-profession"
+                            value={editingData.profession || ""}
+                            onChange={(e) => handleFieldChange("profession", e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-water-intake">Daily Water Intake (L)</Label>
+                          <Input
+                            id="edit-water-intake"
+                            type="number"
+                            value={editingData.water_intake || ""}
+                            onChange={(e) => handleFieldChange("water_intake", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
                           <Label htmlFor="edit-height">Height (cm)</Label>
                           <Input
                             id="edit-height"
@@ -2351,6 +2638,34 @@ export default function HeartHealthResults() {
                             value={editingData.pulse || ""}
                             onChange={(e) => handleFieldChange("pulse", e.target.value)}
                           />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-diabetes">Diabetes Status</Label>
+                          <select
+                            id="edit-diabetes"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={editingData.diabetes || ""}
+                            onChange={(e) => handleFieldChange("diabetes", e.target.value)}
+                          >
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-knows-lipids">Knows Lipid Levels?</Label>
+                          <select
+                            id="edit-knows-lipids"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={editingData.knows_lipids ? "yes" : editingData.knows_lipids === false ? "no" : ""}
+                            onChange={(e) => handleFieldChange("knows_lipids", e.target.value === "yes")}
+                          >
+                            <option value="">Select</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                          </select>
                         </div>
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
@@ -2537,14 +2852,47 @@ export default function HeartHealthResults() {
                   <p className="text-base"><strong>Name:</strong> {assessment?.name}</p>
                   <p className="text-base"><strong>Age/Sex:</strong> {formatAgeSex()}</p>
                   {assessment?.height && <p className="text-base"><strong>Height:</strong> {assessment?.height} cm</p>}
-                  {assessment?.weight && <p className="text-base"><strong>Weight:</strong> {assessment?.weight} kg</p>}
-                  {assessment?.bmi && <p className="text-base"><strong>BMI:</strong> {assessment?.bmi?.toFixed(1)} kg/m²</p>}
-                  {assessment?.systolic && assessment?.diastolic && (
-                    <p className="text-base"><strong>Blood Pressure:</strong> {assessment?.systolic} / {assessment?.diastolic} mmHg</p>
+                  {assessment?.weight && <p className="text-base"><strong>Current Weight:</strong> {assessment?.weight} kg</p>}
+                  {weightMetrics && (
+                    <>
+                      <p className="text-base text-muted-foreground italic">Starting Weight: {weightMetrics.startingWeight.toFixed(1)} kg</p>
+                      <p className="text-base text-success font-medium">Weight Reduced: {weightMetrics.weightReduced.toFixed(1)} kg</p>
+                      {weightMetrics.weightGained > 0 && <p className="text-base text-danger font-medium">Weight Gained: +{weightMetrics.weightGained.toFixed(1)} kg</p>}
+                      <p className="text-base text-accent font-medium">Target Weight: {weightMetrics.targetWeight.toFixed(1)} kg</p>
+                      {weightMetrics.weightToLose > 0 && <p className="text-base text-red-600 font-bold">Weight To Lose: {weightMetrics.weightToLose.toFixed(1)} kg</p>}
+                    </>
                   )}
-                  <p className="text-base"><strong>Pulse:</strong> {assessment?.pulse || 70}/min {assessment?.pulse && assessment?.pulse >= 60 && assessment?.pulse <= 100 ? "(normal)" : ""}</p>
-                   {assessment?.post_meal_sugar && <p className="text-base"><strong>Post-meal Sugar:</strong> {assessment?.post_meal_sugar} mg/dL</p>}
-                   {assessment?.fasting_sugar && <p className="text-base"><strong>Fasting Sugar:</strong> {assessment?.fasting_sugar} mg/dL</p>}
+                  {assessment?.bmi && <p className="text-base"><strong>BMI:</strong> {assessment?.bmi?.toFixed(1)} kg/m² ({getBMICategory()})</p>}
+                  {assessment?.systolic && assessment?.diastolic && (
+                    <p className="text-base">
+                      <strong>Blood Pressure:</strong> 
+                      <span className={bpInfo?.category?.includes("High Blood Pressure") ? "text-red-600 font-bold" : ""}>
+                        {assessment?.systolic} / {assessment?.diastolic} mmHg
+                      </span>
+                    </p>
+                  )}
+                  <p className="text-base">
+                    <strong>Pulse:</strong> 
+                    <span className={(assessment?.pulse && (assessment.pulse < 60 || assessment.pulse > 100)) ? "text-red-600 font-bold" : ""}>
+                      {assessment?.pulse || 70}/min {assessment?.pulse && assessment?.pulse >= 60 && assessment?.pulse <= 100 ? "(normal)" : ""}
+                    </span>
+                  </p>
+                   {assessment?.post_meal_sugar && (
+                     <p className="text-base">
+                       <strong>Post-meal Sugar:</strong> 
+                       <span className={assessment.post_meal_sugar >= 200 ? "text-red-600 font-bold" : ""}>
+                         {assessment?.post_meal_sugar} mg/dL
+                       </span>
+                     </p>
+                   )}
+                   {assessment?.fasting_sugar && (
+                     <p className="text-base">
+                       <strong>Fasting Sugar:</strong> 
+                       <span className={assessment.fasting_sugar >= 126 ? "text-red-600 font-bold" : ""}>
+                         {assessment?.fasting_sugar} mg/dL
+                       </span>
+                     </p>
+                   )}
                    {assessment?.diabetes && <p className="text-base"><strong>Diabetes Status:</strong> {assessment?.diabetes}</p>}
                    
                    <div className="mt-4 pt-4 border-t border-accent/10">
@@ -2568,6 +2916,13 @@ export default function HeartHealthResults() {
                    <div className="mt-4 pt-4 border-t border-accent/10">
                      <h4 className="text-sm font-bold text-accent uppercase tracking-wider mb-2">Lifestyle & History</h4>
                      <p className="text-sm"><strong>Exercise:</strong> {assessment?.exercise || "-"}</p>
+                     <p className="text-sm">
+                       <strong>Sleep:</strong> {correctedSleep?.isCorrected ? (
+                         <span className="text-orange-500 font-bold animate-pulse">
+                           {correctedSleep.notFound ? `${correctedSleep.original} (Incorrect)` : `${correctedSleep.value} (Recovered)`}
+                         </span>
+                       ) : `${assessment?.sleep_hours || "-"} hours/day`}
+                     </p>
                      <p className="text-sm"><strong>Smoking:</strong> {assessment?.smoking || "-"}</p>
                      <p className="text-sm"><strong>Tobacco Use:</strong> {Array.isArray(assessment?.tobacco_use) ? assessment.tobacco_use.join(", ") : (assessment?.tobacco_use || "-")}</p>
                      <p className="text-sm"><strong>Family History:</strong> {assessment?.family_history ? "Yes" : "No"}</p>
@@ -2600,7 +2955,7 @@ export default function HeartHealthResults() {
                           </ul>
                         </>
                       )}
-                    </div>
+                        </div>
                     {weightRec && assessment?.height && (
                       <div className="space-y-2">
                         <p className="text-base">
@@ -2610,8 +2965,8 @@ export default function HeartHealthResults() {
                           <p className="text-base">
                             Needs to {weightRec?.action === "lose" ? "lose" : "gain"} ~{Math.round(weightRec?.kg ?? 0)} kg, but this should be gradual and phased
                           </p>
-                        )}
-                      </div>
+                      )}
+                    </div>
                     )}
                   </div>
                 )}
@@ -3210,7 +3565,7 @@ export default function HeartHealthResults() {
                   </div>
                 )}
 
-                {assessment.bmi && assessment.bmi > 25 && (
+                {assessment.bmi && Number(assessment.bmi.toFixed(1)) > 25 && (
                   <div className="p-4 bg-warning/5 border-l-4 border-warning rounded-lg">
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-5 h-5 text-warning mt-0.5" />
@@ -3281,7 +3636,7 @@ export default function HeartHealthResults() {
                 {!(
                   (assessment.smoking && !NON_SMOKING_VALUES.includes(assessment.smoking)) ||
                   (assessment.systolic && assessment.systolic > 120) ||
-                  (assessment.bmi && assessment.bmi > 25) ||
+                  (assessment.bmi && Number(assessment.bmi.toFixed(1)) > 25) ||
                   (assessment.exercise && LOW_ACTIVITY_LEVELS.includes(assessment.exercise)) ||
                   (assessment.ldl && assessment.ldl > 130) ||
                   (assessment.hdl && assessment.hdl < 40) ||

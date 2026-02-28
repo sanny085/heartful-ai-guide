@@ -162,6 +162,8 @@ serve(async (req) => {
       pulse: false,
       sugar: false,
       bmi_input: false,
+      profession: false,
+      water_intake: false,
     };
 
     const isYes = (val) => {
@@ -195,7 +197,7 @@ serve(async (req) => {
       const field_additional_symptoms = findVal(row, ["additional symptoms"]);
       const field_notes = findVal(row, ["health notes (optional)", "health notes", "notes"]);
       const field_water_intake = findVal(row, ["water intake", "water", "daily water intake", "water consumption"]);
-      const field_profession = findVal(row, ["profession", "occupation", "job", "work"]);
+      const field_profession = findVal(row, ["profession / occupation", "profession", "occupation", "job", "work"]);
       
       const bpRaw = findVal(row, ["blood pressure systolic (upper number) / diastolic (lower number)", "blood pressure", "bp"]);
       
@@ -208,6 +210,8 @@ serve(async (req) => {
       if (field_pulse) discoveredFields.pulse = true;
       if (field_fbs || field_ppbs) discoveredFields.sugar = true;
       if (field_height || field_weight) discoveredFields.bmi_input = true;
+      if (field_profession) discoveredFields.profession = true;
+      if (field_water_intake) discoveredFields.water_intake = true;
 
       const hasAnyData = Object.values(row).some(v => {
         if (v === null || v === undefined || v === "" || v === " ") return false;
