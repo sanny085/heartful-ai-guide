@@ -163,7 +163,20 @@ export default function HeartHealthAssessment() {
         
         mappedData.systolic = findVal(row, ["systolic", "sys", "bp high", "blood pressure high", "bps", "systolic bp"])?.toString() || "";
         mappedData.diastolic = findVal(row, ["diastolic", "dia", "bp low", "blood pressure low", "bpd", "diastolic bp"])?.toString() || "";
-        mappedData.pulse = findVal(row, ["pulse", "heart rate", "hr", "pulse rate", "p"])?.toString() || "";
+        
+        // Handle combined BP column if separate fields are missing
+        if (!mappedData.systolic && !mappedData.diastolic) {
+          const combinedBP = findVal(row, ["blood pressure systolic (upper number) / diastolic (lower number)", "blood pressure", "bp"]);
+          if (combinedBP) {
+            const parts = combinedBP.toString().split("/");
+            if (parts.length === 2) {
+              mappedData.systolic = parts[0].trim();
+              mappedData.diastolic = parts[1].trim();
+            }
+          }
+        }
+
+        mappedData.pulse = findVal(row, ["pulse", "heart rate", "hr", "pulse rate", "p", "blood pressure pulse rate (bpm)"])?.toString() || "";
         
         const isYes = (val) => {
           if (!val) return false;
@@ -188,7 +201,7 @@ export default function HeartHealthAssessment() {
         mappedData.exercise = findVal(row, ["exercise", "activity", "physical activity", "workout"])?.toString() || "";
         mappedData.smoking = findVal(row, ["smoking", "smoker", "smoke"])?.toString() || "";
         mappedData.tobacco = findVal(row, ["tobacco", "tobacco use", "tobacco_use", "tobaccoUse"])?.toString().split(",").map(i => i.trim()).filter(i => i) || [];
-        mappedData.sleepHours = findVal(row, ["sleep", "sleep hours", "sleeping hours", "rest"])?.toString() || "";
+        mappedData.sleepHours = findVal(row, ["average sleeping hours", "sleep", "sleep hours", "sleeping hours", "average sleep hours per night", "rest"])?.toString() || "";
         mappedData.familyHistory = isYes(findVal(row, ["family history", "heart history", "fh", "family hx"]));
         mappedData.swelling = isYes(findVal(row, ["swelling", "edema", "legs swelling"]));
         mappedData.palpitations = isYes(findVal(row, ["palpitations", "heart racing", "racing heart"]));
@@ -1572,6 +1585,7 @@ export default function HeartHealthAssessment() {
                     <TableRow className="bg-accent/5">
                       <TableHead># Name</TableHead>
                       <TableHead>Email / Phone</TableHead>
+                      <TableHead>Profession</TableHead>
                       <TableHead>BP (S/D)</TableHead>
                       <TableHead>Sugar</TableHead>
                       <TableHead>BMI / Risk</TableHead>
@@ -1584,6 +1598,7 @@ export default function HeartHealthAssessment() {
                         <TableCell className="text-[10px]">
                           <div className="text-muted-foreground">{item.mobile}</div>
                         </TableCell>
+                        <TableCell className="text-[10px] italic">{item.profession || "-"}</TableCell>
                         <TableCell>{item.systolic}/{item.diastolic}</TableCell>
                         <TableCell>{item.fasting_sugar || "-"}</TableCell>
                         <TableCell>
